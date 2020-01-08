@@ -7,17 +7,29 @@ from env.gym_maze.rewards import GoalRewardGenerator
 
 ROBOT_MARKER = 150
 BACKGROUND_COLOR = (120, 220, 240)
-ROBOT_COLOR = (180, 180, 180)
+ROBOT_COLOR = (150, 150, 180)
 
 class MazeBase(gym.Env):
+    """
+    Base class for an maze-like environment for particle navigation tasks
+    """
+
     def __init__(self, map_file, goal, goal_range, reward_generator=GoalRewardGenerator, robot_count=256):
+        """
+        :param map_file: *.csv file containing the map data
+        :param goal: A point coordinate in form [x, y] or [column, row]
+        :param goal_range: Circular range around the goal position that should be counted as goal reached
+        :param reward_generator: A class of type RewardGenerator
+        :param robot_count: Number of robots/particles to spawn in the maze
+        """
+
         self.freespace = np.loadtxt(map_file).astype(int)
         self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace
         self.goal = goal
         self.goal_range = goal_range
         self.robot_count = robot_count
 
-        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {N, NE, E, SE, S, SW, W, NW}
+        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {N, NE, E, SE, S, SW, W, NW} TODO: Wrong comment
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
                            4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
         self.rev_action_map = {v : k for k, v in self.action_map.items()}
@@ -29,41 +41,48 @@ class MazeBase(gym.Env):
         self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
 
     def reset(self):
-        locations = np.nonzero(self.freespace)
+        locations = np.transpose(np.nonzero(self.freespace))
         choice = np.random.choice(len(locations), self.robot_count, replace=False)
-        self.robot_locations = locations[choice, :]
-        self.reward_generator.reset() # TODO: Implement reward generator
+        self.robot_locations = locations[choice, :] # Robot Locations are in y, x (row, column) order
+        self.reward_generator.reset(self.robot_locations)
+        return self._generate_observation()
 
     def step(self, action):
         info = {}
         dy, dx = self.action_map[action]
 
-        for i, (rx, ry) in enumerate(self.robot_locations):
-            if self.maze[ry + dy, rx + dx] == 1:
-                self.robot_locations[i] = self.robot_locations[i] + [dy, dx]
+        for i, (ry, rx) in enumerate(self.robot_locations):
+            x2, y2 = rx + dx, ry + dy
+            if 0 <= x2 < self.width and 0 <= y2 < self.height and self.freespace[y2, x2] == 1:
+                self.robot_locations[i] = [y2, x2]
 
-        self.state_img = np.zeros(self.maze.shape)
-
-        np.put(self.state_img, self.robot_locations, [ROBOT_MARKER]*self.robot_count)
-        observation = self.state_img + self.maze*255
-
-        done, reward = self.reward_generator.step(action) #TODO: Implement reward generator
-        return (np.expand_dims(observation, axis=2), reward, done, info)
+        done, reward = self.reward_generator.step(action, self.robot_locations)
+        return (self._generate_observation(), reward, done, info)
 
 
     def render(self, mode='human'):
-        rgb_image = np.full((*self.maze.shape, 3), BACKGROUND_COLOR, dtype=np.uint8)
+        rgb_image = np.full((*self.maze.shape, 3), BACKGROUND_COLOR, dtype=int)
+        maze_rgb = np.stack((self.freespace*255,)*3, axis=-1) # White maze
+        rgb_image = rgb_image + maze_rgb
         for y, x in self.robot_locations:
-            rgb_image[y, x] = ROBOT_COLOR
+            rgb_image[y-1:y+1, x-1:x+1] = ROBOT_COLOR
 
         rgb_image[self.goal[0], self.goal[1]] = [255, 0, 0]
+        rgb_image = np.clip(rgb_image, 0, 255)
 
         if mode == 'human': # Display image
             plt.gcf().clear()  # Clear current figure
-            plt.imshow(rgb_image, vmin=0, vmax=255)
+            plt.imshow(rgb_image.astype(np.uint8), vmin=0, vmax=255)
             plt.show(False)
             plt.pause(0.0001)
-        return rgb_image
+        return rgb_image.astype(np.uint8)
+
+    def _generate_observation(self):
+        self.state_img = np.zeros(self.maze.shape)
+
+        np.put(self.state_img, self.robot_locations, [ROBOT_MARKER] * self.robot_count)
+        observation = self.state_img + self.maze * 255
+        return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
 
     def _calculate_cost_map(self, goal_position):
         """
@@ -71,18 +90,18 @@ class MazeBase(gym.Env):
         :param goal_position: Goal position for all particles - start for the costmap
         """
 
-        queue = collections.deque([goal_position])
+        queue = collections.deque([goal_position]) # [x, y] pairs in point notation order!
         seen = np.zeros(self.maze.shape, dtype=int)
-        seen[goal_position[0], goal_position[1]] = 1
+        seen[goal_position[1], goal_position[0]] = 1
         self.cost = np.zeros(self.maze.shape, dtype=int)
 
         while queue:
             x, y = queue.popleft()
             for x2, y2 in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
-                if 0 <= x2 < self.width and 0 <= y2 < self.height and self.maze[x2, y2] != 1 and seen[x2, y2] != 1:
+                if 0 <= x2 < self.width and 0 <= y2 < self.height and self.maze[y2, x2] != 1 and seen[y2, x2] != 1:
                     queue.append([x2, y2])
-                    seen[x2, y2] = 1
-                    self.cost[x2, y2] = self.cost[x, y] + 1
+                    seen[y2, x2] = 1
+                    self.cost[y2, x2] = self.cost[y, x] + 1
 
         return self.cost
 
