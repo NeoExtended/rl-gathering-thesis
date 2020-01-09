@@ -4,6 +4,7 @@ import logging
 
 from utils import config_util, util
 from experiment.session import Session
+from env.gym_maze.envs.MazeBase import MazeBase
 
 import warnings
 
@@ -24,9 +25,6 @@ def main(args=None):
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
-        import tensorflow as tf
-        from tensorflow import keras
-        from tensorflow.keras.preprocessing.text import Tokenizer
 
     # parse arguments
     if args is None:

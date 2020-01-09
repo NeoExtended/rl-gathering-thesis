@@ -36,3 +36,7 @@ class Session:
             config=self.config)
 
         self.agent.learn(self.config['meta']['n_timesteps'], callback=saver.step)
+
+        # Save model at the end of the learning process
+        saver.save(self.agent)
+

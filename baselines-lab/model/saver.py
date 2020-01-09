@@ -35,12 +35,13 @@ class ModelSaver:
 
         if self.update_counter >= self.last_save + self.save_interval:
             self.last_save = self.update_counter
+            self.save(model)
 
-            if self.n_keep > 0:
-                self._save_model(model)
-            if self.keep_best:
-                self._save_best_model(model)
-
+    def save(self, model):
+        if self.n_keep > 0:
+            self._save_model(model)
+        if self.keep_best:
+            self._save_best_model(model)
 
     def _save_model(self, model):
         logging.debug("Saving last model at timestep {}".format(str(self.update_counter)))

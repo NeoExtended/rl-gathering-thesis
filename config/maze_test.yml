@@ -1,0 +1,20 @@
+algorithm:
+  name: "ppo2"
+  verbose: 10
+  policy:
+    name: CnnPolicy
+  cliprange_vf: -1
+  tensorboard_log: true
+
+env:
+  name: "Maze0318-v0"
+  wrappers: ["stable_baselines.common.atari_wrappers.MaxAndSkipEnv"]
+  n_envs: 4
+  frame_stack:
+    n_stack: 4
+
+meta:
+  seed: 42
+  n_timesteps: 1000000
+  log_dir: "./logs/Labtest"
+  save_interval: 150000
