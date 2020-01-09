@@ -1,6 +1,7 @@
 import copy
 import logging
-from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
+#from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
+from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, SAC, TD3
 
 from utils import util
 
@@ -9,11 +10,11 @@ ALGOS = {
     'acer': ACER,
     'acktr': ACKTR,
     'dqn': DQN,
-    'ddpg': DDPG,
+#    'ddpg': DDPG, mpi dependency
     'her': HER,
     'sac': SAC,
     'ppo2': PPO2,
-    'trpo': TRPO,
+#    'trpo': TRPO, mpi dependency
     'td3': TD3
 }
 

@@ -31,7 +31,7 @@ class ModelSaver:
 
     def step(self, locals_, globals_):
         model = locals_['self']
-        self.update_counter += model.num_timesteps
+        self.update_counter = model.num_timesteps
 
         if self.update_counter >= self.last_save + self.save_interval:
             self.last_save = self.update_counter
