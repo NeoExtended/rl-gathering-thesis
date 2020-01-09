@@ -1,9 +1,10 @@
 algorithm:
   name: "ppo2"
-  verbose: 1
+  verbose: 10
   policy:
     name: MlpPolicy
   cliprange_vf: -1
+  tensorboard_log: true
 
 env:
   name: "CartPole-v1"
@@ -13,4 +14,5 @@ env:
 
 meta:
   seed: 42
-  timesteps: 2048
+  n_timesteps: 2048
+  log_dir: "./logs/Labtest"

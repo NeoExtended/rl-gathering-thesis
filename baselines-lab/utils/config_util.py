@@ -19,10 +19,18 @@ def read_config(config_file):
     config = extend_meta_data(config)
     return config
 
+def save_config(config, path):
+    ext = os.path.splitext(path)[-1]
+    file = open(path, "w")
+    if ext == '.json':
+        json.dump(config, file, indent=2, sort_keys=True)
+    elif ext == '.yml':
+        yaml.dump(config, file, indent=2)
+    file.close()
+
+
 def extend_meta_data(config):
     extended_info = {
-        "trial": -1,
-        "session": -1,
         "timestamp": util.get_timestamp(),
         "ckpt": None,
         "random_seed": None,

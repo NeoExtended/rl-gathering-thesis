@@ -1,6 +1,8 @@
 import logging
 from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
 
+from utils import util
+
 ALGOS = {
     'a2c': A2C,
     'acer': ACER,
@@ -21,13 +23,15 @@ def create_model(config, env):
     verbose = config.pop('verbose', 0)
     policy_config = config.pop('policy')
 
+    tlog_location = _get_tensorflow_log_location(tlog)
+
     if 'trained_agent' in config: # Continue training
         logging.info("Loading pretrained agent.")
 
         return ALGOS[name].load(
             config['trained_agent'],
             env=env,
-            tensorboard_log=tlog,
+            tensorboard_log=tlog_location,
             verbose=verbose,
             **config)
 
@@ -39,6 +43,17 @@ def create_model(config, env):
             policy=policy_name,
             policy_kwargs=policy_config,
             env=env,
-            tensorboard_log=tlog,
+            tensorboard_log=tlog_location,
             verbose=verbose,
             **config)
+
+
+def _get_tensorflow_log_location(tlog):
+    if tlog:
+        if isinstance(tlog, bool):
+            return util.get_log_directory()
+        else:
+            return tlog.get('path', util.get_log_directory())
+    else:
+        return None
+
