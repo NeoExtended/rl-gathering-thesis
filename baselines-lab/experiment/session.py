@@ -19,7 +19,7 @@ class Session:
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
                                       log_dir=self.log)
-        self.agent = create_model(config['algorithm'], self.env)
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
     def run(self):
         logging.info("Starting training.")

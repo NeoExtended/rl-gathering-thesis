@@ -16,7 +16,7 @@ ALGOS = {
     'td3': TD3
 }
 
-def create_model(config, env):
+def create_model(config, env, seed):
     logging.info("Creating model.")
     name =  config.pop('name')
     tlog = config.pop('tensorboard_log', None)
@@ -30,6 +30,7 @@ def create_model(config, env):
 
         return ALGOS[name].load(
             config['trained_agent'],
+            seed=seed,
             env=env,
             tensorboard_log=tlog_location,
             verbose=verbose,
@@ -40,6 +41,7 @@ def create_model(config, env):
         policy_name = policy_config.pop('name')
 
         return ALGOS[name](
+            seed=seed,
             policy=policy_name,
             policy_kwargs=policy_config,
             env=env,
