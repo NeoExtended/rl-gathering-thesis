@@ -1,3 +1,4 @@
+import copy
 import logging
 from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
 
@@ -18,6 +19,7 @@ ALGOS = {
 
 def create_model(config, env, seed):
     logging.info("Creating model.")
+    config = copy.deepcopy(config)
     name =  config.pop('name')
     tlog = config.pop('tensorboard_log', None)
     verbose = config.pop('verbose', 0)

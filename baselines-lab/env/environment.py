@@ -48,7 +48,7 @@ def get_wrapper_class(wrapper):
         return None
 
 
-def create_environment(config, algo_name, seed, log_dir):
+def create_environment(config, algo_name, seed, log_dir=None):
     logging.info("Creating environment.")
     env_id = config['name']
     n_envs = config.get('n_envs', 1)

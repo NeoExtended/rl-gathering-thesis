@@ -4,6 +4,7 @@ import os
 from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
+from model.saver import ModelSaver
 
 class Session:
     def __init__(self, config):
@@ -23,4 +24,15 @@ class Session:
 
     def run(self):
         logging.info("Starting training.")
-        self.agent.learn(self.config['meta']['n_timesteps'])
+        save_interval = self.config['meta'].get('save_interval', 250000)
+        n_keep = self.config['meta'].get('n_keep', 5)
+        keep_best = self.config['meta'].get('keep_best', True)
+
+        saver = ModelSaver(
+            model_dir=os.path.join(self.log, "savepoints"),
+            save_interval=save_interval,
+            n_keep=n_keep,
+            keep_best=keep_best,
+            config=self.config)
+
+        self.agent.learn(self.config['meta']['n_timesteps'], callback=saver.step)

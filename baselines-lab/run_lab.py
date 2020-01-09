@@ -5,6 +5,9 @@ import logging
 from utils import config_util, util
 from experiment.session import Session
 
+import warnings
+
+
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
     parser.add_argument("lab_mode", type=str, choices=["train", "enjoy", "search"], help="Mode for the lab - use 'train' for training and enjoy@{savepoint_location} for replay")
@@ -15,10 +18,15 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Model saving
     # TODO: Replay/Enjoy Lab Mode
     # TODO: Lr schedules
     # TODO: Hyperparameter optimization / Search Lab Mode
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        import tensorflow as tf
+        from tensorflow import keras
+        from tensorflow.keras.preprocessing.text import Tokenizer
 
     # parse arguments
     if args is None:
