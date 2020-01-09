@@ -62,3 +62,27 @@ class GoalRewardGenerator(RewardGenerator):
 
         return done, reward
 
+class ContinuousRewardGenerator(RewardGenerator):
+    def __init__(self, costmap, goal_range, robot_count):
+        super().__init__(costmap, goal_range, robot_count)
+        self.initialCost = 0
+        self.lastCost = 0
+
+    def reset(self, robot_locations):
+        self.initial_robot_locations = np.copy(robot_locations)
+        self.initialCost = np.sum(self.costmap[robot_locations[:, 0], robot_locations[:, 1]])
+        self.lastCost = self.initialCost
+
+    def step(self, action, locations):
+        done = False
+        cost_to_go = np.sum(self.costmap[locations[:, 0], locations[:, 1]])
+        max_cost_agent = np.max(self.costmap[locations[:, 0], locations[:, 1]])
+
+        reward = (self.lastCost - cost_to_go) / self.initialCost
+        self.lastCost = cost_to_go
+
+        if max_cost_agent <= self.goal_range:
+            done = True
+            reward += 100
+
+        return done, reward

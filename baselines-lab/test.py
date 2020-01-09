@@ -4,6 +4,7 @@ from stable_baselines.common.atari_wrappers import MaxAndSkipEnv, FrameStack
 from stable_baselines.common.policies import CnnPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv, VecFrameStack
 
+from env.gym_maze.rewards import GoalRewardGenerator, ContinuousRewardGenerator
 from env.gym_maze.envs.MazeBase import MazeBase
 import gym
 
@@ -40,8 +41,8 @@ if __name__ == '__main__':
 
     #model = PPO2.load("mazemodel", env=env)
     model = PPO2(CnnPolicy, env, verbose=1, cliprange_vf=-1)
-    model.learn(total_timesteps=100000)
-    model.save("mazemodel")
+    model.learn(total_timesteps=200000)
+    model.save("mazemodel2")
 
     obs = env.reset()
     for i in range(2000):

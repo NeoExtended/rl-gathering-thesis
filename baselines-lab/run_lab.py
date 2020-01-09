@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from utils import config_util
+from experiment.session import Session
 
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
@@ -21,10 +22,9 @@ def main(args=None):
 
     logging.getLogger().setLevel(args.verbose)
 
-
-
-
-
+    config = config_util.read_config(args.config_file)
+    s = Session(config)
+    s.run()
 
 
 if __name__ == "__main__":

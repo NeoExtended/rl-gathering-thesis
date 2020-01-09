@@ -1,0 +1,16 @@
+algorithm:
+  name: "ppo2"
+  verbose: 1
+  policy:
+    name: MlpPolicy
+  cliprange_vf: -1
+
+env:
+  name: "CartPole-v1"
+  n_envs: 8
+  frame_stack:
+    n_stack: 4
+
+meta:
+  seed: 42
+  timesteps: 2048

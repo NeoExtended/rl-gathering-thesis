@@ -3,7 +3,7 @@ import numpy as np
 import collections
 import matplotlib.pyplot as plt
 
-from env.gym_maze.rewards import GoalRewardGenerator
+from env.gym_maze.rewards import GoalRewardGenerator, ContinuousRewardGenerator
 
 ROBOT_MARKER = 150
 BACKGROUND_COLOR = (120, 220, 240)
@@ -14,7 +14,7 @@ class MazeBase(gym.Env):
     Base class for an maze-like environment for particle navigation tasks
     """
 
-    def __init__(self, map_file, goal, goal_range, reward_generator=GoalRewardGenerator, robot_count=256):
+    def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
         """
         :param map_file: *.csv file containing the map data
         :param goal: A point coordinate in form [x, y] or [column, row]
@@ -29,7 +29,7 @@ class MazeBase(gym.Env):
         self.goal_range = goal_range
         self.robot_count = robot_count
 
-        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {N, NE, E, SE, S, SW, W, NW} TODO: Wrong comment
+        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
                            4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
         self.rev_action_map = {v : k for k, v in self.action_map.items()}
@@ -39,6 +39,8 @@ class MazeBase(gym.Env):
 
         self._calculate_cost_map(self.goal)
         self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
+        self.robot_locations = []
+        self.reset()
 
     def reset(self):
         locations = np.transpose(np.nonzero(self.freespace))
@@ -58,7 +60,6 @@ class MazeBase(gym.Env):
 
         done, reward = self.reward_generator.step(action, self.robot_locations)
         return (self._generate_observation(), reward, done, info)
-
 
     def render(self, mode='human'):
         rgb_image = np.full((*self.maze.shape, 3), BACKGROUND_COLOR, dtype=int)
@@ -104,6 +105,3 @@ class MazeBase(gym.Env):
                     self.cost[y2, x2] = self.cost[y, x] + 1
 
         return self.cost
-
-
-
