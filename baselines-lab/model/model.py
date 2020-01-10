@@ -29,7 +29,7 @@ def create_model(config, env, seed):
     tlog_location = _get_tensorflow_log_location(tlog)
 
     if 'trained_agent' in config: # Continue training
-        logging.info("Loading pretrained agent.")
+        logging.info("Loading pretrained model from {}.".format(config['trained_agent']))
 
         return ALGOS[name].load(
             config['trained_agent'],

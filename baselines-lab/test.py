@@ -28,7 +28,7 @@ if __name__ == '__main__':
             env = gym.make('Maze0318-v0')  # Creates env with FrameSkip(4) and NoopRandom
             env = MaxAndSkipEnv(env, skip=4)
             env.seed(seed + rank)
-            env = FrameStack(env, 4)
+            #env = FrameStack(env, 4)
             return env
             # return wrap_deepmind(env)
 
@@ -39,10 +39,10 @@ if __name__ == '__main__':
     # Frame-stacking with 4 frames
     env = VecFrameStack(env, n_stack=4)
 
-    #model = PPO2.load("mazemodel", env=env)
-    model = PPO2(CnnPolicy, env, verbose=1, cliprange_vf=-1)
-    model.learn(total_timesteps=200000)
-    model.save("mazemodel2")
+    model = PPO2.load("model_7950848_2020_01_10_083122", env=env)
+    #model = PPO2(CnnPolicy, env, verbose=1, cliprange_vf=-1)
+    #model.learn(total_timesteps=200000)
+    #model.save("mazemodel2")
 
     obs = env.reset()
     for i in range(2000):

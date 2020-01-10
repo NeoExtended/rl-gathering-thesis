@@ -44,7 +44,7 @@ class ModelSaver:
             self._save_best_model(model)
 
     def _save_model(self, model):
-        logging.debug("Saving last model at timestep {}".format(str(self.update_counter)))
+        logging.info("Saving last model at timestep {}".format(str(self.update_counter)))
         timestamp = util.get_timestamp()
         path = os.path.join(self.model_dir, "model_{}_{}.zip".format(self.update_counter, timestamp))
         model.save(path)
