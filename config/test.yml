@@ -5,6 +5,9 @@ algorithm:
     name: MlpPolicy
   cliprange_vf: -1
   tensorboard_log: true
+  learning_rate:
+    name: LinearSchedule
+    initial_value: 2.5e-4
 
 env:
   name: "CartPole-v1"

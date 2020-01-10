@@ -27,6 +27,7 @@ def create_model(config, env, seed):
     policy_config = config.pop('policy')
 
     tlog_location = _get_tensorflow_log_location(tlog)
+    learning_rate = _get_learning_rate(config)
 
     if 'trained_agent' in config: # Continue training
         logging.info("Loading pretrained model from {}.".format(config['trained_agent']))
@@ -37,6 +38,7 @@ def create_model(config, env, seed):
             env=env,
             tensorboard_log=tlog_location,
             verbose=verbose,
+            learning_rate=learning_rate,
             **config)
 
     else:
@@ -50,6 +52,7 @@ def create_model(config, env, seed):
             env=env,
             tensorboard_log=tlog_location,
             verbose=verbose,
+            learning_rate=learning_rate,
             **config)
 
 
@@ -62,3 +65,34 @@ def _get_tensorflow_log_location(tlog):
     else:
         return None
 
+def _get_learning_rate(config):
+    lr = config.pop('learning_rate', 2.5e-4)
+
+    if isinstance(lr, dict):
+        name = lr.pop('name')
+        if name == 'LinearSchedule':
+            return linear_schedule(lr['initial_value'])
+        else:
+            raise NotImplementedError("Currently only LinearSchedules are supported")
+    else:
+        return lr
+
+
+def linear_schedule(initial_value):
+    """
+    Linear learning rate schedule.
+    :param initial_value: (float or str)
+    :return: (function)
+    """
+    if isinstance(initial_value, str):
+        initial_value = float(initial_value)
+
+    def func(progress):
+        """
+        Progress will decrease from 1 (beginning) to 0
+        :param progress: (float)
+        :return: (float)
+        """
+        return progress * initial_value
+
+    return func

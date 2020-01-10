@@ -1,21 +1,22 @@
 algorithm:
-  trained_agent: "./model_7950848_2020_01_10_083122.zip"
   name: "ppo2"
   verbose: 10
   policy:
     name: CnnPolicy
-  cliprange_vf: -1
   tensorboard_log: true
+  learning_rate:
+    name: LinearSchedule
+    initial_value: 3.0e-4
 
 env:
   name: "Maze0318-v0"
   wrappers: ["stable_baselines.common.atari_wrappers.MaxAndSkipEnv"]
-  n_envs: 4
+  n_envs: 8
   frame_stack:
     n_stack: 4
 
 meta:
   seed: 42
-  n_timesteps: 9000000
+  n_timesteps: 15000000
   log_dir: "./logs/Labtest"
-  save_interval: 150000
+  save_interval: 200000

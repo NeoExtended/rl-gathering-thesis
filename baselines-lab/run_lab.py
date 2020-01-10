@@ -25,7 +25,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Replay/Enjoy Lab Mode
     # TODO: Lr schedules
     # TODO: Hyperparameter optimization / Search Lab Mode
 
