@@ -6,12 +6,14 @@ algorithm:
   tensorboard_log: true
   learning_rate:
     name: LinearSchedule
-    initial_value: 3.0e-4
+    initial_value: 1.0e-3
+  nminibatches: 16
+  n_steps: 512
 
 env:
   name: "Maze0318-v0"
-  wrappers: ["stable_baselines.common.atari_wrappers.MaxAndSkipEnv"]
-  n_envs: 8
+  wrappers: ["stable_baselines.common.atari_wrappers.WarpFrame"]
+  n_envs: 64
   frame_stack:
     n_stack: 4
 

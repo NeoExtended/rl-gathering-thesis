@@ -26,6 +26,7 @@ def parse_args(args):
 
 def main(args=None):
     # TODO: Lr schedules
+    # TODO: Normalization parameter saving/loading
     # TODO: Hyperparameter optimization / Search Lab Mode
 
     with warnings.catch_warnings():

@@ -78,11 +78,11 @@ class ContinuousRewardGenerator(RewardGenerator):
         cost_to_go = np.sum(self.costmap[locations[:, 0], locations[:, 1]])
         max_cost_agent = np.max(self.costmap[locations[:, 0], locations[:, 1]])
 
-        reward = (self.lastCost - cost_to_go) / self.initialCost
+        reward = ((self.lastCost - cost_to_go) / self.initialCost) - 0.001
         self.lastCost = cost_to_go
 
         if max_cost_agent <= self.goal_range:
             done = True
-            reward += 100
+            reward += 10
 
         return done, reward
