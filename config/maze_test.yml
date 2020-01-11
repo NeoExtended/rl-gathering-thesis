@@ -6,7 +6,7 @@ algorithm:
   tensorboard_log: true
   learning_rate:
     name: LinearSchedule
-    initial_value: 1.0e-3
+    initial_value: 5.0e-4
   nminibatches: 16
   n_steps: 512
 
@@ -19,6 +19,6 @@ env:
 
 meta:
   seed: 42
-  n_timesteps: 20000000
+  n_timesteps: 100000000
   log_dir: "./logs/Labtest"
   save_interval: 200000
