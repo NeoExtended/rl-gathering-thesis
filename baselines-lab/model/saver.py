@@ -25,7 +25,7 @@ class ModelSaver:
         self.last_models = []
         self.all_models = set()
         self.best = None
-        self.best_score = 0
+        self.best_score = float('-inf')
         self.last_save = 0
         self.update_counter = 0
 
