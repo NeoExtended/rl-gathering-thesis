@@ -13,7 +13,7 @@ algorithm:
 env:
   name: "Maze0318-v0"
   wrappers: ["env.wrappers.WarpGrayscaleFrame", "stable_baselines.common.atari_wrappers.MaxAndSkipEnv", "stable_baselines.common.atari_wrappers.ScaledFloatFrame"]
-  n_envs: 32
+  n_envs: 16
   frame_stack:
     n_stack: 4
 
