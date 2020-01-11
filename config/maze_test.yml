@@ -12,13 +12,13 @@ algorithm:
 
 env:
   name: "Maze0318-v0"
-  wrappers: ["stable_baselines.common.atari_wrappers.WarpFrame"]
-  n_envs: 64
+  wrappers: ["env.wrappers.WarpGrayscaleFrame", "stable_baselines.common.atari_wrappers.MaxAndSkipEnv", "stable_baselines.common.atari_wrappers.ScaledFloatFrame"]
+  n_envs: 32
   frame_stack:
     n_stack: 4
 
 meta:
   seed: 42
-  n_timesteps: 15000000
+  n_timesteps: 20000000
   log_dir: "./logs/Labtest"
   save_interval: 200000
