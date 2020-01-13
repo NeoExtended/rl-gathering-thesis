@@ -28,7 +28,11 @@ class ModelSaver:
         self.best_score = float('-inf')
         self.last_save = 0
         self.update_counter = 0
-        self.env = env
+
+        if 'normalize' in config['env']:
+            self.env = env
+        else:
+            self.env = None
 
     def step(self, locals_, globals_):
         model = locals_['self']
