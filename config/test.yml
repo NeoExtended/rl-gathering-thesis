@@ -6,8 +6,10 @@ algorithm:
   cliprange_vf: -1
   tensorboard_log: true
   learning_rate:
-    name: LinearSchedule
+    type: linear
     initial_value: 2.5e-4
+    final_value: 1.0e-5
+    final_point: 0.8
 
 env:
   name: "CartPole-v1"
@@ -18,5 +20,5 @@ env:
 meta:
   seed: 42
   n_timesteps: 8000
-  log_dir: "./logs/Labtest"
+  log_dir: "./logs/Labtest_CartPole"
   save_interval: 1000

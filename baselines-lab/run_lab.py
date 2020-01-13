@@ -25,10 +25,11 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Lr schedules
     # TODO: Normalization parameter saving/loading
     # TODO: EnvWrapper kwargs configuration
     # TODO: Hyperparameter optimization / Search Lab Mode
+    # TODO: HER/GAIL - experience replay / expert training
+    # TODO: Additional logging, e.g. mean episode length
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
