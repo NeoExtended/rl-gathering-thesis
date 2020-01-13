@@ -16,6 +16,7 @@ env:
   n_envs: 8
   frame_stack:
     n_stack: 4
+  normalize: true
 
 meta:
   seed: 42

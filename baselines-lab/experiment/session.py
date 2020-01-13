@@ -51,7 +51,8 @@ class Session:
             save_interval=save_interval,
             n_keep=n_keep,
             keep_best=keep_best,
-            config=self.config)
+            config=self.config,
+            env=self.env)
 
         self.agent.learn(self.config['meta']['n_timesteps'], callback=saver.step)
 

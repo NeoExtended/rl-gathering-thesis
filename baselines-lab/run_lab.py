@@ -25,7 +25,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Normalization parameter saving/loading
     # TODO: EnvWrapper kwargs configuration
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
@@ -41,13 +40,9 @@ def main(args=None):
 
     logging.getLogger().setLevel(args.verbose)
 
-    config = config_util.read_config(args.config_file)
+    config = config_util.get_config(args.config_file, args.lab_mode)
+
     lab_mode = args.lab_mode.split("@")[0]
-
-    if lab_mode == 'enjoy':
-        config['algorithm']['trained_agent'] = util.parse_enjoy_mode(config['meta']['log_dir'], args.lab_mode)
-        config['meta'].pop('log_dir') # No logs in enjoy mode!
-
     s = Session(config, lab_mode)
     s.run()
 

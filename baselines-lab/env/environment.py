@@ -52,7 +52,7 @@ def create_environment(config, algo_name, seed, log_dir=None):
     logging.info("Creating environment.")
     env_id = config['name']
     n_envs = config.get('n_envs', 1)
-    normalize = config.get('normalize', None)
+    normalize = config.pop('normalize', None)
     frame_stack = config.get('frame_stack', None)
     multiprocessing = config.get('multiprocessing', True)
 
@@ -77,7 +77,13 @@ def _create_vectorized_env(env_id, n_envs, multiprocessing, seed, log_dir, wrapp
             env = DummyVecEnv([make_env(env_id, i, seed, log_dir, wrappers) for i in range(n_envs)])
 
     if normalize:
-        env = VecNormalize(env, **normalize)
+        if isinstance(normalize, bool):
+            env = VecNormalize(env)
+        elif isinstance(normalize, dict):
+            if 'trained_agent' in normalize:
+                env = VecNormalize.load(normalize['trained_agent'], env)
+            else:
+                env = VecNormalize(env, **normalize)
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
 
