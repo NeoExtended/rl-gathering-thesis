@@ -50,6 +50,10 @@ def get_lastest_checkpoint(dir, prefix="", suffix=""):
             datestring = datestring[:-(len(suffix)+1)]
 
         counter, datestring = datestring.split("_", maxsplit=1)
+        # If no suffix is given the datestring may contain invalid data.
+        if len(datestring) > 17:
+            continue
+
         date = datetime.strptime(datestring, TIMESTAMP_FORMAT)
         if date > latest:
             latest = date
