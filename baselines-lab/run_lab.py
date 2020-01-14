@@ -26,9 +26,10 @@ def parse_args(args):
 
 def main(args=None):
     # TODO: EnvWrapper kwargs configuration
+    # TODO: Env kwargs configuration
+    # TODO: Additional logging, e.g. mean episode length
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
-    # TODO: Additional logging, e.g. mean episode length
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)

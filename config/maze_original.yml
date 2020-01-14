@@ -1,0 +1,28 @@
+algorithm:
+  name: "ppo2"
+  verbose: 10
+  policy:
+    name: CnnPolicy
+  tensorboard_log: true
+  learning_rate: 1.0e-4
+  ent_coef: 0.001
+  cliprange: 0.1
+  cliprange_vf: -1
+  nminibatches: 16
+  n_steps: 2048
+
+env:
+  name: "Maze0318Discrete-v0"
+  wrappers: ["env.wrappers.WarpGrayscaleFrame", "stable_baselines.common.atari_wrappers.MaxAndSkipEnv"]
+  n_envs: 128
+  frame_stack:
+    n_stack: 4
+  normalize:
+    norm_reward: false
+    norm_obs: True
+
+meta:
+  seed: 82
+  n_timesteps: 100000000
+  log_dir: "./logs/OriginalMaze"
+  save_interval: 200000
