@@ -83,6 +83,5 @@ class ContinuousRewardGenerator(RewardGenerator):
 
         if max_cost_agent <= self.goal_range:
             done = True
-            reward += 10
 
         return done, reward

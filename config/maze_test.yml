@@ -5,20 +5,23 @@ algorithm:
     name: CnnPolicy
   tensorboard_log: true
   learning_rate:
-    name: LinearSchedule
-    initial_value: 5.0e-4
+    type: "linear"
+    initial_value: 2.5e-4
   nminibatches: 16
   n_steps: 512
 
 env:
-  name: "Maze0318-v0"
-  wrappers: ["env.wrappers.WarpGrayscaleFrame", "stable_baselines.common.atari_wrappers.MaxAndSkipEnv", "stable_baselines.common.atari_wrappers.ScaledFloatFrame"]
+  name: "Maze0318Continuous-v0"
+  wrappers: ["env.wrappers.WarpGrayscaleFrame", "stable_baselines.common.atari_wrappers.MaxAndSkipEnv"]
   n_envs: 16
   frame_stack:
     n_stack: 4
+  normalize:
+    norm_reward: true
+    norm_obs: true
 
 meta:
   seed: 42
-  n_timesteps: 100000000
+  n_timesteps: 15000000
   log_dir: "./logs/Labtest"
   save_interval: 200000
