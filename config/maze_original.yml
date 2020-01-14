@@ -19,7 +19,7 @@ env:
     n_stack: 4
   normalize:
     norm_reward: false
-    norm_obs: True
+    norm_obs: true
 
 meta:
   seed: 82

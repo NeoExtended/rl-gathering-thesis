@@ -52,7 +52,7 @@ def create_environment(config, algo_name, seed, log_dir=None):
     logging.info("Creating environment.")
     env_id = config['name']
     n_envs = config.get('n_envs', 1)
-    normalize = config.pop('normalize', None)
+    normalize = config.get('normalize', None)
     frame_stack = config.get('frame_stack', None)
     multiprocessing = config.get('multiprocessing', True)
 
