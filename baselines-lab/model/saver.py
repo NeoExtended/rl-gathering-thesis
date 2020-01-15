@@ -77,6 +77,7 @@ class ModelSaver:
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
         reward, steps = evaluate_policy(model, self.eval_env, n_eval_episodes=10)
+        logging.debug("Evaluation result: Avg reward: {}, Avg Steps: {}".format(reward, steps))
 
         if reward > self.best_score:
             logging.info("Found new best model with a mean reward of {}".format(str(reward)))
