@@ -11,20 +11,18 @@ ROBOT_COLOR = (150, 150, 180)
 
 class MazeBase(gym.Env):
     """
-    Base class for an maze-like environment for particle navigation tasks
+    Base class for a maze-like environment for particle navigation tasks.
+    :param map_file: (str) *.csv file containing the map data.
+    :param goal: (list) A point coordinate in form [x, y] ([column, row]).
+    :param goal_range: (list) Circular range around the goal position that should be counted as goal reached.
+    :param reward_generator: (RewardGenerator) A class of type RewardGenerator generating reward
+        based on the current state.
+    :param robot_count: (int) Number of robots/particles to spawn in the maze.
     """
 
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
-        """
-        :param map_file: *.csv file containing the map data
-        :param goal: A point coordinate in form [x, y] or [column, row]
-        :param goal_range: Circular range around the goal position that should be counted as goal reached
-        :param reward_generator: A class of type RewardGenerator
-        :param robot_count: Number of robots/particles to spawn in the maze
-        """
-
-        self.freespace = np.loadtxt(map_file).astype(int)
-        self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace
+        self.freespace = np.loadtxt(map_file).astype(int) # 1: Passable terrain, 0: Wall
+        self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
         self.goal = goal
         self.goal_range = goal_range
         self.robot_count = robot_count

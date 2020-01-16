@@ -3,6 +3,13 @@ from abc import ABC
 import numpy as np
 
 class RewardGenerator(ABC):
+    """
+    Base Class for reward generators for the maze environments
+    :param costmap (np.ndarray) two dimensional array defining a cost-to-go value (distance) for each pixel to the
+        the goal position.
+    :param goal_range: (int) Range around the goal position which should be treated as 'goal reached'.
+    :param robot_count: (int) Total number of robots.
+    """
     def __init__(self, costmap, goal_range, robot_count):
         self.costmap = costmap
         self.goal_range = goal_range
@@ -16,6 +23,11 @@ class RewardGenerator(ABC):
 
 
 class GoalRewardGenerator(RewardGenerator):
+    """
+    Gives rewards based on achievement of certain goals. Rewards are only granted a single time.
+    Current rewards include measurements about the average and maximum distance to the goal position.
+    Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
+    """
     def __init__(self, costmap, goal_range, robot_count):
         super().__init__(costmap, goal_range, robot_count)
         self.reward_grad = np.zeros(40).astype(np.uint8)
@@ -63,6 +75,10 @@ class GoalRewardGenerator(RewardGenerator):
         return done, reward
 
 class ContinuousRewardGenerator(RewardGenerator):
+    """
+    Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
+    initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
+    """
     def __init__(self, costmap, goal_range, robot_count):
         super().__init__(costmap, goal_range, robot_count)
         self.initialCost = 0

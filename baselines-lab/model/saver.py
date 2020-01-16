@@ -8,6 +8,18 @@ from env.environment import create_environment
 
 
 class ModelSaver:
+    """
+    Class to manage model savepoints.
+    :param model_dir: (str) Target directory for all the savepoints
+    :param save_interval: (int) Interval at which models will be saved. Note that the real interval may depend on the
+        frequency of calls to the step() function.
+    :param n_keep: Number of models to keep. when saving the newest model n+1 the oldest will be deleted automatically.
+    :param keep_best: Whether or not to also save the best model. The best model is determined by running a test each
+        time a new model is saved. This may take some time.
+    :param config: Current lab configuration. Needed to create an evaluation environment if keep_best=True
+    :param env: If the lab environment uses a running average normalization like VecNormalize, the running averages of
+        the given env will be saved along with the model.
+    """
     def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, config=None, env=None):
         os.makedirs(model_dir, exist_ok=True)
         self.model_dir = model_dir
@@ -15,12 +27,13 @@ class ModelSaver:
         self.n_keep = n_keep
         self.keep_best = keep_best
 
-        if keep_best:
+        if keep_best or env:
             assert config, "You must provide an environment configuration to evaluate the model!"
 
-        env_desc = copy.deepcopy(config['env'])
-        env_desc['n_envs'] = 1
-        self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
+        if config:
+            env_desc = copy.deepcopy(config['env'])
+            env_desc['n_envs'] = 1
+            self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
 
         self.last_models = []
         self.all_models = set()
@@ -29,12 +42,17 @@ class ModelSaver:
         self.last_save = 0
         self.update_counter = 0
 
-        if 'normalize' in config['env']:
+        if config and 'normalize' in config['env']: # TODO: Better check if VecNormalize is in self.env
             self.env = env
         else:
             self.env = None
 
     def step(self, locals_, globals_):
+        """
+        Step function that can be used as a callback in stable-baselines models. Saves models if necessary.
+        :param locals_: (dict) The callers local variables at call time.
+        :param globals_: (dict) The callers global variables at call time
+        """
         model = locals_['self']
         self.update_counter = model.num_timesteps
 
@@ -43,6 +61,10 @@ class ModelSaver:
             self.save(model)
 
     def save(self, model):
+        """
+        Explicitly saves the given model.
+        :param model: stable-baselines model.
+        """
         if self.n_keep > 0:
             self._save_model(model)
         if self.keep_best:

@@ -8,6 +8,13 @@ from model.model import create_model
 from model.saver import ModelSaver
 
 class Session:
+    """
+    The main experiment control unit. Creates the environment and model from the lab configuration, runs the experiment
+        and controls model saving.
+    :param config: (dict) The lab configuration.
+    :param lab_mode: (str) The lab mode as given by the user. Starts a training session in train mode or a replay
+        session for enjoy mode.
+    """
     def __init__(self, config, lab_mode):
         self.config = config
         util.set_random_seed(self.config)
@@ -25,6 +32,9 @@ class Session:
         self.lab_mode = lab_mode
 
     def run(self):
+        """
+        Starts the experiment.
+        """
         if self.lab_mode == 'train':
             self._train()
         elif self.lab_mode == 'enjoy':

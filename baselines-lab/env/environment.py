@@ -8,14 +8,16 @@ from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
+
 def make_env(env_id, rank=0, seed=0, log_dir=None, wrappers=None):
     """
     Helper function to multiprocess training and log the progress.
-    :param env_id: (str)
-    :param rank: (int)
-    :param seed: (int)
-    :param log_dir: (str)
+    :param env_id: (str) Name of the environment.
+    :param rank: (int) Pseudo-RNG seed shift for the environment.
+    :param seed: (int) Pseudo-RNG seed for the environment.
+    :param log_dir: (str) Log directory for the environment.
     :param wrappers: (list) a list with subclasses of gym.Wrapper to wrap the original env with
+    :return (function) a function to create environments, e.g. for use in SubprocVecEnv or DummyVecEnv
     """
     def _init():
         set_global_seeds(seed + rank)
@@ -49,6 +51,15 @@ def get_wrapper_class(wrapper):
 
 
 def create_environment(config, algo_name, seed, log_dir=None):
+    """
+    Creates a new environment according to the parameters from the given lab config dictionary.
+    :param config: (dict) Lab config from config['env'].
+    :param algo_name: (str) Name of the algorithm which should be used with this environment.
+    :param seed: (int) Pseudo-RNG seed for the environment. Vectorized environments will use linear increments
+        from this seed.
+    :param log_dir: (str) Path to the log directory.
+    :return: (gym.Env) New gym environment created according to the given configuration.
+    """
     logging.info("Creating environment.")
     env_id = config['name']
     n_envs = config.get('n_envs', 1)

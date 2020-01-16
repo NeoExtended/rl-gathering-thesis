@@ -1,3 +1,7 @@
+"""
+General helper functions.
+"""
+
 from datetime import datetime
 import time
 import os
@@ -8,6 +12,10 @@ log_dir = None
 TIMESTAMP_FORMAT="%Y_%m_%d_%H%M%S"
 
 def set_random_seed(config):
+    """
+    Sets the random seed to python, numpy and tensorflow. The selected seed will be saved in the config['meta'] section.
+    :param config: The lab config file
+    """
     random_seed = config['meta'].get('seed', time.time())
     config['meta']['seed'] = random_seed
 
@@ -15,10 +23,20 @@ def set_random_seed(config):
 
 
 def get_timestamp(pattern=TIMESTAMP_FORMAT):
+    """
+    Generates a string timestamp to use for logging.
+    :param pattern: (str) Pattern for the timestamp following the python datetime format.
+    :return: (str) The current timestamp formated according to pattern
+    """
     time = datetime.now()
     return time.strftime(pattern)
 
 def create_log_directory(root):
+    """
+    Creates a global log directory at a given place. The directory will be named with a current timestamp.
+    :param root: (str) Parent directory for the log directory. Will be created if it does not exist.
+    :return: (str) Location of the created log directory.
+    """
     if not root:
         return None
 
@@ -31,10 +49,14 @@ def create_log_directory(root):
     return log_dir
 
 def get_log_directory():
+    """
+    Returns the current log directory. May be None if create_log_directory() has not been called before.
+    """
     global log_dir
     return log_dir
 
 def get_lastest_checkpoint(dir, prefix="", suffix=""):
+    # TODO: Move to model.Saver
     files = os.listdir(dir)
 
     latest = datetime.fromisoformat('1970-01-01')
@@ -84,6 +106,13 @@ def get_normalization_params(log_dir, type="best"):
         return get_savepoint_file(log_dir, prefix="normalization", extension="pkl")
 
 def parse_enjoy_mode(log_dir, lab_mode):
+    """
+    Parses and checks the parameters for the lab enjoy mode.
+    :param log_dir: (str) The log dir as defined in the lab config.
+    :param lab_mode: (str) Unparsed lab mode sting.
+    :return: (str, str) Tuple containing the directory containing the saved models and the type of the checkpoint which
+        should be loaded (best or last).
+    """
     mode, location = lab_mode.split("@")
     assert mode == "enjoy", "Lab must be in enjoy mode to parse enjoy mode parameters!"
 

@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning) # Ignore future warnings from numpy/tensorflow version problems
+
 import sys
 import argparse
 import logging
@@ -28,11 +31,12 @@ def main(args=None):
     # TODO: EnvWrapper kwargs configuration
     # TODO: Env kwargs configuration
     # TODO: Additional logging, e.g. mean episode length
+    # TODO: Normalization with precomputed values on random actions
+    # TODO: Fix evaluation - Saver Normalization must be the same as on main env
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
+
 
     # parse arguments
     if args is None:

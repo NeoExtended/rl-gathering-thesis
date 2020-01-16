@@ -21,6 +21,13 @@ ALGOS = {
 }
 
 def create_model(config, env, seed):
+    """
+    Creates a stable-baselines model according to the given lab configuration.
+    :param config: (dict) The current lab model configuration (from config['algorithm']).
+    :param env: (gym.Env) The environment to learn from.
+    :param seed: The current seed for the model prngs.
+    :return: (BaseRLModel) A model which can be used to learn in the given environment.
+    """
     logging.info("Creating model.")
     config = copy.deepcopy(config)
     name =  config.pop('name')
@@ -62,6 +69,10 @@ def create_model(config, env, seed):
 
 
 def _get_tensorflow_log_location(tlog):
+    """
+    Returns the tensorflow log directory.
+    :param tlog: The tensorboard-log parameter from config['algorithm']['tensorboard_log']
+    """
     if tlog:
         if isinstance(tlog, bool):
             return util.get_log_directory()

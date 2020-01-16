@@ -2,6 +2,7 @@ from experiment.session import Session
 
 class Trial:
     """
+    TODO?
     Runs multiple sessions with the same configuration. Gathers statistics over sessions.
     """
     def __init__(self, config):
