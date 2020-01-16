@@ -2,6 +2,7 @@ import logging
 import os
 import numpy as np
 
+from stable_baselines.common.vec_env import VecVideoRecorder
 from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
@@ -41,6 +42,9 @@ class Session:
             self._enjoy()
 
     def _enjoy(self):
+        # self.env = VecVideoRecorder(self.env, "./logs/",
+        #                        record_video_trigger=lambda x: x == 0, video_length=2000,
+        #                        name_prefix="random-agent-{}".format("maze-test"))
         obs = self.env.reset()
         episode_counter = 0
         while episode_counter < self.config['env']['n_envs']*4:  # Render at least 4 complete episodes

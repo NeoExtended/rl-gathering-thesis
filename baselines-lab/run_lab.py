@@ -30,6 +30,7 @@ def main(args=None):
     # TODO: Additional logging, e.g. mean episode length
     # TODO: Normalization with precomputed values on random actions
     # TODO: Fix evaluation - Saver Normalization must be the same as on main env
+    # TODO: Video/Image Export
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
 

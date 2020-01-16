@@ -20,6 +20,8 @@ class MazeBase(gym.Env):
     :param robot_count: (int) Number of robots/particles to spawn in the maze.
     """
 
+    metadata = {'render.modes': ['human', 'rgb_array']}
+
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
         self.freespace = np.loadtxt(map_file).astype(int) # 1: Passable terrain, 0: Wall
         self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
