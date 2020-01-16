@@ -10,8 +10,6 @@ from utils import config_util, util
 from experiment.session import Session
 from env.gym_maze.envs.MazeBase import MazeBase
 
-import warnings
-
 def check_lab_mode(arg_value, pat=re.compile(r"^train$|^enjoy@.+$|^search$")):
     if not pat.match(arg_value):
         raise argparse.ArgumentTypeError
@@ -26,7 +24,6 @@ def parse_args(args):
     return parser.parse_args(args=args)
 
 
-
 def main(args=None):
     # TODO: EnvWrapper kwargs configuration
     # TODO: Env kwargs configuration
@@ -35,8 +32,6 @@ def main(args=None):
     # TODO: Fix evaluation - Saver Normalization must be the same as on main env
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
-
-
 
     # parse arguments
     if args is None:
