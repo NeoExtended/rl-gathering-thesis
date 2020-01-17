@@ -16,7 +16,8 @@ def make_env(env_id, rank=0, seed=0, log_dir=None, wrappers=None):
     :param rank: (int) Pseudo-RNG seed shift for the environment.
     :param seed: (int) Pseudo-RNG seed for the environment.
     :param log_dir: (str) Log directory for the environment.
-    :param wrappers: (list) a list with subclasses of gym.Wrapper to wrap the original env with
+    :param wrappers: (list) Subclasses of gym.Wrapper, provided as a list of tuples (class, class_kwargs).
+        Will be used to wrap the env with.
     :return (function) a function to create environments, e.g. for use in SubprocVecEnv or DummyVecEnv
     """
     def _init():
@@ -25,7 +26,7 @@ def make_env(env_id, rank=0, seed=0, log_dir=None, wrappers=None):
 
         if wrappers:
             for wrapper in wrappers:
-                env = wrapper(env)
+                env = wrapper[0](env=env, **wrapper[1])
 
         env.seed(seed + rank)
         if log_dir:
@@ -40,8 +41,9 @@ def get_wrapper_class(wrapper):
     Get a Gym environment wrapper class from a string describing the module and class name
     e.g. env_wrapper: gym_minigrid.wrappers.FlatObsWrapper
 
-    :param wrapper: (string)
-    :return: a subclass of gym.Wrapper (class object) you can use to create another Gym env giving an original env.
+    :param wrapper: (str)
+    :return: (gym.Wrapper) A subclass of gym.Wrapper (class object) you can use to create another Gym env
+        giving an original env.
     """
     if wrapper:
         wrapper_module = importlib.import_module(wrapper.rsplit(".", 1)[0])
@@ -67,10 +69,17 @@ def create_environment(config, algo_name, seed, log_dir=None):
     frame_stack = config.get('frame_stack', None)
     multiprocessing = config.get('multiprocessing', True)
 
+    # Get tuples with (wrapper_class, wrapper_kwargs)
     wrappers = []
     if 'wrappers' in config:
         for wrapper in config['wrappers']:
-            wrappers.append(get_wrapper_class(wrapper))
+            if isinstance(wrapper, dict):
+                wrapper_name = list(wrapper.keys())[0]
+                wrappers.append((get_wrapper_class(wrapper_name), wrapper[wrapper_name]))
+            elif isinstance(wrapper, str):
+                wrappers.append((get_wrapper_class(wrapper), {}))
+            else:
+                raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
     if algo_name in ['dqn', 'ddpg']:
         return _create_standard_env(env_id, seed, log_dir, wrappers, normalize, frame_stack)
