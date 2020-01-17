@@ -109,7 +109,7 @@ class ModelSaver:
         logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/10))
 
         if reward > self.best_score:
-            logging.info("Found new best model with a mean reward of {:4f}".format(str(reward)))
+            logging.info("Found new best model with a mean reward of {:4f}".format(reward))
             self.best_score = reward
             if self.best:
                 self._remove_savepoint(self.best, postfix="best")
