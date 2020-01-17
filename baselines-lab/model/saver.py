@@ -46,8 +46,8 @@ class ModelSaver:
             if normalization:
                 self.env = env
                 # Remove unnecessary keys
-                normalization.pop('precompute')
-                normalization.pop('samples')
+                normalization.pop('precompute', None)
+                normalization.pop('samples', None)
             self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
 
     def step(self, locals_, globals_):
