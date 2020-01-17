@@ -30,22 +30,25 @@ class ModelSaver:
         if keep_best or env:
             assert config, "You must provide an environment configuration to evaluate the model!"
 
-        if config:
-            env_desc = copy.deepcopy(config['env'])
-            env_desc['n_envs'] = 1
-            self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
-
         self.last_models = []
         self.all_models = set()
         self.best = None
         self.best_score = float('-inf')
         self.last_save = 0
         self.update_counter = 0
+        self.env = None
 
-        if config and 'normalize' in config['env']: # TODO: Better check if VecNormalize is in self.env
-            self.env = env
-        else:
-            self.env = None
+        if config:
+            env_desc = copy.deepcopy(config['env'])
+            env_desc['n_envs'] = 1
+            normalization = env_desc.get('normalize', False)
+
+            if normalization:
+                self.env = env
+                # Remove unnecessary keys
+                normalization.pop('precompute')
+                normalization.pop('samples')
+            self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
 
     def step(self, locals_, globals_):
         """
@@ -98,11 +101,15 @@ class ModelSaver:
 
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
+        if self.env: # Update normalization running means if necessary
+            self.eval_env.obs_rms = self.env.obs_rms
+            self.eval_env.ret_rms = self.env.ret_rms
+
         reward, steps = evaluate_policy(model, self.eval_env, n_eval_episodes=10)
-        logging.debug("Evaluation result: Avg reward: {}, Avg Steps: {}".format(reward, steps))
+        logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/10))
 
         if reward > self.best_score:
-            logging.info("Found new best model with a mean reward of {}".format(str(reward)))
+            logging.info("Found new best model with a mean reward of {:4f}".format(str(reward)))
             self.best_score = reward
             if self.best:
                 self._remove_savepoint(self.best, postfix="best")

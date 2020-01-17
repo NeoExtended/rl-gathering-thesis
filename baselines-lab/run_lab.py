@@ -25,10 +25,7 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Env kwargs configuration
     # TODO: Additional logging, e.g. mean episode length
-    # TODO: Normalization with precomputed values on random actions
-    # TODO: Fix evaluation - Saver Normalization must be the same as on main env
     # TODO: Video/Image Export
     # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode

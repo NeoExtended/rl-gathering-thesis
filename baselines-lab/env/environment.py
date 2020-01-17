@@ -104,6 +104,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
         elif isinstance(normalize, dict):
             if 'trained_agent' in normalize:
                 env = VecNormalize.load(normalize['trained_agent'], env)
+            elif normalize.pop('precompute', False):
+                samples = normalize.pop('samples', 10000)
+                env = _precompute_normalization(env, n_envs, samples, normalize)
             else:
                 env = VecNormalize(env, **normalize)
     if frame_stack:
@@ -122,4 +125,23 @@ def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize,
         env = FrameStack(env, **frame_stack)
 
     return env
+
+
+def _precompute_normalization(env, num_envs, samples, config):
+    env = VecNormalize(env, training=True, **config)
+
+    logging.info("Precomputing normalization. This may take a while.")
+    env.reset()
+    for i in range(samples):
+        actions = [env.action_space.sample() for _ in range(num_envs)]
+        obs, rewards, dones, info = env.step(actions)
+
+        if i % 1000 == 0:
+            logging.info("Progress: {}/{}".format(i, samples))
+
+    logging.info("Successfully precomputed normalization parameters.")
+    env.reset()
+    env.training = False
+    return env
+
 

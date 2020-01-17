@@ -22,7 +22,7 @@ env:
   frame_stack:
     n_stack: 4
   normalize:
-    norm_reward: true
+    norm_reward: false
     norm_obs: true
   robot_count: 256
 
