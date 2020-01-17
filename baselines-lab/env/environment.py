@@ -1,6 +1,7 @@
 import importlib
 import os
 import logging
+import copy
 
 import gym
 from stable_baselines.bench import Monitor
@@ -9,7 +10,7 @@ from stable_baselines.common.atari_wrappers import FrameStack
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
 
-def make_env(env_id, rank=0, seed=0, log_dir=None, wrappers=None):
+def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
     Helper function to multiprocess training and log the progress.
     :param env_id: (str) Name of the environment.
@@ -22,7 +23,7 @@ def make_env(env_id, rank=0, seed=0, log_dir=None, wrappers=None):
     """
     def _init():
         set_global_seeds(seed + rank)
-        env = gym.make(env_id)
+        env = gym.make(env_id, **env_kwargs)
 
         if wrappers:
             for wrapper in wrappers:
@@ -63,38 +64,39 @@ def create_environment(config, algo_name, seed, log_dir=None):
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
     logging.info("Creating environment.")
-    env_id = config['name']
-    n_envs = config.get('n_envs', 1)
-    normalize = config.get('normalize', None)
-    frame_stack = config.get('frame_stack', None)
-    multiprocessing = config.get('multiprocessing', True)
+    config = copy.deepcopy(config)
+    env_id = config.pop('name')
+    n_envs = config.pop('n_envs', 1)
+    normalize = config.pop('normalize', None)
+    frame_stack = config.pop('frame_stack', None)
+    multiprocessing = config.pop('multiprocessing', True)
 
     # Get tuples with (wrapper_class, wrapper_kwargs)
+    wrappers_config = config.pop('wrappers', [])
     wrappers = []
-    if 'wrappers' in config:
-        for wrapper in config['wrappers']:
-            if isinstance(wrapper, dict):
-                wrapper_name = list(wrapper.keys())[0]
-                wrappers.append((get_wrapper_class(wrapper_name), wrapper[wrapper_name]))
-            elif isinstance(wrapper, str):
-                wrappers.append((get_wrapper_class(wrapper), {}))
-            else:
-                raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
+    for wrapper in wrappers_config:
+        if isinstance(wrapper, dict):
+            wrapper_name = list(wrapper.keys())[0]
+            wrappers.append((get_wrapper_class(wrapper_name), wrapper[wrapper_name]))
+        elif isinstance(wrapper, str):
+            wrappers.append((get_wrapper_class(wrapper), {}))
+        else:
+            raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
     if algo_name in ['dqn', 'ddpg']:
-        return _create_standard_env(env_id, seed, log_dir, wrappers, normalize, frame_stack)
+        return _create_standard_env(env_id, config, seed, log_dir, wrappers, normalize, frame_stack)
     else:
-        return _create_vectorized_env(env_id, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack)
+        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack)
 
 
-def _create_vectorized_env(env_id, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack):
     if n_envs == 1:
-        env = DummyVecEnv([make_env(env_id, 0, seed, log_dir, wrappers)])
+        env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
     else:
         if multiprocessing:
-            env = SubprocVecEnv([make_env(env_id, i, seed, log_dir, wrappers) for i in range(n_envs)])
+            env = SubprocVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
         else:
-            env = DummyVecEnv([make_env(env_id, i, seed, log_dir, wrappers) for i in range(n_envs)])
+            env = DummyVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
 
     if normalize:
         if isinstance(normalize, bool):
@@ -110,8 +112,8 @@ def _create_vectorized_env(env_id, n_envs, multiprocessing, seed, log_dir, wrapp
     return env
 
 
-def _create_standard_env(env_id, seed, log_dir, wrappers, normalize, frame_stack):
-    env_maker = make_env(env_id, 0, seed, log_dir, wrappers)
+def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize, frame_stack):
+    env_maker = make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)
     env = env_maker()
 
     if normalize:

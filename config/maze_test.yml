@@ -24,6 +24,7 @@ env:
   normalize:
     norm_reward: true
     norm_obs: true
+  robot_count: 256
 
 meta:
   seed: 82
