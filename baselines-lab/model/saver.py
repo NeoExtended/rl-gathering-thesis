@@ -2,6 +2,7 @@ import logging
 import os
 import copy
 from stable_baselines.common.evaluation import evaluate_policy
+from stable_baselines.common.vec_env import VecNormalize
 
 from utils import util
 from env.environment import create_environment
@@ -14,18 +15,20 @@ class ModelSaver:
     :param save_interval: (int) Interval at which models will be saved. Note that the real interval may depend on the
         frequency of calls to the step() function.
     :param n_keep: Number of models to keep. when saving the newest model n+1 the oldest will be deleted automatically.
+    :param n_eval_episodes: Number of episodes used for model evaluation.
     :param keep_best: Whether or not to also save the best model. The best model is determined by running a test each
         time a new model is saved. This may take some time.
     :param config: Current lab configuration. Needed to create an evaluation environment if keep_best=True
     :param env: If the lab environment uses a running average normalization like VecNormalize, the running averages of
         the given env will be saved along with the model.
     """
-    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, config=None, env=None):
+    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=16, config=None, env=None):
         os.makedirs(model_dir, exist_ok=True)
         self.model_dir = model_dir
         self.save_interval = save_interval
         self.n_keep = n_keep
         self.keep_best = keep_best
+        self.n_eval_episodes = n_eval_episodes
 
         if keep_best or env:
             assert config, "You must provide an environment configuration to evaluate the model!"
@@ -44,7 +47,7 @@ class ModelSaver:
             normalization = env_desc.get('normalize', False)
 
             if normalization:
-                self.env = env
+                self.env = util.unwrap_vec_env(env, VecNormalize)
                 # Remove unnecessary keys
                 normalization.pop('precompute', None)
                 normalization.pop('samples', None)
@@ -102,11 +105,12 @@ class ModelSaver:
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
         if self.env: # Update normalization running means if necessary
-            self.eval_env.obs_rms = self.env.obs_rms
-            self.eval_env.ret_rms = self.env.ret_rms
+            norm_wrapper = util.unwrap_vec_env(self.eval_env, VecNormalize)
+            norm_wrapper.obs_rms = self.env.obs_rms
+            norm_wrapper.ret_rms = self.env.ret_rms
 
-        reward, steps = evaluate_policy(model, self.eval_env, n_eval_episodes=10)
-        logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/10))
+        reward, steps = evaluate_policy(model, self.eval_env, n_eval_episodes=self.n_eval_episodes)
+        logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/self.n_eval_episodes))
 
         if reward > self.best_score:
             logging.info("Found new best model with a mean reward of {:4f}".format(reward))

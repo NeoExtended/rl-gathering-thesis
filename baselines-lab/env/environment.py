@@ -132,7 +132,7 @@ def _precompute_normalization(env, num_envs, samples, config):
 
     logging.info("Precomputing normalization. This may take a while.")
     env.reset()
-    for i in range(samples):
+    for i in range(samples // num_envs):
         actions = [env.action_space.sample() for _ in range(num_envs)]
         obs, rewards, dones, info = env.step(actions)
 

@@ -8,6 +8,7 @@ import os
 import numpy as np
 
 from stable_baselines.common import set_global_seeds
+from stable_baselines.common.vec_env import VecEnvWrapper
 
 
 log_dir = None
@@ -141,3 +142,12 @@ def safe_mean(arr):
     :return: (float)
     """
     return np.nan if len(arr) == 0 else np.mean(arr)
+
+def unwrap_vec_env(env, target_wrapper):
+    """
+    Unwraps the given environment until the target wrapper is found.
+    Returns the first wrapper if target wrapper was not found.
+    """
+    while not isinstance(env, target_wrapper) and isinstance(env.venv, VecEnvWrapper):
+        env = env.venv
+    return env

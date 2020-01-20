@@ -52,11 +52,16 @@ class Session:
         #                        name_prefix="random-agent-{}".format("maze-test"))
         obs = self.env.reset()
         episode_counter = 0
-        while episode_counter < self.config['env']['n_envs']*4:  # Render at least 4 complete episodes
-            action, _states = self.agent.predict(obs)
+        step_counter = 0
+        num_episodes = self.config['env']['n_envs']*4
+        while episode_counter < num_episodes:  # Render about 4 complete episodes per env
+            action, _states = self.agent.predict(obs, deterministic=True)
             obs, rewards, dones, info = self.env.step(action)
             self.env.render()
             episode_counter += np.sum(dones)
+            step_counter += (self.config['env']['n_envs'])
+
+        logging.info("Performed {} episodes with an avg length of {}".format(num_episodes, step_counter/num_episodes))
         self.env.close()
 
     def _train(self):
@@ -64,12 +69,14 @@ class Session:
         save_interval = self.config['meta'].get('save_interval', 250000)
         n_keep = self.config['meta'].get('n_keep', 5)
         keep_best = self.config['meta'].get('keep_best', True)
+        n_eval_episodes = self.config['meta'].get('n_eval_episodes', 16)
 
         saver = ModelSaver(
             model_dir=os.path.join(self.log, "savepoints"),
             save_interval=save_interval,
             n_keep=n_keep,
             keep_best=keep_best,
+            n_eval_episodes=n_eval_episodes,
             config=self.config,
             env=self.env)
         self.add_callback(saver)

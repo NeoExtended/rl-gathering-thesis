@@ -18,11 +18,13 @@ env:
   frame_stack:
     n_stack: 4
   normalize:
+    precompute: true
+    samples: 10000
     norm_reward: false
     norm_obs: true
 
 meta:
   seed: 82
-  n_timesteps: 100000000
+  n_timesteps: 120000000
   log_dir: "./logs/OriginalMaze"
-  save_interval: 200000
+  save_interval: 250000
