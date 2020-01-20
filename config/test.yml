@@ -17,6 +17,8 @@ env:
   frame_stack:
     n_stack: 4
   normalize:
+    precompute: true
+    samples: 10000
     norm_reward: false
     norm_obs: true
 
