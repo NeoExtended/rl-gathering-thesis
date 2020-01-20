@@ -6,7 +6,7 @@ import argparse
 import logging
 import re
 
-from utils import config_util, util
+from utils import config_util
 from experiment.session import Session
 from env.gym_maze.envs.MazeBase import MazeBase
 
@@ -25,11 +25,11 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Additional logging, e.g. mean episode length
     # TODO: Video/Image Export
     # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
+    # TODO: Allow user to run multiple experiments
 
     # parse arguments
     if args is None:

@@ -5,6 +5,8 @@ General helper functions.
 from datetime import datetime
 import time
 import os
+import numpy as np
+
 from stable_baselines.common import set_global_seeds
 
 
@@ -128,3 +130,14 @@ def parse_enjoy_mode(log_dir, lab_mode):
     assert os.path.exists(dir), "Could not find any savepoints in logdir!"
     assert ckpt_type in ['best', 'last'], "Checkpoint type can only be best or last!"
     return dir, ckpt_type
+
+
+def safe_mean(arr):
+    """
+    Compute the mean of an array if there is at least one element.
+    For empty array, return nan. It is used for logging only.
+
+    :param arr: (np.ndarray)
+    :return: (float)
+    """
+    return np.nan if len(arr) == 0 else np.mean(arr)

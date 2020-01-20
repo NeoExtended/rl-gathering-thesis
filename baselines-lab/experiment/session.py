@@ -7,6 +7,7 @@ from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
 from model.saver import ModelSaver
+from experiment.logger import TensorboardLogger
 
 class Session:
     """
@@ -31,6 +32,7 @@ class Session:
                                       log_dir=self.log)
         self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
         self.lab_mode = lab_mode
+        self.callbacks = []
 
     def run(self):
         """
@@ -40,6 +42,9 @@ class Session:
             self._train()
         elif self.lab_mode == 'enjoy':
             self._enjoy()
+
+    def add_callback(self, callback):
+        self.callbacks.append(callback)
 
     def _enjoy(self):
         # self.env = VecVideoRecorder(self.env, "./logs/",
@@ -67,9 +72,15 @@ class Session:
             keep_best=keep_best,
             config=self.config,
             env=self.env)
+        self.add_callback(saver)
+        self.add_callback(TensorboardLogger(n_envs=self.config['env']['n_envs']))
 
-        self.agent.learn(self.config['meta']['n_timesteps'], callback=saver.step)
+        self.agent.learn(self.config['meta']['n_timesteps'], callback=self.step)
 
         # Save model at the end of the learning process
         saver.save(self.agent)
         self.env.close()
+
+    def step(self, locals_, globals_):
+        for cb in self.callbacks:
+            cb.step(locals_, globals_)
