@@ -1,3 +1,4 @@
+import random
 import gym
 import numpy as np
 import collections
@@ -9,15 +10,18 @@ ROBOT_MARKER = 150
 BACKGROUND_COLOR = (120, 220, 240)
 ROBOT_COLOR = (150, 150, 180)
 
+
 class MazeBase(gym.Env):
     """
     Base class for a maze-like environment for particle navigation tasks.
     :param map_file: (str) *.csv file containing the map data.
     :param goal: (list) A point coordinate in form [x, y] ([column, row]).
+        Can be set to None for a random goal position.
     :param goal_range: (list) Circular range around the goal position that should be counted as goal reached.
     :param reward_generator: (RewardGenerator) A class of type RewardGenerator generating reward
         based on the current state.
     :param robot_count: (int) Number of robots/particles to spawn in the maze.
+        Can be set to -1 for a random number of particles.
     """
 
     metadata = {'render.modes': ['human', 'rgb_array']}
@@ -25,9 +29,23 @@ class MazeBase(gym.Env):
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
         self.freespace = np.loadtxt(map_file).astype(int) # 1: Passable terrain, 0: Wall
         self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
-        self.goal = goal
+        self.cost = None
+
+        if goal:
+            self.randomize_goal = False
+            self.goal = goal
+            self._calculate_cost_map()
+        else:
+            self.randomize_goal = True
+            self.goal = [0, 0]
         self.goal_range = goal_range
-        self.robot_count = robot_count
+
+        if robot_count < 0:
+            self.randomize_n_robots = True
+            self.robot_count = 0
+        else:
+            self.randomize_n_robots = False
+            self.robot_count = robot_count
 
         self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
@@ -37,13 +55,25 @@ class MazeBase(gym.Env):
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
         self.height, self.width = self.maze.shape
 
-        self._calculate_cost_map(self.goal)
         self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
         self.robot_locations = []
         self.reset()
 
     def reset(self):
         locations = np.transpose(np.nonzero(self.freespace))
+
+        # Randomize number of robots if necessary
+        if self.randomize_n_robots:
+            self.robot_count = random.randrange(1, len(locations) // 4)
+            self.reward_generator.set_robot_count(self.robot_count)
+
+        # Randomize goal position if necessary
+        if self.randomize_goal:
+            new_goal = locations[random.randrange(0, len(locations))]
+            self.goal = [new_goal[1], new_goal[0]]
+            self._calculate_cost_map()
+
+        # Reset robot positions
         choice = np.random.choice(len(locations), self.robot_count, replace=False)
         self.robot_locations = locations[choice, :] # Robot Locations are in y, x (row, column) order
         self.reward_generator.reset(self.robot_locations)
@@ -85,15 +115,14 @@ class MazeBase(gym.Env):
         observation = self.state_img + self.maze * 255
         return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
 
-    def _calculate_cost_map(self, goal_position):
+    def _calculate_cost_map(self):
         """
         Calculates the cost map based on a given goal position via bfs
-        :param goal_position: Goal position for all particles - start for the costmap
         """
 
-        queue = collections.deque([goal_position]) # [x, y] pairs in point notation order!
+        queue = collections.deque([self.goal]) # [x, y] pairs in point notation order!
         seen = np.zeros(self.maze.shape, dtype=int)
-        seen[goal_position[1], goal_position[0]] = 1
+        seen[self.goal[1], self.goal[0]] = 1
         self.cost = np.zeros(self.maze.shape, dtype=int)
 
         while queue:
@@ -104,4 +133,6 @@ class MazeBase(gym.Env):
                     seen[y2, x2] = 1
                     self.cost[y2, x2] = self.cost[y, x] + 1
 
+        if self.reward_generator:
+            self.reward_generator.set_costmap(self.cost)
         return self.cost

@@ -37,8 +37,6 @@ def main(args=None):
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments
     # TODO: Make GoalRewardGenerator configurable
-    # TODO: New MazeEnv with random number of robots
-    # TODO: New MazeEnv with random goal position
     # TODO: New MazeEnv with random maze
 
     # parse arguments

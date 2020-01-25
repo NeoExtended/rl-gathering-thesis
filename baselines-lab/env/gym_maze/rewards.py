@@ -1,6 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import numpy as np
+
 
 class RewardGenerator(ABC):
     """
@@ -18,6 +19,13 @@ class RewardGenerator(ABC):
     def reset(self, robot_locations):
         self.initial_robot_locations = np.copy(robot_locations)
 
+    def set_robot_count(self, num_robots):
+        self.robot_count = num_robots
+
+    def set_costmap(self, costmap):
+        self.costmap = costmap
+
+    @abstractmethod
     def step(self, action, locations):
         pass
 
@@ -82,6 +90,7 @@ class GoalRewardGenerator(RewardGenerator):
             reward += 2
 
         return done, reward
+
 
 class ContinuousRewardGenerator(RewardGenerator):
     """
