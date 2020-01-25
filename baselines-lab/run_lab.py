@@ -10,11 +10,6 @@ from utils import config_util
 from experiment.session import Session
 from env.gym_maze.envs.MazeBase import MazeBase
 
-def check_lab_mode(arg_value, pat=re.compile(r"^train$|^enjoy@.+$|^search$")):
-    if not pat.match(arg_value):
-        raise argparse.ArgumentTypeError
-    return arg_value
-
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
     #parser.add_argument("lab_mode", type=check_lab_mode,
@@ -37,7 +32,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Video/Image Export
     # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
@@ -56,7 +50,7 @@ def main(args=None):
 
     config = config_util.get_config(args.config_file, args)
 
-    s = Session(config, args.lab_mode)
+    s = Session.create_session(config, args)
     s.run()
 
 

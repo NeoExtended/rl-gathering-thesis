@@ -1,6 +1,8 @@
+import distutils.spawn
 import logging
 import os
 import numpy as np
+from abc import ABC, abstractmethod
 
 from stable_baselines.common.vec_env import VecVideoRecorder
 from utils import util, config_util
@@ -8,52 +10,91 @@ from env.environment import create_environment
 from model.model import create_model
 from model.checkpoints import CheckpointManager
 from experiment.logger import TensorboardLogger
+from env.wrappers import VecGifRecorder
 
-class Session:
+
+class Session(ABC):
     """
     The main experiment control unit. Creates the environment and model from the lab configuration, runs the experiment
         and controls model saving.
     :param config: (dict) The lab configuration.
-    :param lab_mode: (str) The lab mode as given by the user. Starts a training session in train mode or a replay
-        session for enjoy mode.
+    :param args: (dict) Parsed additional command line arguments.
     """
-    def __init__(self, config, lab_mode):
+    def __init__(self, config, args):
         self.config = config
         util.set_random_seed(self.config)
 
         log_dir = self.config['meta'].get('log_dir', None)
-        self.log = util.create_log_directory(log_dir)
-        if self.log:
-            config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
+        if args.lab_mode == "train":
+            self.log = util.create_log_directory(log_dir)
+            if self.log:
+                config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
 
-        self.env = create_environment(config=config['env'],
-                                      algo_name=config['algorithm']['name'],
-                                      seed=self.config['meta']['seed'],
-                                      log_dir=self.log)
-        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
-        self.lab_mode = lab_mode
+        self.lab_mode = args.lab_mode
         self.callbacks = []
 
+    @abstractmethod
     def run(self):
         """
         Starts the experiment.
         """
-        if self.lab_mode == 'train':
-            self._train()
-        elif self.lab_mode == 'enjoy':
-            self._enjoy()
+        pass
 
     def add_callback(self, callback):
         self.callbacks.append(callback)
 
-    def _enjoy(self):
-        # self.env = VecVideoRecorder(self.env, "./logs/",
-        #                        record_video_trigger=lambda x: x == 0, video_length=2000,
-        #                        name_prefix="random-agent-{}".format("maze-test"))
+    def step(self, locals_, globals_):
+        for cb in self.callbacks:
+            cb.step(locals_, globals_)
+
+    @staticmethod
+    def create_session(config, args):
+        if args.lab_mode == "train":
+            return TrainSession(config, args)
+        elif args.lab_mode == "enjoy":
+            return ReplaySession(config, args)
+        else:
+            raise ValueError("Unknown lab mode!")
+
+
+class ReplaySession(Session):
+    """
+    Control unit for a replay session (includes enjoy and evaluation lab modes).
+    """
+    def __init__(self, config, args):
+        Session.__init__(self, config, args)
+
+        self.env = create_environment(config=config['env'],
+                                      algo_name=config['algorithm']['name'],
+                                      seed=self.config['meta']['seed'],
+                                      log_dir=None)
+
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+
+        if args.video:
+            self._setup_video_recorder(config, args)
+
+    def _setup_video_recorder(self, config, args):
+        if args.checkpoint_path:
+            video_path = args.get("checkpoint_path")
+        else:
+            video_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
+
+        if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
+            logging.info("Using installed standard video encoder.")
+            self.env = VecVideoRecorder(self.env, video_path,
+                                        record_video_trigger=lambda x: x == 0,
+                                        video_length=10000,
+                                        name_prefix=util.get_timestamp())
+        else:
+            logging.warning("Did not find avconf or ffmpeg - using gif as a video container replacement.")
+            self.env = VecGifRecorder(self.env, video_path)
+
+    def run(self):
         obs = self.env.reset()
         episode_counter = 0
         step_counter = 0
-        num_episodes = self.config['env']['n_envs']*4
+        num_episodes = self.config['env']['n_envs'] * 4
         while episode_counter < num_episodes:  # Render about 4 complete episodes per env
             action, _states = self.agent.predict(obs, deterministic=True)
             obs, rewards, dones, info = self.env.step(action)
@@ -61,10 +102,25 @@ class Session:
             episode_counter += np.sum(dones)
             step_counter += (self.config['env']['n_envs'])
 
-        logging.info("Performed {} episodes with an avg length of {}".format(num_episodes, step_counter/num_episodes))
+        logging.info("Performed {} episodes with an avg length of {}".format(num_episodes, step_counter / num_episodes))
         self.env.close()
 
-    def _train(self):
+
+class TrainSession(Session):
+    """
+    Control unit for the training lab mode.
+    """
+    def __init__(self, config, args):
+        Session.__init__(self, config, args)
+
+        self.env = create_environment(config=config['env'],
+                                      algo_name=config['algorithm']['name'],
+                                      seed=self.config['meta']['seed'],
+                                      log_dir=self.log)
+
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+
+    def run(self):
         logging.info("Starting training.")
         save_interval = self.config['meta'].get('save_interval', 250000)
         n_keep = self.config['meta'].get('n_keep', 5)
@@ -87,7 +143,3 @@ class Session:
         # Save model at the end of the learning process
         saver.save(self.agent)
         self.env.close()
-
-    def step(self, locals_, globals_):
-        for cb in self.callbacks:
-            cb.step(locals_, globals_)

@@ -46,8 +46,6 @@ def clean_config(config, args):
         else:
             set_checkpoints(config, config['meta']['log_dir'], args.type)
 
-        config['meta'].pop('log_dir') # Do not write logs in enjoy mode!
-
         # Reduce number of envs if there are too many
         if config['env']['n_envs'] > 32:
             config['env']['n_envs'] = 32
