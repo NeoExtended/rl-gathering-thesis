@@ -38,6 +38,7 @@ class MazeBase(gym.Env):
             self.randomize_n_robots = False
             self.robot_count = robot_count
 
+        self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
         self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
                            4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
@@ -55,7 +56,6 @@ class MazeBase(gym.Env):
             self.goal = [0, 0]
 
         self.goal_range = goal_range
-        self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
         self.robot_locations = []
         self.reset()
 
