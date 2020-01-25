@@ -31,15 +31,6 @@ class MazeBase(gym.Env):
         self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
         self.cost = None
 
-        if goal:
-            self.randomize_goal = False
-            self.goal = goal
-            self._calculate_cost_map()
-        else:
-            self.randomize_goal = True
-            self.goal = [0, 0]
-        self.goal_range = goal_range
-
         if robot_count < 0:
             self.randomize_n_robots = True
             self.robot_count = 0
@@ -55,6 +46,15 @@ class MazeBase(gym.Env):
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
         self.height, self.width = self.maze.shape
 
+        if goal:
+            self.randomize_goal = False
+            self.goal = goal
+            self._calculate_cost_map()
+        else:
+            self.randomize_goal = True
+            self.goal = [0, 0]
+
+        self.goal_range = goal_range
         self.reward_generator = reward_generator(self.cost, self.goal_range, self.robot_count)
         self.robot_locations = []
         self.reset()
