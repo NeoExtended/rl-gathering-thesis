@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import os
 import copy
@@ -8,10 +9,10 @@ from utils import util
 from env.environment import create_environment
 
 
-class ModelSaver:
+class CheckpointManager:
     """
-    Class to manage model savepoints.
-    :param model_dir: (str) Target directory for all the savepoints
+    Class to manage model checkpoints.
+    :param model_dir: (str) Target directory for all the checkpoints.
     :param save_interval: (int) Interval at which models will be saved. Note that the real interval may depend on the
         frequency of calls to the step() function.
     :param n_keep: Number of models to keep. when saving the newest model n+1 the oldest will be deleted automatically.
@@ -79,7 +80,7 @@ class ModelSaver:
     def _save_model(self, model):
         logging.info("Saving last model at timestep {}".format(str(self.update_counter)))
         savepoint = (self.update_counter, util.get_timestamp())
-        self._create_savepoint(savepoint, model)
+        self._create_checkpoint(savepoint, model)
 
         self.last_models.append(savepoint)
         self.all_models.add(savepoint)
@@ -87,20 +88,23 @@ class ModelSaver:
         if len(self.last_models) > self.n_keep:
             old_savepoint = self.last_models[0]
             del self.last_models[0]
-            self._remove_savepoint(old_savepoint)
+            self._remove_checkpoint(old_savepoint)
             self.all_models.remove(old_savepoint)
 
-    def _get_model_path(self, savepoint, postfix=None):
-        if postfix:
-            return os.path.join(self.model_dir, "model_{}_{}_{}.zip".format(savepoint[0], savepoint[1], postfix))
-        else:
-            return os.path.join(self.model_dir, "model_{}_{}.zip".format(savepoint[0], savepoint[1]))
+    def _get_model_path(self, checkpoint, suffix=""):
+        return os.path.join(self.model_dir,
+                            self._build_filename(checkpoint, "model", suffix=suffix, extension="zip"))
 
-    def _get_vecnorm_path(self, savepoint, postfix=None):
-        if postfix:
-            return os.path.join(self.model_dir, "normalization_{}_{}_{}.pkl".format(savepoint[0], savepoint[1], postfix))
+    def _get_vecnorm_path(self, checkpoint, suffix=""):
+        return os.path.join(self.model_dir,
+                            self._build_filename(checkpoint, "normalization", suffix=suffix, extension="pkl"))
+
+    @staticmethod
+    def _build_filename(checkpoint, prefix, suffix="", extension="zip"):
+        if len(suffix) > 0:
+            return "{}_{}_{}_{}.{}".format(prefix, checkpoint[0], checkpoint[1], suffix, extension)
         else:
-            return os.path.join(self.model_dir, "normalization_{}_{}.pkl".format(savepoint[0], savepoint[1]))
+            return "{}_{}_{}.{}".format(prefix, checkpoint[0], checkpoint[1], extension)
 
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
@@ -116,21 +120,88 @@ class ModelSaver:
             logging.info("Found new best model with a mean reward of {:4f}".format(reward))
             self.best_score = reward
             if self.best:
-                self._remove_savepoint(self.best, postfix="best")
+                self._remove_checkpoint(self.best, postfix="best")
 
             self.best = (self.update_counter, util.get_timestamp())
-            self._create_savepoint(self.best, model, postfix="best")
+            self._create_checkpoint(self.best, model, postfix="best")
 
-    def _remove_savepoint(self, savepoint, postfix=None):
+    def _remove_checkpoint(self, savepoint, postfix=""):
         model_path = self._get_model_path(savepoint, postfix)
         os.remove(model_path)
         if self.env:
             env_path = self._get_vecnorm_path(savepoint, postfix)
             os.remove(env_path)
 
-    def _create_savepoint(self, savepoint, model, postfix=None):
+    def _create_checkpoint(self, savepoint, model, postfix=""):
         model_path = self._get_model_path(savepoint, postfix)
         model.save(model_path)
         if self.env:
             env_path = self._get_vecnorm_path(savepoint, postfix)
             self.env.save(env_path)
+
+    @classmethod
+    def get_checkpoint(cls, path, type="best", normalization=False):
+        """
+        Returns paths to the files of the latest checkpoint saved in a given log directory.
+        :param path: (str) Path to a log directory (should contain subdirectories for each run).
+        :param type: (str) Type of the checkpoint ("last" or "best").
+        :param normalization: (bool) Weather or not to load normalization parameters.
+        :return: (str, None) or (str, str) depending on the normalization parameter, containing paths to the
+            latest checkpoint files.
+        """
+        path = cls._get_latest_run(path)
+        sp_path = os.path.join(path, "checkpoints")
+        assert os.path.exists(sp_path), "No checkpoints directory found in {}".format(path)
+
+        if type == "best":
+            model_suffix = "best"
+        else:
+            model_suffix = ""
+
+        checkpoint = cls._get_latest_checkpoint(sp_path, prefix="model", suffix=model_suffix)
+        model_name = cls._build_filename(checkpoint, "model", suffix=model_suffix, extension="zip")
+        model_path = os.path.join(sp_path, model_name)
+        assert os.path.exists(model_path), "Could not find model checkpoint {} in {}".format(model_name, sp_path)
+
+        if normalization:
+            norm_name = cls._build_filename(checkpoint, "normalization", suffix=model_suffix, extension="pkl")
+            norm_path = os.path.join(sp_path, norm_name)
+            assert os.path.exists(norm_path), \
+                "Could not find normalization parameter checkpoint {} in {}".format(norm_name, sp_path)
+            return model_path, norm_path
+        else:
+            return model_path, None
+
+    @staticmethod
+    def _get_latest_run(path):
+        runs = os.listdir(path)
+        runs.sort()
+        return os.path.join(path, runs[-1])  # Return latest run
+
+    @staticmethod
+    def _get_latest_checkpoint(dir, prefix="", suffix=""):
+        files = os.listdir(dir)
+
+        latest = datetime.fromisoformat('1970-01-01')
+        counter = None
+        for savepoint in files:
+            datestring = os.path.splitext(savepoint)[0]
+            if not (datestring.startswith(prefix) and datestring.endswith(suffix)):
+                continue
+
+            if len(prefix) > 0:
+                datestring = datestring[len(prefix) + 1:]
+            if len(suffix) > 0:
+                datestring = datestring[:-(len(suffix) + 1)]
+
+            step, datestring = datestring.split("_", maxsplit=1)
+            # If no suffix is given the datestring may contain invalid data.
+            if len(datestring) > 17:
+                continue
+
+            date = datetime.strptime(datestring, util.TIMESTAMP_FORMAT)
+            if date > latest:
+                latest = date
+                counter = step
+
+        return (counter, latest.strftime(util.TIMESTAMP_FORMAT))

@@ -7,34 +7,31 @@ import json
 import yaml
 
 from utils import util
+from model.checkpoints import CheckpointManager
 
 
-def get_config(config_file, lab_mode):
+def get_config(config_file, args):
     """
     Reads the lab config from a given file and configures it for use with to the current lab mode.
     :param config_file: (str) Path to the config file.
-    :param lab_mode: (str) Unparsed lab mode string as given by the user.
+    :param args: (dict) parsed args dict
     :return: (dict) The parsed config file as dictionary.
     """
     config = read_config(config_file)
     config = extend_meta_data(config)
-    config = clean_config(config, lab_mode)
+    config = clean_config(config, args)
     return config
 
 
-def clean_config(config, lab_mode):
+def clean_config(config, args):
     """
     Deletes or modifies keys from the config which are not compatible with the current lab mode.
     :param config: (dict) The config dictionary
-    :param lab_mode: (str) The unparsed lab mode as given by the user
+    :param args: (dict) parsed args dict
     :return: (dict) The cleaned config dictionary
     """
-    mode = lab_mode.split("@")[0]
-    if mode == 'enjoy':
-        dir, ckpt_type = util.parse_enjoy_mode(config['meta']['log_dir'], lab_mode)
-        config['algorithm']['trained_agent'] = util.get_model_location(dir, ckpt_type)
-        config['meta'].pop('log_dir') # No logs in enjoy mode!
 
+    if args.lab_mode == 'enjoy':
         # Do not change running averages in enjoy mode
         if 'normalize' in config['env']:
             if isinstance(config['env']['normalize'], bool):
@@ -43,9 +40,35 @@ def clean_config(config, lab_mode):
             else:
                 config['env']['normalize']['training'] = False
 
-            config['env']['normalize']['trained_agent'] = util.get_normalization_params(dir, ckpt_type)
+        # Find checkpoints
+        if len(args.checkpoint_path) > 0:
+            set_checkpoints(config, args.checkpoint_path, args.type)
+        else:
+            set_checkpoints(config, config['meta']['log_dir'], args.type)
+
+        config['meta'].pop('log_dir') # Do not write logs in enjoy mode!
+
+        # Reduce number of envs if there are too many
+        if config['env']['n_envs'] > 32:
+            config['env']['n_envs'] = 32
+
+    elif args.lab_mode == 'train':
+        # Allow fast loading of recently trained agents via "last" and "best" checkpoints
+        if config['algorithm'].get('trained_agent', None):
+            if config['algorithm']['trained_agent'] in ['best', 'last']:
+                set_checkpoints(config, config['meta']['log_dir'], config['algorithm']['trained_agent'])
 
     return config
+
+
+def set_checkpoints(config, path, type):
+    normalization = 'normalize' in config['env']
+    model_checkpoint, norm_checkpoint = CheckpointManager.get_checkpoint(path,
+                                                                         type=type,
+                                                                         normalization=normalization)
+    config['algorithm']['trained_agent'] = model_checkpoint
+    if normalization:
+        config['env']['normalize']['trained_agent'] = norm_checkpoint
 
 
 def read_config(config_file):

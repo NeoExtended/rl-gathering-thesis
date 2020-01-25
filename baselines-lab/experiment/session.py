@@ -6,7 +6,7 @@ from stable_baselines.common.vec_env import VecVideoRecorder
 from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
-from model.saver import ModelSaver
+from model.checkpoints import CheckpointManager
 from experiment.logger import TensorboardLogger
 
 class Session:
@@ -71,8 +71,8 @@ class Session:
         keep_best = self.config['meta'].get('keep_best', True)
         n_eval_episodes = self.config['meta'].get('n_eval_episodes', 16)
 
-        saver = ModelSaver(
-            model_dir=os.path.join(self.log, "savepoints"),
+        saver = CheckpointManager(
+            model_dir=os.path.join(self.log, "checkpoints"),
             save_interval=save_interval,
             n_keep=n_keep,
             keep_best=keep_best,
