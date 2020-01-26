@@ -111,7 +111,7 @@ class MazeBase(gym.Env):
     def _generate_observation(self):
         self.state_img = np.zeros(self.maze.shape)
 
-        np.put(self.state_img, self.robot_locations, [ROBOT_MARKER] * self.robot_count)
+        self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
         observation = self.state_img + self.maze * 255
         return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
 
