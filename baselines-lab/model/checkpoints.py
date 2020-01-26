@@ -117,7 +117,7 @@ class CheckpointManager:
         logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/self.n_eval_episodes))
 
         if reward > self.best_score:
-            logging.info("Found new best model with a mean reward of {:4f}".format(reward))
+            logging.info("Found new best model with a mean reward of {:.4f}".format(reward))
             self.best_score = reward
             if self.best:
                 self._remove_checkpoint(self.best, postfix="best")

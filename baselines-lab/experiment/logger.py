@@ -66,12 +66,12 @@ class TensorboardLogger:
         if len(self.ep_len_buffer) > 0:
             reward_summary = tf.Summary(value=[
                     tf.Summary.Value(
-                        tag='ep_reward_mean',
+                        tag='ep_length_mean',
                         simple_value=safe_mean(self.ep_len_buffer))
             ])
             length_summary = tf.Summary(value=[
                 tf.Summary.Value(
-                    tag='ep_length_mean',
+                    tag='ep_reward_mean',
                     simple_value=safe_mean(self.reward_buffer))
             ])
             writer.add_summary(reward_summary, num_timesteps)
