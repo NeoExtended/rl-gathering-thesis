@@ -32,6 +32,7 @@ def parse_args(args):
 
 
 def main(args=None):
+    # TODO: Video mode for observation space.
     # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training

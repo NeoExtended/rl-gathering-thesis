@@ -3,10 +3,12 @@ import gym
 import numpy as np
 import collections
 import matplotlib.pyplot as plt
+import cv2
 
 from env.gym_maze.rewards import GoalRewardGenerator, ContinuousRewardGenerator
 
 ROBOT_MARKER = 150
+GOAL_MARKER = 200
 BACKGROUND_COLOR = (120, 220, 240)
 ROBOT_COLOR = (150, 150, 180)
 
@@ -17,7 +19,7 @@ class MazeBase(gym.Env):
     :param map_file: (str) *.csv file containing the map data.
     :param goal: (list) A point coordinate in form [x, y] ([column, row]).
         Can be set to None for a random goal position.
-    :param goal_range: (list) Circular range around the goal position that should be counted as goal reached.
+    :param goal_range: (list) Circle radius around the goal position that should be counted as goal reached.
     :param reward_generator: (RewardGenerator) A class of type RewardGenerator generating reward
         based on the current state.
     :param robot_count: (int) Number of robots/particles to spawn in the maze.
@@ -64,7 +66,7 @@ class MazeBase(gym.Env):
 
         # Randomize number of robots if necessary
         if self.randomize_n_robots:
-            self.robot_count = random.randrange(1, len(locations) // 4)
+            self.robot_count = random.randrange(1, len(locations) // 5)
             self.reward_generator.set_robot_count(self.robot_count)
 
         # Randomize goal position if necessary
@@ -98,7 +100,7 @@ class MazeBase(gym.Env):
         for y, x in self.robot_locations:
             rgb_image[y-1:y+1, x-1:x+1] = ROBOT_COLOR
 
-        rgb_image[self.goal[0], self.goal[1]] = [255, 0, 0]
+        cv2.circle(rgb_image, tuple(self.goal), self.goal_range, (255, 0, 0), thickness=1)
         rgb_image = np.clip(rgb_image, 0, 255)
 
         if mode == 'human': # Display image
@@ -113,6 +115,9 @@ class MazeBase(gym.Env):
 
         self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
         observation = self.state_img + self.maze * 255
+        if self.randomize_goal:
+            cv2.circle(self.state_img, tuple(self.goal), self.goal_range, (GOAL_MARKER))
+
         return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
 
     def _calculate_cost_map(self):

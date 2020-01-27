@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 import os
 import copy
+import tensorflow as tf
 from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines.common.vec_env import VecNormalize
 
@@ -22,8 +23,10 @@ class CheckpointManager:
     :param config: Current lab configuration. Needed to create an evaluation environment if keep_best=True
     :param env: If the lab environment uses a running average normalization like VecNormalize, the running averages of
         the given env will be saved along with the model.
+    :param tb_log: Set to true if the evaluation results should be logged. (Only works with keep_best=True)
     """
-    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=16, config=None, env=None):
+    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=16, config=None,
+                 env=None, tb_log=False):
         os.makedirs(model_dir, exist_ok=True)
         self.model_dir = model_dir
         self.save_interval = save_interval
@@ -41,6 +44,8 @@ class CheckpointManager:
         self.last_save = 0
         self.update_counter = 0
         self.env = None
+        self.tb_log = tb_log
+        self.writer = None
 
         if config:
             env_desc = copy.deepcopy(config['env'])
@@ -63,6 +68,9 @@ class CheckpointManager:
         model = locals_['self']
         self.update_counter = model.num_timesteps
 
+        if not self.writer:
+            self.writer = locals_['writer']
+
         if self.update_counter >= self.last_save + self.save_interval:
             self.last_save = self.update_counter
             self.save(model)
@@ -75,7 +83,8 @@ class CheckpointManager:
         if self.n_keep > 0:
             self._save_model(model)
         if self.keep_best:
-            self._save_best_model(model)
+            reward, steps = self._save_best_model(model)
+            self._log(reward, steps)
 
     def _save_model(self, model):
         logging.info("Saving last model at timestep {}".format(str(self.update_counter)))
@@ -124,6 +133,27 @@ class CheckpointManager:
 
             self.best = (self.update_counter, util.get_timestamp())
             self._create_checkpoint(self.best, model, postfix="best")
+
+        return reward, steps
+
+    def _log(self, reward, steps):
+        if not self.tb_log:
+            return
+
+        length_summary = tf.Summary(value=[
+            tf.Summary.Value(
+                tag='episode_length/eval_ep_length_mean',
+                simple_value=steps/self.n_eval_episodes)
+        ])
+        self.writer.add_summary(length_summary, self.update_counter)
+
+
+        reward_summary = tf.Summary(value=[
+            tf.Summary.Value(
+                tag='reward/eval_ep_reward_mean',
+                simple_value=reward)
+        ])
+        self.writer.add_summary(reward_summary, self.update_counter)
 
     def _remove_checkpoint(self, savepoint, postfix=""):
         model_path = self._get_model_path(savepoint, postfix)

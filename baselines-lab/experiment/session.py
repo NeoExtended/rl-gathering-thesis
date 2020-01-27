@@ -29,6 +29,8 @@ class Session(ABC):
             self.log = util.create_log_directory(log_dir)
             if self.log:
                 config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
+        else:
+            self.log = None
 
         self.lab_mode = args.lab_mode
         self.callbacks = []
@@ -134,7 +136,8 @@ class TrainSession(Session):
             keep_best=keep_best,
             n_eval_episodes=n_eval_episodes,
             config=self.config,
-            env=self.env)
+            env=self.env,
+            tb_log=bool(self.log))
         self.add_callback(saver)
         self.add_callback(TensorboardLogger(n_envs=self.config['env']['n_envs']))
 

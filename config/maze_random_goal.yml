@@ -1,0 +1,33 @@
+algorithm:
+  name: "ppo2"
+  verbose: 10
+  policy:
+    name: CnnPolicy
+  tensorboard_log: true
+  learning_rate:
+    type: "linear"
+    initial_value: 1.5e-4
+    final_value: 5.0e-5
+    final_point: 0.5
+  nminibatches: 16
+  n_steps: 512
+
+env:
+  name: "Maze0318Continuous-v2"
+  wrappers:
+    - env.wrappers.WarpGrayscaleFrame
+    - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
+        skip: 4
+  n_envs: 32
+  frame_stack:
+    n_stack: 4
+  normalize:
+    norm_reward: true
+    norm_obs: true
+  robot_count: 256
+
+meta:
+  seed: 82
+  n_timesteps: 100000000
+  log_dir: "./logs/RandomGoalTest"
+  save_interval: 200000
