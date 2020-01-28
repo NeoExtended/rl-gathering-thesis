@@ -116,7 +116,8 @@ class MazeBase(gym.Env):
         self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
         observation = self.state_img + self.maze * 255
         if self.randomize_goal:
-            cv2.circle(self.state_img, tuple(self.goal), self.goal_range, (GOAL_MARKER))
+            cv2.circle(observation, tuple(self.goal), self.goal_range, (GOAL_MARKER))
+            observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
         return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
 

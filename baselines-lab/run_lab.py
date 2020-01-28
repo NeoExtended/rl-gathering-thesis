@@ -29,6 +29,10 @@ def parse_args(args):
     enjoy_parser.add_argument("--stochastic",
                               help="Execute the neural network in stochastic instead of deterministic mode.",
                               action="store_true")
+    enjoy_parser.add_argument("--evaluate",
+                              help="Activates the model evaluation over x given episodes and saves the result to the model dir.",
+                              type=int,
+                              default=None)
 
     train_parser = subparsers.add_parser("train")
 
@@ -46,6 +50,7 @@ def main(args=None):
     # TODO: Allow user to run multiple experiments
     # TODO: Make GoalRewardGenerator configurable
     # TODO: New MazeEnv with random maze
+    # TODO: Config dependencies: Link configs together for clearer params between configs.
 
     # parse arguments
     if args is None:
