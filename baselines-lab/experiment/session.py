@@ -10,7 +10,7 @@ from env.environment import create_environment
 from model.model import create_model
 from model.checkpoints import CheckpointManager
 from experiment.logger import TensorboardLogger
-from env.wrappers import VecGifRecorder
+from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper
 
 
 class Session(ABC):
@@ -61,29 +61,36 @@ class Session(ABC):
 
 class ReplaySession(Session):
     """
-    Control unit for a replay session (includes enjoy and evaluation lab modes).
+    Control unit for a replay session (enjoy lab mode - includes model evaluation).
     """
     def __init__(self, config, args):
         Session.__init__(self, config, args)
 
-        if args.video or args.obs_video:
-            if args.checkpoint_path:
-                video_path = args.get("checkpoint_path")
-            else:
-                video_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
+        if args.checkpoint_path:
+            data_path = args.get("checkpoint_path")
         else:
-            video_path = None
+            data_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
 
         self.env = create_environment(config=config['env'],
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
                                       log_dir=None,
-                                      video_path=video_path)
+                                      video_path=data_path if args.obs_video else None)
 
         self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
         self.deterministic = not args.stochastic
         if args.video:
-            self._setup_video_recorder(video_path)
+            self._setup_video_recorder(data_path)
+
+        if args.evaluate:
+            self.num_episodes = args.evaluate
+            if "Vec" in type(self.env).__name__:
+                self.env = VecEvaluationWrapper(self.env, path=data_path)
+            else:
+                self.env = EvaluationWrapper(self.env, path=data_path)
+        else:
+            # Render about 4 complete episodes per env in enjoy mode without evaluation.
+            self.num_episodes = self.config['env']['n_envs'] * 4
 
     def _setup_video_recorder(self, video_path):
         if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
@@ -100,15 +107,14 @@ class ReplaySession(Session):
         obs = self.env.reset()
         episode_counter = 0
         step_counter = 0
-        num_episodes = self.config['env']['n_envs'] * 4
-        while episode_counter < num_episodes:  # Render about 4 complete episodes per env
+        while episode_counter < self.num_episodes:
             action, _states = self.agent.predict(obs, deterministic=self.deterministic)
             obs, rewards, dones, info = self.env.step(action)
             self.env.render()
             episode_counter += np.sum(dones)
             step_counter += (self.config['env']['n_envs'])
 
-        logging.info("Performed {} episodes with an avg length of {}".format(num_episodes, step_counter / num_episodes))
+        # logging.info("Performed {} episodes with an avg length of {}".format(episode_counter, step_counter / episode_counter))
         self.env.close()
 
 

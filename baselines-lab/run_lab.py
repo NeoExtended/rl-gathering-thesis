@@ -30,9 +30,13 @@ def parse_args(args):
                               help="Execute the neural network in stochastic instead of deterministic mode.",
                               action="store_true")
     enjoy_parser.add_argument("--evaluate",
-                              help="Activates the model evaluation over x given episodes and saves the result to the model dir.",
+                              help="Activates the model evaluation over at least x given episodes and saves the result to the model dir. "
+                                   "(Use with --strict option for more accurate evaluation!)",
                               type=int,
                               default=None)
+    enjoy_parser.add_argument("--strict",
+                              help="Sets the number of environments to 1. Results in more accurate but far slower evaluation.",
+                              action="store_true")
 
     train_parser = subparsers.add_parser("train")
 
@@ -44,7 +48,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments

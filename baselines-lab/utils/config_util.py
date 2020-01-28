@@ -50,6 +50,9 @@ def clean_config(config, args):
         if config['env']['n_envs'] > 32:
             config['env']['n_envs'] = 32
 
+        if args.strict:
+            config['env']['n_envs'] = 1
+
     elif args.lab_mode == 'train':
         # Allow fast loading of recently trained agents via "last" and "best" checkpoints
         if config['algorithm'].get('trained_agent', None):
@@ -87,6 +90,7 @@ def read_config(config_file):
 
     file.close()
     return config
+
 
 def save_config(config, path):
     """
