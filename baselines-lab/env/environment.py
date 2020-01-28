@@ -9,6 +9,7 @@ from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
+from env.wrappers import VecGifRecorder
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
@@ -53,7 +54,7 @@ def get_wrapper_class(wrapper):
         return None
 
 
-def create_environment(config, algo_name, seed, log_dir=None):
+def create_environment(config, algo_name, seed, log_dir=None, video_path=None):
     """
     Creates a new environment according to the parameters from the given lab config dictionary.
     :param config: (dict) Lab config from config['env'].
@@ -61,6 +62,8 @@ def create_environment(config, algo_name, seed, log_dir=None):
     :param seed: (int) Pseudo-RNG seed for the environment. Vectorized environments will use linear increments
         from this seed.
     :param log_dir: (str) Path to the log directory.
+    :param video_path: (str) If a video path is given the environment will create a gif of the env observation space
+        before the normalization layer (if present).
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
     logging.info("Creating environment.")
@@ -86,10 +89,10 @@ def create_environment(config, algo_name, seed, log_dir=None):
     if algo_name in ['dqn', 'ddpg']:
         return _create_standard_env(env_id, config, seed, log_dir, wrappers, normalize, frame_stack)
     else:
-        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack)
+        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path)
 
 
-def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path):
     if n_envs == 1:
         env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
     else:
@@ -97,6 +100,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
             env = SubprocVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
         else:
             env = DummyVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
+
+    if video_path:
+        env = VecGifRecorder(env, video_path, record_obs=True)
 
     if normalize:
         if isinstance(normalize, bool):

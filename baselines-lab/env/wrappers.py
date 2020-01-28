@@ -1,10 +1,8 @@
-import os
-import imageio
-import numpy as np
 import gym
 import cv2
 from stable_baselines.common.vec_env import VecEnvWrapper
-from utils import get_timestamp
+from stable_baselines.common.tile_images import tile_images
+from utils.recorder import GifRecorder
 
 class WarpGrayscaleFrame(gym.ObservationWrapper):
     def __init__(self, env):
@@ -35,26 +33,33 @@ class VecGifRecorder(VecEnvWrapper):
     Records videos from the environment in gif format.
     :param env: (VecEnv) Environment to record from.
     :param output_directory: (str) Output directory for the gifs. Individual files will be named with a timestamp
+    :param record_obs: (bool) If true the recorder records observations instead of the rgb_array output of the env.
     """
-    def __init__(self, env, output_directory):
+    def __init__(self, env, output_directory, record_obs=False):
         VecEnvWrapper.__init__(self, env)
-        self.images = []
-        self.path = output_directory
-        self.timestamp = get_timestamp()
+        if record_obs:
+            self.recorder = GifRecorder(path=output_directory, name_prefix="obs_")
+        else:
+            self.recorder = GifRecorder(path=output_directory)
+        self.record_obs = record_obs
 
     def reset(self):
         obs = self.venv.reset()
-        self.images = []
-        self.timestamp = get_timestamp()
-        self.images.append(self.venv.render(mode="rgb_array"))
+        self.recorder.reset()
+        self._record(obs)
         return obs
 
     def step_wait(self):
         obs, rews, dones, infos = self.venv.step_wait()
-        self.images.append(self.venv.render(mode="rgb_array"))
+        self._record(obs)
         return obs, rews, dones, infos
 
     def close(self):
-        gif_path = os.path.join(self.path, "{}.gif".format(self.timestamp))
-        imageio.mimsave(gif_path, [np.array(img) for img in self.images], fps=30)
+        self.recorder.close()
         VecEnvWrapper.close(self)
+
+    def _record(self, obs):
+        if self.record_obs:
+            self.recorder.record(tile_images(obs))
+        else:
+            self.recorder.record(self.venv.render(mode="rgb_array"))

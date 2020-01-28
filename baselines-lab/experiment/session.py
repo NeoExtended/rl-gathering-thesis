@@ -66,22 +66,26 @@ class ReplaySession(Session):
     def __init__(self, config, args):
         Session.__init__(self, config, args)
 
+        if args.video or args.obs_video:
+            if args.checkpoint_path:
+                video_path = args.get("checkpoint_path")
+            else:
+                video_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
+        else:
+            video_path = None
+
         self.env = create_environment(config=config['env'],
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
-                                      log_dir=None)
+                                      log_dir=None,
+                                      video_path=video_path)
 
         self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
-
+        self.deterministic = not args.stochastic
         if args.video:
-            self._setup_video_recorder(config, args)
+            self._setup_video_recorder(video_path)
 
-    def _setup_video_recorder(self, config, args):
-        if args.checkpoint_path:
-            video_path = args.get("checkpoint_path")
-        else:
-            video_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
-
+    def _setup_video_recorder(self, video_path):
         if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
             logging.info("Using installed standard video encoder.")
             self.env = VecVideoRecorder(self.env, video_path,
@@ -98,7 +102,7 @@ class ReplaySession(Session):
         step_counter = 0
         num_episodes = self.config['env']['n_envs'] * 4
         while episode_counter < num_episodes:  # Render about 4 complete episodes per env
-            action, _states = self.agent.predict(obs, deterministic=True)
+            action, _states = self.agent.predict(obs, deterministic=self.deterministic)
             obs, rewards, dones, info = self.env.step(action)
             self.env.render()
             episode_counter += np.sum(dones)

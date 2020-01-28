@@ -19,8 +19,16 @@ def parse_args(args):
 
     enjoy_parser = subparsers.add_parser("enjoy")
     enjoy_parser.add_argument("--type", help="Checkpoint type to load", choices=["best", "last"], default="best")
-    enjoy_parser.add_argument("--checkpoint-path", help="Path to a directory containing a model checkpoint (defaults to config log dir)", default="")
+    enjoy_parser.add_argument("--checkpoint-path",
+                              help="Path to a directory containing a model checkpoint (defaults to config log dir)",
+                              default="")
     enjoy_parser.add_argument("--video", help="Create a video file in enjoy mode", action="store_true")
+    enjoy_parser.add_argument("--obs-video",
+                              help="Create a video file capturing the observations (only works if the env outputs image-like obs)",
+                              action="store_true")
+    enjoy_parser.add_argument("--stochastic",
+                              help="Execute the neural network in stochastic instead of deterministic mode.",
+                              action="store_true")
 
     train_parser = subparsers.add_parser("train")
 
@@ -32,7 +40,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Video mode for observation space.
     # TODO: Replay mode with evaluation (get mean reward and episode length), also include/exclude failed runs
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
