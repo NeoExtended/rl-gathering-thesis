@@ -82,6 +82,9 @@ class EvaluationWrapper(gym.Wrapper):
         self.aggregator.step([rew], [done], [info])
         return obs, rew, done, info
 
+    def reset_statistics(self):
+        self.aggregator.reset_statistics()
+
     def close(self):
         gym.Wrapper.close(self)
         self.aggregator.close()
@@ -102,6 +105,9 @@ class VecEvaluationWrapper(VecEnvWrapper):
     def reset(self):
         obs = self.venv.reset()
         return obs
+
+    def reset_statistics(self):
+        self.aggregator.reset_statistics()
 
     def step_wait(self):
         obs, rews, dones, infos = self.venv.step_wait()

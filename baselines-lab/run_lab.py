@@ -54,6 +54,7 @@ def main(args=None):
     # TODO: Make GoalRewardGenerator configurable
     # TODO: New MazeEnv with random maze
     # TODO: Config dependencies: Link configs together for clearer params between configs.
+    # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.
 
     # parse arguments
     if args is None:

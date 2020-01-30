@@ -5,12 +5,16 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from stable_baselines.common.vec_env import VecVideoRecorder
+
 from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
 from model.checkpoints import CheckpointManager
 from experiment.logger import TensorboardLogger
+from experiment.runner import Runner
+from experiment.optimization import HyperparameterOptimizer
 from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper
+
 
 
 class Session(ABC):
@@ -25,7 +29,7 @@ class Session(ABC):
         util.set_random_seed(self.config)
 
         log_dir = self.config['meta'].get('log_dir', None)
-        if args.lab_mode == "train":
+        if args.lab_mode in ["train", "search"]:
             self.log = util.create_log_directory(log_dir)
             if self.log:
                 config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
@@ -55,6 +59,8 @@ class Session(ABC):
             return TrainSession(config, args)
         elif args.lab_mode == "enjoy":
             return ReplaySession(config, args)
+        elif args.lab_mode == "search":
+            return SearchSession(config, args)
         else:
             raise ValueError("Unknown lab mode!")
 
@@ -151,32 +157,7 @@ class TrainSession(Session):
 class SearchSession(Session):
     def __init__(self, config, args):
         Session.__init__(self, config, args)
-        self.evalation_interval = 20 #TODO
-        self.eval_method = config['search'].get('eval_method')
+        self.optimizer = HyperparameterOptimizer(config, self.log)
 
     def run(self):
-        pass
-
-
-class Runner:
-    def __init__(self, env, agent, deterministic=True):
-        self.env = env
-        self.agent = agent
-        self.deterministic = deterministic
-
-    def run(self, n_episodes):
-        """
-        Simulates at least n_episodes of environment interactions.
-        """
-        obs = self.env.reset()
-        episode_counter = 0
-        step_counter = 0
-        while episode_counter < n_episodes:
-            action, _states = self.agent.predict(obs, deterministic=self.deterministic)
-            obs, rewards, dones, info = self.env.step(action)
-            self.env.render()
-            episode_counter += np.sum(dones)
-            step_counter += len(obs)
-
-        # logging.info("Performed {} episodes with an avg length of {}".format(episode_counter, step_counter / episode_counter))
-        self.env.close()
+        self.optimizer.optimize()

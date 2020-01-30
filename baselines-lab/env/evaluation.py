@@ -1,7 +1,8 @@
 import logging
 import os
+from collections import deque
 
-from utils import get_timestamp, config_util
+from utils import get_timestamp, config_util, safe_mean
 
 
 class EpisodeInformationAggregator:
@@ -9,9 +10,10 @@ class EpisodeInformationAggregator:
     Class for aggregating and episode information over the course of an enjoy session. Used for evaluation.
     :param num_envs: (int) Number of environments that will be used.
     :param path: (str) Directory to save the results to.
+    :param smoothing: (int) Smoothing factor for running mean averages.
     """
 
-    def __init__(self, num_envs=1, path=None):
+    def __init__(self, num_envs=1, path=None, smoothing=100):
         self.successful_reward = 0
         self.successful_steps = 0
         self.n_failed_episodes = 0
@@ -21,7 +23,11 @@ class EpisodeInformationAggregator:
 
         self.reward_buffer = [0] * num_envs
         self.step_buffer = [0] * num_envs
+        self.num_envs = num_envs
         self.path = path
+        self.reward_rms_buffer = deque(maxlen=smoothing)
+        self.step_rms_buffer = deque(maxlen=smoothing)
+        self.smoothing = smoothing
 
     def step(self, rews, dones, infos):
         for i, (r, done, info) in enumerate(zip(rews, dones, infos)):
@@ -38,9 +44,24 @@ class EpisodeInformationAggregator:
                     self.n_successful_episodes += 1
                     self.successful_reward += self.reward_buffer[i]
                     self.successful_steps += self.step_buffer[i]
+                self.reward_rms_buffer.append(self.reward_buffer[i])
+                self.step_rms_buffer.append(self.step_buffer[i])
 
                 self.reward_buffer[i] = 0
                 self.step_buffer[i] = 0
+
+    def reset_statistics(self):
+        self.successful_reward = 0
+        self.successful_steps = 0
+        self.n_failed_episodes = 0
+        self.n_successful_episodes = 0
+        self.failed_reward = 0
+        self.failed_steps = 0
+
+        self.reward_buffer = [0] * self.num_envs
+        self.step_buffer = [0] * self.num_envs
+        self.reward_rms_buffer = deque(maxlen=self.smoothing)
+        self.step_rms_buffer = deque(maxlen=self.smoothing)
 
     @property
     def total_steps(self):
@@ -61,6 +82,14 @@ class EpisodeInformationAggregator:
     @property
     def mean_steps(self):
         return float(self.total_steps / self.total_episodes)
+
+    @property
+    def reward_rms(self):
+        return safe_mean(self.reward_rms_buffer)
+
+    @property
+    def step_rms(self):
+        return safe_mean(self.step_rms_buffer)
 
     def close(self):
         success_rate = float(self.n_successful_episodes / self.total_episodes)

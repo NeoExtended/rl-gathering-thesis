@@ -42,3 +42,11 @@ register(id="Maze0318Continuous-v3",
                 'goal_range': 10,
                 'robot_count': -1,
                 'reward_generator': ContinuousRewardGenerator})
+
+register(id="Maze0518Continuous-v2",
+        entry_point="env.gym_maze.envs:MazeBase",
+        max_episode_steps=2000,
+        kwargs={'map_file':'../mapdata/map0518.csv',
+                'goal': None,
+                'goal_range': 10,
+                'reward_generator': ContinuousRewardGenerator})
