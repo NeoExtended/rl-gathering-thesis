@@ -42,20 +42,37 @@ class EpisodeInformationAggregator:
                 self.reward_buffer[i] = 0
                 self.step_buffer[i] = 0
 
+    @property
+    def total_steps(self):
+        return self.successful_steps + self.failed_steps
+
+    @property
+    def total_episodes(self):
+        return self.n_successful_episodes + self.n_failed_episodes
+
+    @property
+    def total_reward(self):
+        return float(self.successful_reward + self.failed_reward)
+
+    @property
+    def mean_reward(self):
+        return float(self.total_reward / self.total_episodes)
+
+    @property
+    def mean_steps(self):
+        return float(self.total_steps / self.total_episodes)
+
     def close(self):
-        num_episodes = self.n_successful_episodes + self.n_failed_episodes
-        success_rate = self.n_successful_episodes / num_episodes
-        total_reward = self.successful_reward + self.failed_reward
-        total_steps = self.successful_steps + self.failed_steps
+        success_rate = float(self.n_successful_episodes / self.total_episodes)
 
         logging.info(
             "Performed {} episodes with a success rate of {:.2%} an average reward of {:.4f} and an average of {:.4f} steps.".format(
-                num_episodes,
+                self.total_episodes,
                 success_rate,
-                total_reward / num_episodes,
-                total_steps / num_episodes)
+                self.mean_reward,
+                self.mean_steps)
         )
-        logging.info("Success Rate: {}/{} = {:.2%}".format(self.n_successful_episodes, num_episodes, success_rate))
+        logging.info("Success Rate: {}/{} = {:.2%}".format(self.n_successful_episodes, self.total_episodes, success_rate))
         if self.n_successful_episodes > 0:
             logging.info("Average reward if episode was successful: {:.4f}".format(
                 self.successful_reward / self.n_successful_episodes))
@@ -66,17 +83,17 @@ class EpisodeInformationAggregator:
                 self.failed_reward / self.n_failed_episodes))
 
         if self.path:
-            self._save_results(num_episodes, success_rate, total_reward, total_steps)
+            self._save_results(success_rate)
 
-    def _save_results(self, num_episodes, success_rate, total_reward, total_steps):
+    def _save_results(self, success_rate):
         output = dict()
-        output['n_episodes'] = num_episodes
+        output['n_episodes'] = self.total_episodes
         output['n_successful_episodes'] = self.n_successful_episodes
         output['n_failed_episodes'] = self.n_failed_episodes
-        output['success_rate'] = round(float(success_rate), 4)
-        output['total_reward'] = float(total_reward)
-        output['reward_per_episode'] = round(float(total_reward / num_episodes), 4)
-        output['avg_episode_length'] = round(float(total_steps / num_episodes), 4)
+        output['success_rate'] = round(success_rate, 4)
+        output['total_reward'] = self.total_reward
+        output['reward_per_episode'] = round(self.mean_reward, 4)
+        output['avg_episode_length'] = round(self.mean_steps, 4)
 
         if self.n_successful_episodes > 0:
             output['reward_on_success'] = round(float(self.successful_reward / self.n_successful_episodes), 4)

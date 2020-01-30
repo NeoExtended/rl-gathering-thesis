@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 import os
 import numpy as np
+import gym
 
 from stable_baselines.common import set_global_seeds
 from stable_baselines.common.vec_env import VecEnvWrapper
@@ -71,10 +72,39 @@ def safe_mean(arr):
     """
     return np.nan if len(arr) == 0 else np.mean(arr)
 
+
+def unwrap_env(env, target_vec_wrapper, target_wrapper):
+    """
+    Unwraps the given environment until the target wrapper is found.
+    Returns the first wrapper if target wrapper was not found.
+    :param env: (gym.Wrapper or VecEnvWrapper) The wrapper to unwrap.
+    :param target_wrapper: (gym.Wrapper) Class of the target wrapper in case of type(env)==gym.Wrapper.
+    :param target_vec_wrapper: (VecEnvWrapper) Class of the target wrapper in case of type(env)==VecEnvWrapper
+    """
+    if "Vec" in type(env).__name__:
+        return unwrap_vec_env(env, target_vec_wrapper)
+    else:
+        return unwrap_standard_env(env, target_wrapper)
+
+
+def unwrap_standard_env(env, target_wrapper):
+    """
+    Unwraps the given environment until the target wrapper is found.
+    Returns the first wrapper if target wrapper was not found.
+    :param env: (gym.Wrapper) The wrapper to unwrap.
+    :param target_wrapper: (gym.Wrapper) Class of the target wrapper.
+    """
+    while not isinstance(env, target_wrapper) and isinstance(env.env, gym.Wrapper):
+        env = env.env
+    return env
+
+
 def unwrap_vec_env(env, target_wrapper):
     """
     Unwraps the given environment until the target wrapper is found.
     Returns the first wrapper if target wrapper was not found.
+    :param env: (VecEnvWrapper) The wrapper to unwrap.
+    :param target_wrapper: (VecEnvWrapper) Class of the target wrapper.
     """
     while not isinstance(env, target_wrapper) and isinstance(env.venv, VecEnvWrapper):
         env = env.venv

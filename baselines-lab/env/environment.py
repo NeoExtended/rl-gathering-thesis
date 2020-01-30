@@ -9,7 +9,7 @@ from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
-from env.wrappers import VecGifRecorder
+from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
@@ -54,7 +54,7 @@ def get_wrapper_class(wrapper):
         return None
 
 
-def create_environment(config, algo_name, seed, log_dir=None, video_path=None):
+def create_environment(config, algo_name, seed, log_dir=None, video_path=None, evaluation=False):
     """
     Creates a new environment according to the parameters from the given lab config dictionary.
     :param config: (dict) Lab config from config['env'].
@@ -64,6 +64,7 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None):
     :param log_dir: (str) Path to the log directory.
     :param video_path: (str) If a video path is given the environment will create a gif of the env observation space
         before the normalization layer (if present).
+    :param evaluation: (bool) Weather or not to create an evaluation wrapper for the environment.
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
     logging.info("Creating environment.")
@@ -87,12 +88,12 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None):
             raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
     if algo_name in ['dqn', 'ddpg']:
-        return _create_standard_env(env_id, config, seed, log_dir, wrappers, normalize, frame_stack)
+        return _create_standard_env(env_id, config, seed, log_dir, wrappers, normalize, frame_stack, evaluation)
     else:
-        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path)
+        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation)
 
 
-def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation):
     if n_envs == 1:
         env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
     else:
@@ -118,10 +119,13 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
 
+    if evaluation:
+        env = VecEvaluationWrapper(env)
+
     return env
 
 
-def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize, frame_stack):
+def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize, frame_stack, evaluation):
     env_maker = make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)
     env = env_maker()
 
@@ -129,6 +133,8 @@ def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize,
         logging.warning("Normalization is not supported for DDPG/DQN methods.")
     if frame_stack:
         env = FrameStack(env, **frame_stack)
+    if evaluation:
+        env = EvaluationWrapper(env)
 
     return env
 

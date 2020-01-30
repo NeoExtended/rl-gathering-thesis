@@ -75,7 +75,8 @@ class ReplaySession(Session):
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
                                       log_dir=None,
-                                      video_path=data_path if args.obs_video else None)
+                                      video_path=data_path if args.obs_video else None,
+                                      evaluation=args.evaluate)
 
         self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
         self.deterministic = not args.stochastic
@@ -84,13 +85,13 @@ class ReplaySession(Session):
 
         if args.evaluate:
             self.num_episodes = args.evaluate
-            if "Vec" in type(self.env).__name__:
-                self.env = VecEvaluationWrapper(self.env, path=data_path)
-            else:
-                self.env = EvaluationWrapper(self.env, path=data_path)
+            eval_wrapper = util.unwrap_env(self.env, VecEvaluationWrapper, EvaluationWrapper)
+            eval_wrapper.aggregator.path = data_path
         else:
             # Render about 4 complete episodes per env in enjoy mode without evaluation.
             self.num_episodes = self.config['env']['n_envs'] * 4
+
+        self.runner = Runner(self.env, self.agent, deterministic=self.deterministic)
 
     def _setup_video_recorder(self, video_path):
         if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
@@ -104,18 +105,7 @@ class ReplaySession(Session):
             self.env = VecGifRecorder(self.env, video_path)
 
     def run(self):
-        obs = self.env.reset()
-        episode_counter = 0
-        step_counter = 0
-        while episode_counter < self.num_episodes:
-            action, _states = self.agent.predict(obs, deterministic=self.deterministic)
-            obs, rewards, dones, info = self.env.step(action)
-            self.env.render()
-            episode_counter += np.sum(dones)
-            step_counter += (self.config['env']['n_envs'])
-
-        # logging.info("Performed {} episodes with an avg length of {}".format(episode_counter, step_counter / episode_counter))
-        self.env.close()
+        self.runner.run(self.num_episodes)
 
 
 class TrainSession(Session):
@@ -155,4 +145,38 @@ class TrainSession(Session):
 
         # Save model at the end of the learning process
         saver.save(self.agent)
+        self.env.close()
+
+
+class SearchSession(Session):
+    def __init__(self, config, args):
+        Session.__init__(self, config, args)
+        self.evalation_interval = 20 #TODO
+        self.eval_method = config['search'].get('eval_method')
+
+    def run(self):
+        pass
+
+
+class Runner:
+    def __init__(self, env, agent, deterministic=True):
+        self.env = env
+        self.agent = agent
+        self.deterministic = deterministic
+
+    def run(self, n_episodes):
+        """
+        Simulates at least n_episodes of environment interactions.
+        """
+        obs = self.env.reset()
+        episode_counter = 0
+        step_counter = 0
+        while episode_counter < n_episodes:
+            action, _states = self.agent.predict(obs, deterministic=self.deterministic)
+            obs, rewards, dones, info = self.env.step(action)
+            self.env.render()
+            episode_counter += np.sum(dones)
+            step_counter += len(obs)
+
+        # logging.info("Performed {} episodes with an avg length of {}".format(episode_counter, step_counter / episode_counter))
         self.env.close()
