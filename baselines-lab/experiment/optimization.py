@@ -2,7 +2,7 @@ import logging
 import optuna
 from copy import deepcopy
 import numpy as np
-from optuna.pruners import SuccessiveHalvingPruner, MedianPruner
+from optuna.pruners import SuccessiveHalvingPruner, MedianPruner, NopPruner
 from optuna.samplers import RandomSampler, TPESampler
 from stable_baselines.common.vec_env import VecNormalize
 
@@ -55,14 +55,14 @@ class HyperparameterOptimizer:
         except KeyboardInterrupt:
             pass
 
-        print('Number of finished trials: ', len(study.trials))
-        print('Best trial:')
+        logging.info('Number of finished trials: {}'.format(len(study.trials)))
+        logging.info('Best trial:')
         trial = study.best_trial
 
-        print('Value: ', trial.value)
-        print('Params: ')
+        logging.info('Value: {}'.format(trial.value))
+        logging.info('Params: ')
         for key, value in trial.params.items():
-            print('    {}: {}'.format(key, value))
+            logging.info('    {}: {}'.format(key, value))
 
         return study.trials_dataframe()
 
@@ -74,7 +74,7 @@ class HyperparameterOptimizer:
             pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=self.n_evaluations // 3)
         elif self.pruner_method == 'none':
             # Do not prune
-            pruner = MedianPruner(n_startup_trials=self.n_trials, n_warmup_steps=self.n_evaluations)
+            pruner = NopPruner()
         else:
             raise ValueError('Unknown pruner: {}'.format(self.pruner_method))
         return pruner
@@ -95,6 +95,7 @@ class HyperparameterOptimizer:
 
     def evaluation_callback(self, locals_, globals_):
         self_ = locals_['self']
+        trial = self_.trial
 
         # Initialize variables
         if not hasattr(self_, 'is_pruned'):
@@ -107,6 +108,7 @@ class HyperparameterOptimizer:
             return True
 
         self_.last_time_evaluated = self_.num_timesteps
+        logging.debug("Evaluating model at {} timesteps".format(self_.num_timesteps))
 
         if self.eval_method == "fast":
             mean_reward = self._evaluate_fast()
@@ -118,8 +120,19 @@ class HyperparameterOptimizer:
         else:
             raise NotImplementedError("Unknown evaluation method '{}'".format(self.eval_method))
 
+        logging.info("Evaluated model at {} timesteps. Reached a mean reward of {}".format(self_.num_timesteps, mean_reward))
         self_.last_mean_test_reward = mean_reward
         self_.eval_idx += 1
+
+        # report best or report current ?
+        # report num_timesteps or elasped time ?
+        trial.report(-1 * mean_reward, self_.num_timesteps) #TODO: Change to num_timesteps?
+        # Prune trial if need
+        if trial.should_prune(self_.num_timesteps):
+            self_.is_pruned = True
+            return False
+
+        return True
 
     def _evaluate_fast(self):
         return self.test_env.aggregator.reward_rms
@@ -145,7 +158,9 @@ class HyperparameterOptimizer:
 
         def objective(trial):
             trial_config = deepcopy(self.config)
-            trial_config['algorithm'].update(sampler(trial))
+            sample = sampler(trial)
+            trial_config['algorithm'].update(sample)
+            logging.info("Sampled new configuration: {}".format(sample))
 
             integrated_evaluation = True if self.eval_method == "fast" else False
 
@@ -163,6 +178,7 @@ class HyperparameterOptimizer:
             model.trial = trial
 
             try:
+                logging.debug("Training model...")
                 model.learn(trial_config['search']['n_timesteps'], callback=self.callback_step)
                 # Free memory
                 model.env.close()
@@ -170,6 +186,7 @@ class HyperparameterOptimizer:
             except AssertionError:
                 # Sometimes, random hyperparams can generate NaN
                 # Free memory
+                logging.debug("Something went wrong - stopping trial.")
                 model.env.close()
                 self.test_env.close()
                 raise

@@ -22,7 +22,8 @@ class GifRecorder:
         self.images = []
 
     def close(self):
-        gif_path = os.path.join(self.path, "{}{}.gif".format(self.name_prefix, get_timestamp()))
-        logging.info("Saving gif to {}".format(gif_path))
-        imageio.mimsave(gif_path, [np.array(img) for img in self.images], fps=30)
-        self.reset()
+        if len(self.images) > 0:
+            gif_path = os.path.join(self.path, "{}{}.gif".format(self.name_prefix, get_timestamp()))
+            logging.info("Saving gif to {}".format(gif_path))
+            imageio.mimsave(gif_path, [np.array(img) for img in self.images], fps=30)
+            self.reset()

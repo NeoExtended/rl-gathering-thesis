@@ -10,6 +10,10 @@ from utils import config_util
 from experiment.session import Session
 from env.gym_maze.envs.MazeBase import MazeBase
 
+import tensorflow as tf
+#tf.logging.set_verbosity(tf.logging.ERROR)
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
     #parser.add_argument("lab_mode", type=check_lab_mode,
@@ -48,6 +52,7 @@ def parse_args(args):
 
 
 def main(args=None):
+    # TODO: Investigate RNG initialization bug!
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments

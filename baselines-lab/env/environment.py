@@ -4,6 +4,7 @@ import logging
 import copy
 
 import gym
+from gym.envs.classic_control import CartPoleEnv
 from stable_baselines.bench import Monitor
 from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack
@@ -25,12 +26,13 @@ def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     def _init():
         set_global_seeds(seed + rank)
         env = gym.make(env_id, **env_kwargs)
+        env.seed(seed + rank)
+        env.action_space.seed(seed + rank)
 
         if wrappers:
             for wrapper in wrappers:
                 env = wrapper[0](env=env, **wrapper[1])
 
-        env.seed(seed + rank)
         if log_dir:
             env = Monitor(env, os.path.join(log_dir, str(rank)), allow_early_resets=True)
         return env
@@ -67,13 +69,13 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
     :param evaluation: (bool) Weather or not to create an evaluation wrapper for the environment.
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
-    logging.info("Creating environment.")
     config = copy.deepcopy(config)
     env_id = config.pop('name')
     n_envs = config.pop('n_envs', 1)
     normalize = config.pop('normalize', None)
     frame_stack = config.pop('frame_stack', None)
     multiprocessing = config.pop('multiprocessing', True)
+    logging.info("Creating environment with id {} and {} instances.".format(env_id, n_envs))
 
     # Get tuples with (wrapper_class, wrapper_kwargs)
     wrappers_config = config.pop('wrappers', [])
@@ -144,7 +146,7 @@ def _precompute_normalization(env, num_envs, samples, config):
 
     logging.info("Precomputing normalization. This may take a while.")
     env.reset()
-    log_step = 1000 // num_envs
+    log_step = 5000 // num_envs
     for i in range(samples // num_envs):
         actions = [env.action_space.sample() for _ in range(num_envs)]
         obs, rewards, dones, info = env.step(actions)

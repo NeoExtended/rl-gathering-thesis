@@ -24,12 +24,12 @@ env:
 
 meta:
   seed: 42
-  n_timesteps: 24000
+  n_timesteps: 14000
   log_dir: "./logs/Labtest_CartPole"
   save_interval: 4000
 
 search:
   n_timesteps: 40000
   eval_method: "normal"
-  n_trials: 40
+  n_trials: 20
   sampler: "tpe"

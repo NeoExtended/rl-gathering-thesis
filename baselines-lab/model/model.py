@@ -28,7 +28,6 @@ def create_model(config, env, seed):
     :param seed: The current seed for the model prngs.
     :return: (BaseRLModel) A model which can be used to learn in the given environment.
     """
-    logging.info("Creating model.")
     config = copy.deepcopy(config)
     name =  config.pop('name')
     tlog = config.pop('tensorboard_log', None)
@@ -55,7 +54,7 @@ def create_model(config, env, seed):
             **config)
 
     else:
-        logging.info("Creating new agent.")
+        logging.info("Creating new model for {}.".format(name))
         policy_name = policy_config.pop('name')
 
         return ALGOS[name](
