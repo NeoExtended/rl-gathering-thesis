@@ -10,7 +10,7 @@ algorithm:
     final_value: 5.0e-5
     final_point: 0.5
   nminibatches: 16
-  n_steps: 512
+  n_steps: 128
 
 env:
   name: "Maze0318Continuous-v0"

@@ -1,9 +1,9 @@
-import random
 import gym
 import numpy as np
 import collections
 import matplotlib.pyplot as plt
 import cv2
+from gym.utils import seeding
 
 from env.gym_maze.rewards import GoalRewardGenerator, ContinuousRewardGenerator
 
@@ -29,6 +29,8 @@ class MazeBase(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
+        self.np_random = None
+        self.seed()
         self.freespace = np.loadtxt(map_file).astype(int) # 1: Passable terrain, 0: Wall
         self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
         self.cost = None
@@ -66,17 +68,17 @@ class MazeBase(gym.Env):
 
         # Randomize number of robots if necessary
         if self.randomize_n_robots:
-            self.robot_count = random.randrange(1, len(locations) // 5)
+            self.robot_count = self.np_random.randint(1, len(locations) // 5)
             self.reward_generator.set_robot_count(self.robot_count)
 
         # Randomize goal position if necessary
         if self.randomize_goal:
-            new_goal = locations[random.randrange(0, len(locations))]
+            new_goal = locations[self.np_random.randint(0, len(locations))]
             self.goal = [new_goal[1], new_goal[0]]
             self._calculate_cost_map()
 
         # Reset robot positions
-        choice = np.random.choice(len(locations), self.robot_count, replace=False)
+        choice = self.np_random.choice(len(locations), self.robot_count, replace=False)
         self.robot_locations = locations[choice, :] # Robot Locations are in y, x (row, column) order
         self.reward_generator.reset(self.robot_locations)
         return self._generate_observation()
@@ -120,6 +122,10 @@ class MazeBase(gym.Env):
             observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
         return np.expand_dims(observation, axis=2).astype(np.uint8) # Convert to single channel image and uint8 to save memory
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
 
     def _calculate_cost_map(self):
         """
