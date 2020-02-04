@@ -1,3 +1,4 @@
+import numpy as np
 import gym
 import cv2
 from stable_baselines.common.vec_env import VecEnvWrapper
@@ -117,3 +118,19 @@ class VecEvaluationWrapper(VecEnvWrapper):
     def close(self):
         VecEnvWrapper.close(self)
         self.aggregator.close()
+
+
+class VecScaledFloatFrame(VecEnvWrapper):
+    def __init__(self, env):
+        VecEnvWrapper.__init__(self, env)
+
+    def reset(self):
+        obs = self.venv.reset()
+        return self._scale_obs(obs)
+
+    def step_wait(self):
+        obs, rews, dones, infos = self.venv.step_wait()
+        return self._scale_obs(obs), rews, dones, infos
+
+    def _scale_obs(self, obs):
+        return np.array(obs).astype(np.float32) / 255.0
