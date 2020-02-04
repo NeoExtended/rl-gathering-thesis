@@ -107,6 +107,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
     if video_path:
         env = VecGifRecorder(env, video_path, record_obs=True)
 
+    if evaluation:
+        env = VecEvaluationWrapper(env)
+
     if normalize:
         if isinstance(normalize, bool):
             env = VecNormalize(env)
@@ -120,9 +123,6 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
                 env = VecNormalize(env, **normalize)
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
-
-    if evaluation:
-        env = VecEvaluationWrapper(env)
 
     return env
 

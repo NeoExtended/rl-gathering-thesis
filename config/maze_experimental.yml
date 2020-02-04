@@ -10,7 +10,7 @@ algorithm:
     final_value: 5.0e-5
     final_point: 0.5
   nminibatches: 16
-  n_steps: 512
+  n_steps: 128
 
 env:
   name: "Maze0318Continuous-v0"
@@ -18,10 +18,10 @@ env:
     - env.wrappers.WarpGrayscaleFrame
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
+    - stable_baselines.common.atari_wrappers.ScaledFloatFrame
   n_envs: 32
-  normalize:
-    norm_reward: true
-    norm_obs: true
+  frame_stack:
+    n_stack: 4
   robot_count: 256
 
 meta:
