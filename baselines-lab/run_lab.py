@@ -8,6 +8,10 @@ import logging
 from utils import config_util
 from experiment import Session
 
+# Import env package to init gym registry
+import env.gym_maze
+
+
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.logging.set_verbosity(tf.logging.ERROR)
