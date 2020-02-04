@@ -121,8 +121,12 @@ class VecEvaluationWrapper(VecEnvWrapper):
 
 
 class VecScaledFloatFrame(VecEnvWrapper):
+    """
+    Scales image observations to [0.0, 1.0]. May be less memory efficient due to float conversion.
+    """
     def __init__(self, env):
-        VecEnvWrapper.__init__(self, env)
+        self.observation_space = gym.spaces.Box(low=0, high=1.0, shape=env.observation_space.shape, dtype=np.float32)
+        VecEnvWrapper.__init__(self, env, observation_space=self.observation_space)
 
     def reset(self):
         obs = self.venv.reset()
