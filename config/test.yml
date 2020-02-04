@@ -29,7 +29,7 @@ meta:
   save_interval: 4000
 
 search:
-  n_timesteps: 40000
+  n_timesteps: 8000
   eval_method: "normal"
-  n_trials: 20
+  n_trials: 4
   sampler: "tpe"

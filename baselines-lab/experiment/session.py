@@ -5,16 +5,14 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from stable_baselines.common.vec_env import VecVideoRecorder
+import matplotlib.pyplot as plt
 
 from utils import util, config_util
 from env.environment import create_environment
 from model.model import create_model
 from model.checkpoints import CheckpointManager
-from experiment.logger import TensorboardLogger
-from experiment.runner import Runner
-from experiment.optimization import HyperparameterOptimizer
+from experiment import TensorboardLogger, Runner, HyperparameterOptimizer, Sampler
 from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper
-
 
 
 class Session(ABC):
@@ -84,7 +82,12 @@ class ReplaySession(Session):
                                       video_path=data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 
-        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        # TODO: Reenable agent seeding once the stable-baselines bug is fixed
+        # self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        self.agent = create_model(config['algorithm'], self.env, seed=None)
+
+        obs = self.env.reset()
+
         self.deterministic = not args.stochastic
         if args.video:
             self._setup_video_recorder(data_path)
@@ -125,8 +128,9 @@ class TrainSession(Session):
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
                                       log_dir=self.log)
-
-        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        # TODO: Reenable agent seeding once the stable-baselines bug is fixed
+        # self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        self.agent = create_model(config['algorithm'], self.env, seed=None)
 
     def run(self):
         logging.info("Starting training.")
@@ -158,6 +162,36 @@ class SearchSession(Session):
     def __init__(self, config, args):
         Session.__init__(self, config, args)
         self.optimizer = HyperparameterOptimizer(config, self.log)
+        self.plot = args.plot
 
     def run(self):
-        self.optimizer.optimize()
+        study = self.optimizer.optimize()
+
+        dataframe = study.trials_dataframe()
+        dataframe.to_csv(os.path.join(self.log, "search_history.csv"))
+        if self.plot:
+            hist = dataframe.hist()
+            plt.show()
+        promising = self._find_promising_trials(study)
+        for i, trial in enumerate(promising):
+            self._save_config(study.trials[trial[0]], "promising_trial_{}.yml".format(i))
+        self._save_config(study.best_trial, "best_trial.yml")
+
+    def _save_config(self, trial, name):
+        alg_params = {}
+        env_params = {}
+        for key, value in trial.params.items():
+            if key.startswith("env_"):
+                env_params[key[4:]] = value
+            elif key.startswith("alg_"):
+                alg_params[key[4:]] = value
+        sampled_config = Sampler.create_sampler(self.config).update_config(alg_params, env_params)
+        config_util.save_config(sampled_config, os.path.join(self.log, name))
+
+    def _find_promising_trials(self, study):
+        promising = list()
+        for idx, trial in enumerate(study.trials):
+            promising.append([idx, trial.value])
+
+        promising = sorted(promising, key=lambda x: x[1])
+        return promising[:3]

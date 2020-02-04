@@ -4,21 +4,16 @@ warnings.filterwarnings("ignore", category=FutureWarning) # Ignore future warnin
 import sys
 import argparse
 import logging
-import re
 
 from utils import config_util
-from experiment.session import Session
-from env.gym_maze.envs.MazeBase import MazeBase
+from experiment import Session
 
 import tensorflow as tf
-#tf.logging.set_verbosity(tf.logging.ERROR)
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
-    #parser.add_argument("lab_mode", type=check_lab_mode,
-    #                   help="Mode for the lab - use 'train' for training and enjoj@[best, last] enjoy@{log_location}:[best, last] for replay")
-
     subparsers = parser.add_subparsers(help="Argument defining the lab mode.", dest="lab_mode", required=True)
 
     enjoy_parser = subparsers.add_parser("enjoy")
@@ -45,6 +40,9 @@ def parse_args(args):
     train_parser = subparsers.add_parser("train")
 
     search_parser = subparsers.add_parser("search")
+    search_parser.add_argument("--plot",
+                               help="Weather or not to plot the distribution of choosen hyperparameters",
+                               action="store_true")
 
     parser.add_argument("config_file", type=str, help="Location of the lab config file")
     parser.add_argument("--verbose", type=int, default=10, help="Verbosity level - corresponds to python logging levels")
@@ -52,7 +50,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Investigate RNG initialization bug!
     # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments
@@ -60,6 +57,8 @@ def main(args=None):
     # TODO: New MazeEnv with random maze
     # TODO: Config dependencies: Link configs together for clearer params between configs.
     # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.
+    # TODO: Fix --checkpoint-path option
+    # TODO: Investigate performance (float vs int obs, etc)
 
     # parse arguments
     if args is None:
