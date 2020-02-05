@@ -149,7 +149,7 @@ class TrainSession(Session):
             env=self.env,
             tb_log=bool(self.log))
         self.add_callback(saver)
-        self.add_callback(TensorboardLogger(n_envs=self.config['env']['n_envs']))
+        self.add_callback(TensorboardLogger())
 
         self.agent.learn(self.config['meta']['n_timesteps'], callback=self.step)
 
@@ -159,6 +159,9 @@ class TrainSession(Session):
 
 
 class SearchSession(Session):
+    """
+    Control unit for the search lab mode
+    """
     def __init__(self, config, args):
         Session.__init__(self, config, args)
         self.optimizer = HyperparameterOptimizer(config, self.log)
@@ -166,12 +169,19 @@ class SearchSession(Session):
 
     def run(self):
         study = self.optimizer.optimize()
+        self._log_study_info(study)
 
         dataframe = study.trials_dataframe()
         dataframe.to_csv(os.path.join(self.log, "search_history.csv"))
         if self.plot:
-            hist = dataframe.hist()
+            # Suppress find font spam
+            logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+            try:
+                hist = dataframe.hist()
+            except:
+                logging.warning("Could not plot data due to infinite values. :(")
             plt.show()
+
         promising = self._find_promising_trials(study)
         for i, trial in enumerate(promising):
             self._save_config(study.trials[trial[0]], "promising_trial_{}.yml".format(i))
@@ -195,3 +205,13 @@ class SearchSession(Session):
 
         promising = sorted(promising, key=lambda x: x[1])
         return promising[:3]
+
+    def _log_study_info(self, study):
+        logging.info('Number of finished trials: {}'.format(len(study.trials)))
+        logging.info('Best trial:')
+        trial = study.best_trial
+
+        logging.info('Value: {}'.format(trial.value))
+        logging.info('Params: ')
+        for key, value in trial.params.items():
+            logging.info('  {}: {}'.format(key, value))

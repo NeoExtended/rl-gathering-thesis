@@ -3,6 +3,10 @@ from copy import deepcopy
 
 
 class Sampler(ABC):
+    """
+    Base class for all samplers. Generates parameter sets from a specific sampler for hyperparameter optimization.
+    :param config: (dict) Lab configuration.
+    """
     def __init__(self, config):
         self.config = config
         self.alg_parameters = {}
@@ -24,11 +28,24 @@ class Sampler(ABC):
         return self.sample(**kwargs)
 
     def sample(self, trial):
+        """
+        Samples a new parameter set and returns an updated lab config.
+        :param trial: (optuna.trial.Trial) Optuna trial object containing the sampler that should be used to sample the
+            parameters.
+        """
         alg_sample = self.sample_parameters(trial, self.alg_parameters, 'alg_')
         env_sample = self.sample_parameters(trial, self.env_parameters, 'env_')
         return self.update_config(alg_sample, env_sample)
 
     def sample_parameters(self, trial, parameters, prefix=""):
+        """
+        Samples parameters for a trial, from a given parameter set.
+        :param trial: (optuna.trial.Trial) Optuna trial to sample parameters for.
+        :param parameters: (dict) The parameter set which should be used for sampling.
+            Must be in form of key: (method, data)
+        :param prefix: (str) A name prefix for all parameters.
+        :return (dict) Returns a dict containing the sampled parameters
+        """
         sample = {}
         for name, (method, data) in parameters.items():
             p_name = prefix + name
@@ -49,6 +66,12 @@ class Sampler(ABC):
         return sample
 
     def update_config(self, alg_sample, env_sample):
+        """
+        Updates the config with a set of sampled parameters. Will not overwrite existing keys.
+        :param alg_sample: (dict) Set of parameters to update the algorithm configuration.
+        :param env_sample: (dict) Set of parameters to update the environment configuration.
+        :return (dict) The updated lab config.
+        """
         alg_sample, env_sample = self.transform_samples(alg_sample, env_sample)
         sampled_config = deepcopy(self.config)
 
@@ -66,6 +89,12 @@ class Sampler(ABC):
 
     @abstractmethod
     def transform_samples(self, alg_sample, env_sample):
+        """
+        Method which is called before updating the dictionary. May be used to filter out invalid configurations.
+        :param alg_sample: (dict) Set of parameters to update the algorithm configuration.
+        :param env_sample: (dict) Set of parameters to update the environment configuration.
+        :return (dict, dict) The updated or filtered alg_sample and env_sample
+        """
         pass
 
     def _parse_config(self, parameter_config):
@@ -87,6 +116,10 @@ class Sampler(ABC):
 
     @staticmethod
     def create_sampler(config):
+        """
+        Creates a new sampler for the given lab configuration.
+        :param config: (dict) Lab configuration.
+        """
         alg_name = config['algorithm']['name']
         if alg_name == 'ppo2':
             return PPO2Sampler(config)
@@ -95,6 +128,9 @@ class Sampler(ABC):
 
 
 class PPO2Sampler(Sampler):
+    """
+    Sampler for basic PPO2 parameters.
+    """
     def __init__(self, config):
         super().__init__(config)
         parameters = {'batch_size': ('categorial', [32, 64, 128, 256]),

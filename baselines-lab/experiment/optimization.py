@@ -14,16 +14,20 @@ from experiment import Runner, TensorboardLogger, Sampler
 
 
 class HyperparameterOptimizer:
+    """
+    Class for automated hyperparameter optimization with optuna.
+    :param config: (dict) Lab config.
+    :param log_dir: (str) Global log directory.
+    """
     def __init__(self, config, log_dir):
-        # TODO: Code cleanup
-
         search_config = config['search']
         self.config = config
 
-        # test during 5 episodes
+        # Number of test episodes per evaluation
         self.n_test_episodes = search_config.get('n_test_episodes', 10)
-        # evaluate every 20th of the maximum budget per iteration
+        # Number of evaluations per trial
         self.n_evaluations = search_config.get('n_evaluations', 15)
+        # Timesteps per trial
         self.n_timesteps = search_config.get('n_timesteps', 10000)
         self.evaluation_interval = int(self.n_timesteps / self.n_evaluations)
         self.n_trials = search_config.get('n_trials', 10)
@@ -36,53 +40,72 @@ class HyperparameterOptimizer:
         self.train_env = None
         self.test_env = None
         self.log_dir = log_dir
-        self.logger = TensorboardLogger(config['env']['n_envs'])
-        self.callbacks = [self.evaluation_callback, self.logger.step]
+        self.logger = TensorboardLogger()
+        self.callbacks = [self._evaluation_callback, self.logger.step]
         self.integrated_evaluation = True if self.eval_method == "fast" else False
 
-        if not self.integrated_evaluation:
-            test_env_config = deepcopy(config)
-            if self.eval_method == "slow":
-                test_env_config['env']['num_envs'] = 1
-
-            self.test_env = create_environment(test_env_config['env'], config['algorithm']['name'], test_env_config['meta']['seed'],
-                                               evaluation=True)
+        self._initialize_test_env()
 
     def optimize(self):
+        """
+        Starts the optimization process. This function will return even if the program receives a keyboard interrupt.
+        :return (optuna.study.Study) An optuna study object containing all information about each trial that was run.
+        """
         sampler = self._make_sampler()
         pruner = self._make_pruner()
+        logging.info("Starting optimization process.")
         logging.info("Sampler: {} - Pruner: {}".format(self.sampler_method, self.pruner_method))
 
         study = optuna.create_study(sampler=sampler, pruner=pruner)
-        objective = self.create_objective_function()
+        objective = self._create_objective_function()
 
         try:
             study.optimize(objective, n_trials=self.n_trials, n_jobs=self.n_jobs)
         except KeyboardInterrupt:
+            # Still save results after keyboard interrupt!
             pass
-
-        logging.info('Number of finished trials: {}'.format(len(study.trials)))
-        logging.info('Best trial:')
-        trial = study.best_trial
-
-        logging.info('Value: {}'.format(trial.value))
-        logging.info('Params: ')
-        for key, value in trial.params.items():
-            logging.info('    {}: {}'.format(key, value))
 
         return study
 
+    def _initialize_test_env(self):
+        if not self.integrated_evaluation:
+            test_env_config = deepcopy(self.config)
+            if self.eval_method == "slow":
+                test_env_config['env']['num_envs'] = 1
+
+            if not test_env_config['env'].get('n_envs', None):
+                test_env_config['env']['n_envs'] = 8
+
+            self.test_env = create_environment(test_env_config['env'],
+                                               self.config['algorithm']['name'],
+                                               test_env_config['meta']['seed'],
+                                               evaluation=True)
+
     def _make_pruner(self):
-        # n_warmup_steps: Disable pruner until the trial reaches the given number of step.
-        if self.pruner_method == 'halving':
-            pruner = SuccessiveHalvingPruner(min_resource=1, reduction_factor=4, min_early_stopping_rate=0)
-        elif self.pruner_method == 'median':
-            pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=self.n_timesteps // 6)
-        elif self.pruner_method == 'none':
-            # Do not prune
-            pruner = NopPruner()
+        if isinstance(self.pruner_method, str):
+            if self.pruner_method == 'halving':
+                pruner = SuccessiveHalvingPruner(min_resource=self.n_timesteps // 6, reduction_factor=4,  min_early_stopping_rate=0)
+            elif self.pruner_method == 'median':
+                pruner = MedianPruner(n_startup_trials=5, n_warmup_steps=self.n_timesteps // 6)
+            elif self.pruner_method == 'none':
+                # Do not prune
+                pruner = NopPruner()
+            else:
+                raise ValueError('Unknown pruner: {}'.format(self.pruner_method))
+        elif isinstance(self.pruner_method, dict):
+            method_copy = deepcopy(self.pruner_method)
+            method = method_copy.pop('method')
+            if method == 'halving':
+                pruner = SuccessiveHalvingPruner(**method_copy)
+            elif method == 'median':
+                pruner = MedianPruner(**method_copy)
+            elif method == 'none':
+                # Do not prune
+                pruner = NopPruner()
+            else:
+                raise ValueError('Unknown pruner: {}'.format(self.pruner_method))
         else:
-            raise ValueError('Unknown pruner: {}'.format(self.pruner_method))
+            raise ValueError("Wrong type for pruner settings!")
         return pruner
 
     def _make_sampler(self):
@@ -90,16 +113,11 @@ class HyperparameterOptimizer:
             sampler = RandomSampler(seed=self.seed)
         elif self.sampler_method == 'tpe':
             sampler = TPESampler(n_startup_trials=5, seed=self.seed)
-        # elif sampler_method == 'skopt':
-        #     # cf https://scikit-optimize.github.io/#skopt.Optimizer
-        #     # GP: gaussian process
-        #     # Gradient boosted regression: GBRT
-        #     sampler = SkoptSampler(skopt_kwargs={'base_estimator': "GP", 'acq_func': 'gp_hedge'})
         else:
             raise ValueError('Unknown sampler: {}'.format(self.sampler_method))
         return sampler
 
-    def evaluation_callback(self, locals_, globals_):
+    def _evaluation_callback(self, locals_, globals_):
         self_ = locals_['self']
         trial = self_.trial
 
@@ -185,8 +203,7 @@ class HyperparameterOptimizer:
         if self.integrated_evaluation:
             self.test_env = unwrap_env(self.train_env, VecEvaluationWrapper, EvaluationWrapper)
 
-    def create_objective_function(self):
-        algo_name = self.config['algorithm']['name']
+    def _create_objective_function(self):
         sampler = Sampler.create_sampler(self.config)
 
         def objective(trial):
@@ -200,12 +217,13 @@ class HyperparameterOptimizer:
             # model = create_model(trial_config['algorithm'], train_env, trial_config['meta']['seed'])
             # TODO: Reenable once stable-baselines bug is fixed
 
+            self.logger.reset()
             model.trial = trial
             try:
                 logging.debug("Training model...")
                 model.learn(trial_config['search']['n_timesteps'], callback=self.callback_step)
-            except AssertionError:
-                # Sometimes, random hyperparams can generate NaN
+            except:
+                # Random hyperparams may be invalid
                 logging.debug("Something went wrong - stopping trial.")
                 raise
             is_pruned = False
@@ -223,5 +241,8 @@ class HyperparameterOptimizer:
         return objective
 
     def callback_step(self, locals_, globals_):
+        ret_val = True
         for cb in self.callbacks:
-            cb(locals_, globals_)
+            if not cb(locals_, globals_):
+                ret_val = False
+        return ret_val

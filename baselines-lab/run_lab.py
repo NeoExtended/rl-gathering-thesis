@@ -54,7 +54,6 @@ def parse_args(args):
 
 
 def main(args=None):
-    # TODO: Hyperparameter optimization / Search Lab Mode
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments
     # TODO: Make GoalRewardGenerator configurable

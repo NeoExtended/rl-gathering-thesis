@@ -10,16 +10,16 @@ from utils import safe_mean
 class TensorboardLogger:
     """
     Logs additional values into the tensorboard log. Can be used as a callback for all learning algorithms.
-    :param n_envs: Number of environments that are used in the training process
     :param smoothing: Number of episodes over which the running average for episode length and return
         will be calculated.
     """
-    def __init__(self, n_envs, smoothing=100):
+    def __init__(self, smoothing=100):
         self.ep_len_buffer = deque(maxlen=smoothing)
         self.reward_buffer = deque(maxlen=smoothing)
-        self.n_episodes = [0]*n_envs
+        self.n_episodes = None
         self.t_start = time.time()
         self.last_timesteps = 0
+        self.first_step = True
 
     def step(self, locals_, globals_):
         """
@@ -28,16 +28,41 @@ class TensorboardLogger:
         self_ = locals_['self']
         env = self_.env
 
+        if self.first_step:
+            self._initialize(env)
+            self.first_step = False
+
         self._retrieve_values(env)
         self._write_summary(locals_['writer'], self_.num_timesteps)
         return True
+
+    def reset(self):
+        """
+        Resets the logger.
+        """
+        self.ep_len_buffer.clear()
+        self.reward_buffer.clear()
+        self.n_episodes = None
+        self.first_step = True
+        self.last_timesteps = 0
+        self.t_start = time.time()
+
+    def _initialize(self, env):
+        """
+        Initializes the logger in the first step by retrieving the number of used environments.
+        """
+        if isinstance(env, VecEnv):
+            episode_rewards = env.env_method("get_episode_rewards")
+            self.n_episodes = [0] * len(episode_rewards)
+        else:
+            self.n_episodes = [0]
 
     def _retrieve_values(self, env):
         """
         This method makes use of methods from the Monitor environment wrapper to retrieve episode information
         independent of the used algorithm.
         """
-        if isinstance(env, VecEnv) or isinstance(env, VecEnvWrapper):
+        if isinstance(env, VecEnv):
             self._retrieve_from_vec_env(env)
         else:
             self._retrieve_from_env(env)
