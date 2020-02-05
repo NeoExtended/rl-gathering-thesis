@@ -44,7 +44,8 @@ def clean_config(config, args):
         if len(args.checkpoint_path) > 0:
             set_checkpoints(config, args.checkpoint_path, args.type)
         else:
-            set_checkpoints(config, config['meta']['log_dir'], args.type)
+            path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+            set_checkpoints(config, path, args.type)
 
         # Reduce number of envs if there are too many
         if config['env']['n_envs'] > 32:
@@ -57,7 +58,8 @@ def clean_config(config, args):
         # Allow fast loading of recently trained agents via "last" and "best" checkpoints
         if config['algorithm'].get('trained_agent', None):
             if config['algorithm']['trained_agent'] in ['best', 'last']:
-                set_checkpoints(config, config['meta']['log_dir'], config['algorithm']['trained_agent'])
+                path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+                set_checkpoints(config, path, config['algorithm']['trained_agent'])
 
     return config
 

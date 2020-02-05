@@ -71,7 +71,7 @@ class ReplaySession(Session):
         Session.__init__(self, config, args)
 
         if args.checkpoint_path:
-            data_path = args.get("checkpoint_path")
+            data_path = args.checkpoint_path
         else:
             data_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
 

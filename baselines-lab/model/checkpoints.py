@@ -179,7 +179,6 @@ class CheckpointManager:
         :return: (str, None) or (str, str) depending on the normalization parameter, containing paths to the
             latest checkpoint files.
         """
-        path = cls._get_latest_run(path)
         sp_path = os.path.join(path, "checkpoints")
         assert os.path.exists(sp_path), "No checkpoints directory found in {}".format(path)
 
@@ -203,7 +202,7 @@ class CheckpointManager:
             return model_path, None
 
     @staticmethod
-    def _get_latest_run(path):
+    def get_latest_run(path):
         runs = os.listdir(path)
         runs.sort()
         return os.path.join(path, runs[-1])  # Return latest run
