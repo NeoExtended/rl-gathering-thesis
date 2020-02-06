@@ -60,6 +60,11 @@ def clean_config(config, args):
             if config['algorithm']['trained_agent'] in ['best', 'last']:
                 path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
                 set_checkpoints(config, path, config['algorithm']['trained_agent'])
+    elif args.lab_mode == "search":
+        resume = config['search'].get("resume", False)
+        if resume and isinstance(resume, bool):
+            path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+            config['search']['resume'] = path
 
     return config
 

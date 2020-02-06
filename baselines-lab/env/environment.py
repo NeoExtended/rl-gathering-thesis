@@ -75,7 +75,7 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
     normalize = config.pop('normalize', None)
     frame_stack = config.pop('frame_stack', None)
     multiprocessing = config.pop('multiprocessing', True)
-    scale = config.pop('scale', False)
+    scale = config.pop('scale', None)
     logging.info("Creating environment with id {} and {} instances.".format(env_id, n_envs))
 
     # Get tuples with (wrapper_class, wrapper_kwargs)
@@ -124,7 +124,11 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
                 env = VecNormalize(env, **normalize)
 
     if scale:
-        env = VecScaledFloatFrame(env)
+        if isinstance(scale, dict):
+            env = VecScaledFloatFrame(env, **scale)
+        else:
+            env = VecScaledFloatFrame(env)
+
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
 

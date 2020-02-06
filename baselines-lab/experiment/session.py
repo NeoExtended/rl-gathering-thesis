@@ -25,15 +25,7 @@ class Session(ABC):
     def __init__(self, config, args):
         self.config = config
         util.set_random_seed(self.config)
-
-        log_dir = self.config['meta'].get('log_dir', None)
-        if args.lab_mode in ["train", "search"]:
-            self.log = util.create_log_directory(log_dir)
-            if self.log:
-                config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
-        else:
-            self.log = None
-
+        self.log = None
         self.lab_mode = args.lab_mode
         self.callbacks = []
 
@@ -48,8 +40,12 @@ class Session(ABC):
         self.callbacks.append(callback)
 
     def step(self, locals_, globals_):
+        ret_val = True
         for cb in self.callbacks:
-            cb.step(locals_, globals_)
+            ret = cb.step(locals_, globals_)
+            if isinstance(ret, bool) and not ret:
+                ret_val = False
+        return ret_val
 
     @staticmethod
     def create_session(config, args):
@@ -61,6 +57,12 @@ class Session(ABC):
             return SearchSession(config, args)
         else:
             raise ValueError("Unknown lab mode!")
+
+    def _create_log_dir(self):
+        log_dir = self.config['meta'].get('log_dir', None)
+        self.log = util.create_log_directory(log_dir)
+        if self.log:
+            config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
 
 
 class ReplaySession(Session):
@@ -123,7 +125,7 @@ class TrainSession(Session):
     """
     def __init__(self, config, args):
         Session.__init__(self, config, args)
-
+        self._create_log_dir()
         self.env = create_environment(config=config['env'],
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
@@ -164,6 +166,13 @@ class SearchSession(Session):
     """
     def __init__(self, config, args):
         Session.__init__(self, config, args)
+
+        if config['search'].get("resume", False):
+            self.log = config['search']['resume']
+            util.set_log_directory(self.log)
+        else:
+            self._create_log_dir()
+
         self.optimizer = HyperparameterOptimizer(config, self.log)
         self.plot = args.plot
 

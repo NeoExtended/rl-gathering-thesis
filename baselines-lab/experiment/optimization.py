@@ -1,4 +1,5 @@
 import logging
+import os
 import optuna
 from copy import deepcopy
 import numpy as np
@@ -56,7 +57,12 @@ class HyperparameterOptimizer:
         logging.info("Starting optimization process.")
         logging.info("Sampler: {} - Pruner: {}".format(self.sampler_method, self.pruner_method))
 
-        study = optuna.create_study(sampler=sampler, pruner=pruner)
+        study_name = "hypersearch"
+        study = optuna.create_study(study_name=study_name,
+                                    sampler=sampler,
+                                    pruner=pruner,
+                                    storage='sqlite:///{}'.format(os.path.join(self.log_dir, "search.db")),
+                                    load_if_exists=True)
         objective = self._create_objective_function()
 
         try:

@@ -54,6 +54,14 @@ def create_log_directory(root):
     return log_dir
 
 
+def set_log_directory(log_directory):
+    """
+    Sets the global log directory.
+    """
+    global log_dir
+    log_dir = log_directory
+
+
 def get_log_directory():
     """
     Returns the current log directory. May be None if create_log_directory() has not been called before.
