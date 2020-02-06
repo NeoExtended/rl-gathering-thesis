@@ -13,8 +13,8 @@ import env.gym_maze
 
 
 import tensorflow as tf
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-tf.logging.set_verbosity(tf.logging.ERROR)
+#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+#tf.logging.set_verbosity(tf.logging.ERROR)
 
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
@@ -60,7 +60,6 @@ def main(args=None):
     # TODO: New MazeEnv with random maze
     # TODO: Config dependencies: Link configs together for clearer params between configs.
     # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.
-    # TODO: Investigate performance (float vs int obs, etc)
     # TODO: Saving/Resuming in hyperparameter optimization
 
     # parse arguments

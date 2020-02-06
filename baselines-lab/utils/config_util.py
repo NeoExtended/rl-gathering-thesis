@@ -7,7 +7,6 @@ import json
 import yaml
 
 from utils import util
-from model.checkpoints import CheckpointManager
 
 
 def get_config(config_file, args):
@@ -30,6 +29,7 @@ def clean_config(config, args):
     :param args: (dict) parsed args dict
     :return: (dict) The cleaned config dictionary
     """
+    from model.checkpoints import CheckpointManager
 
     if args.lab_mode == 'enjoy':
         # Do not change running averages in enjoy mode
@@ -65,6 +65,7 @@ def clean_config(config, args):
 
 
 def set_checkpoints(config, path, type):
+    from model.checkpoints import CheckpointManager
     normalization = 'normalize' in config['env']
     model_checkpoint, norm_checkpoint = CheckpointManager.get_checkpoint(path,
                                                                          type=type,
