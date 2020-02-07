@@ -10,7 +10,7 @@ algorithm:
     final_value: 5.0e-5
     final_point: 0.5
   nminibatches: 16
-  n_steps: 128
+  n_steps: 512
 
 env:
   name: "Maze0318Continuous-v0"
@@ -21,9 +21,6 @@ env:
   n_envs: 32
   frame_stack:
     n_stack: 4
-  normalize:
-    norm_reward: true
-    norm_obs: true
   robot_count: 256
 
 meta:

@@ -6,16 +6,13 @@ algorithm:
   tensorboard_log: true
 
 env:
-  name: "Maze0318Continuous-v0"
+  name: "Maze0318Continuous-v2"
   wrappers:
     - env.wrappers.WarpGrayscaleFrame
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
   frame_stack:
     n_stack: 4
-  normalize:
-    norm_reward: true
-    norm_obs: true
   robot_count: 256
 
 meta:
@@ -25,14 +22,14 @@ meta:
   save_interval: 200000
 
 search:
-  n_timesteps: 3000000
+  n_timesteps: 5000000
   eval_method: "normal"
   n_test_episodes: 20
   n_trials: 40
   sampler: "tpe"
   pruner:
     method: "halving"
-    min_resource: 400000
+    min_resource: 800000
   env:
     n_envs:
       method: "categorial"
