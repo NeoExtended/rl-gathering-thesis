@@ -123,6 +123,10 @@ class Sampler(ABC):
         alg_name = config['algorithm']['name']
         if alg_name == 'ppo2':
             return PPO2Sampler(config)
+        elif alg_name == 'acktr':
+            return ACKTRSampler(config)
+        elif alg_name == 'acer':
+            return ACERSampler(config)
         else:
             raise NotImplementedError("There is currently no parameter sampler available for {}".format(alg_name))
 
@@ -187,5 +191,5 @@ class ACERSampler(Sampler):
         self.alg_parameters.update(parameters)
 
     def transform_samples(self, alg_sample, env_sample):
-        alg_sample['replay_start'] = int(alg_sample['buffer_size'] / 5)
+        alg_sample['replay_start'] = int(alg_sample['buffer_size'] // 5)
         return alg_sample, env_sample
