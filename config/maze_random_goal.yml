@@ -6,28 +6,26 @@ algorithm:
   tensorboard_log: true
   learning_rate:
     type: "linear"
-    initial_value: 1.5e-4
-    final_value: 5.0e-5
-    final_point: 0.5
-  nminibatches: 16
-  n_steps: 512
+    initial_value: 0.0002
+    final_value: 0.00001
+  nminibatches: 32
+  n_steps: 2048
+  cliprange: 0.1
+  ent_coef: 0.00076
+  gamma: 0.9999
+  lam: 0.95
+  noptepochs: 50
 
 env:
   name: "Maze0318Continuous-v2"
   wrappers:
-    - env.wrappers.WarpGrayscaleFrame
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
-  n_envs: 32
-  frame_stack:
-    n_stack: 4
-  normalize:
-    norm_reward: true
-    norm_obs: true
+  n_envs: 16
   robot_count: 256
 
 meta:
   seed: 82
-  n_timesteps: 100000000
+  n_timesteps: 20000000
   log_dir: "./logs/RandomGoalTest"
   save_interval: 200000

@@ -32,5 +32,5 @@ search:
     min_resource: 800000
   env:
     n_envs:
-      method: "categorial"
+      method: "categorical"
       choices: [16, 32, 64]

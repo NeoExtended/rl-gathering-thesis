@@ -49,7 +49,7 @@ class Sampler(ABC):
         sample = {}
         for name, (method, data) in parameters.items():
             p_name = prefix + name
-            if method == 'categorial':
+            if method == 'categorical':
                 sample[name] = trial.suggest_categorical(p_name, data)
             elif method == 'loguniform':
                 low, high = data
@@ -99,7 +99,7 @@ class Sampler(ABC):
 
     def _parse_config(self, parameter_config):
         method = parameter_config.get('method')
-        if method == 'categorial':
+        if method == 'categorical':
             data = parameter_config.get('choices')
         elif method == 'loguniform':
             data = (float(parameter_config.get('low')), float(parameter_config.get('high')))
@@ -133,15 +133,15 @@ class PPO2Sampler(Sampler):
     """
     def __init__(self, config):
         super().__init__(config)
-        parameters = {'batch_size': ('categorial', [32, 64, 128, 256]),
-                      'n_steps': ('categorial', [16, 32, 64, 128, 256, 512, 1024, 2048]),
-                      'gamma': ('categorial', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+        parameters = {'batch_size': ('categorical', [32, 64, 128, 256]),
+                      'n_steps': ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
+                      'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
                       'learning_rate': ('loguniform', (0.5e-5, 0.2)),
                       'ent_coef': ('loguniform', (1e-8, 0.1)),
-                      'cliprange': ('categorial', [0.1, 0.2, 0.3, 0.4]),
-                      'cliprange_vf': ('categorial', [-1, None]),
-                      'noptepochs': ('categorial', [1, 5, 10, 20, 30, 50]),
-                      'lam': ('categorial', [0.8, 0.9, 0.92, 0.95, 0.98, 0.99, 1.0])}
+                      'cliprange': ('categorical', [0.1, 0.2, 0.3, 0.4]),
+                      'cliprange_vf': ('categorical', [-1, None]),
+                      'noptepochs': ('categorical', [1, 5, 10, 20, 30, 50]),
+                      'lam': ('categorical', [0.8, 0.9, 0.92, 0.95, 0.98, 0.99, 1.0])}
         parameters.update(self.alg_parameters)
         self.alg_parameters.update(parameters)
 
@@ -152,4 +152,21 @@ class PPO2Sampler(Sampler):
         else:
             alg_sample['nminibatches'] = int(alg_sample['n_steps'] / batch_size)
 
+        return alg_sample, env_sample
+
+
+class ACKTRSampler(Sampler):
+    def __init__(self, config):
+        super().__init__(config)
+
+        parameters = {'gamma' : ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+                      'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
+                      'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
+                      'learning_rate': ('loguniform', (1e-5, 0.2)),
+                      'ent_coef': ('loguniform', 1e-8, 0.1),
+                      'vf_coef': ('uniform', (0, 1))}
+        parameters.update(self.alg_parameters)
+        self.alg_parameters.update(parameters)
+
+    def transform_samples(self, alg_sample, env_sample):
         return alg_sample, env_sample
