@@ -1,24 +1,22 @@
 algorithm:
-  name: "acktr"
+  name: "acer"
   verbose: 10
   policy:
     name: CnnPolicy
   tensorboard_log: true
-  n_steps: 64
-  gamma: 0.9999
-  ent_coef: 0.0014
-  n_cpu_tf_sess:
+  buffer_size: 15000
+  ent_coef: 0.01
 
 env:
   name: "Maze0318Continuous-v0"
   wrappers:
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
-  n_envs: 16
+  n_envs: 32
   robot_count: 256
 
 meta:
   seed: 82
-  n_timesteps: 3000000
-  log_dir: "./logs/Labtest"
+  n_timesteps: 5000000
+  log_dir: "./logs/Labtest_Acer"
   save_interval: 200000

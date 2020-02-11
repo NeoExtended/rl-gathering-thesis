@@ -1,24 +1,19 @@
 algorithm:
-  name: "acktr"
-  verbose: 10
+  name: "dqn"
+  verbose: 0
   policy:
     name: CnnPolicy
   tensorboard_log: true
-  n_steps: 64
-  gamma: 0.9999
-  ent_coef: 0.0014
-  n_cpu_tf_sess:
 
 env:
   name: "Maze0318Continuous-v0"
   wrappers:
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
-  n_envs: 16
   robot_count: 256
 
 meta:
   seed: 82
   n_timesteps: 3000000
-  log_dir: "./logs/Labtest"
+  log_dir: "./logs/Labtest_Dqn"
   save_interval: 200000

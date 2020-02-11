@@ -170,3 +170,22 @@ class ACKTRSampler(Sampler):
 
     def transform_samples(self, alg_sample, env_sample):
         return alg_sample, env_sample
+
+
+class ACERSampler(Sampler):
+    def __init__(self, config):
+        super().__init__(config)
+
+        parameters = {'gamma' : ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+                      'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
+                      'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
+                      'learning_rate': ('loguniform', (1e-5, 0.2)),
+                      'ent_coef': ('loguniform', 1e-8, 0.1),
+                      'q_coef' : ('uniform', 0.01, 0.9),
+                      'buffer_size': ('categorical', [5000, 10000, 20000, 40000, 50000])}
+        parameters.update(self.alg_parameters)
+        self.alg_parameters.update(parameters)
+
+    def transform_samples(self, alg_sample, env_sample):
+        alg_sample['replay_start'] = int(alg_sample['buffer_size'] / 5)
+        return alg_sample, env_sample

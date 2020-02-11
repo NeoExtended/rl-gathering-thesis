@@ -10,16 +10,18 @@ from utils import safe_mean
 class TensorboardLogger:
     """
     Logs additional values into the tensorboard log. Can be used as a callback for all learning algorithms.
-    :param smoothing: Number of episodes over which the running average for episode length and return
+    :param smoothing: (int) Number of episodes over which the running average for episode length and return
         will be calculated.
+    :param min_log_delay: (int) Minimum number of timesteps between log entries.
     """
-    def __init__(self, smoothing=100):
+    def __init__(self, smoothing=100, min_log_delay=200):
         self.ep_len_buffer = deque(maxlen=smoothing)
         self.reward_buffer = deque(maxlen=smoothing)
         self.n_episodes = None
         self.t_start = time.time()
         self.last_timesteps = 0
         self.first_step = True
+        self.min_log_delay = min_log_delay
 
     def step(self, locals_, globals_):
         """
@@ -27,13 +29,15 @@ class TensorboardLogger:
         """
         self_ = locals_['self']
         env = self_.env
+        timesteps = self_.num_timesteps
 
         if self.first_step:
             self._initialize(env)
             self.first_step = False
 
-        self._retrieve_values(env)
-        self._write_summary(locals_['writer'], self_.num_timesteps)
+        if timesteps - self.last_timesteps > self.min_log_delay:
+            self._retrieve_values(env)
+            self._write_summary(locals_['writer'], timesteps)
         return True
 
     def reset(self):
