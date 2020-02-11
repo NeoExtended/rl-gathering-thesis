@@ -167,7 +167,7 @@ class ACKTRSampler(Sampler):
                       'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
                       'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
                       'learning_rate': ('loguniform', (1e-5, 0.2)),
-                      'ent_coef': ('loguniform', 1e-8, 0.1),
+                      'ent_coef': ('loguniform', (1e-8, 0.1)),
                       'vf_coef': ('uniform', (0, 1))}
         parameters.update(self.alg_parameters)
         self.alg_parameters.update(parameters)
@@ -184,8 +184,8 @@ class ACERSampler(Sampler):
                       'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
                       'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
                       'learning_rate': ('loguniform', (1e-5, 0.2)),
-                      'ent_coef': ('loguniform', 1e-8, 0.1),
-                      'q_coef' : ('uniform', 0.01, 0.9),
+                      'ent_coef': ('loguniform', (1e-8, 0.1)),
+                      'q_coef' : ('uniform', (0.01, 0.9)),
                       'buffer_size': ('categorical', [5000, 10000, 20000, 40000, 50000])}
         parameters.update(self.alg_parameters)
         self.alg_parameters.update(parameters)
