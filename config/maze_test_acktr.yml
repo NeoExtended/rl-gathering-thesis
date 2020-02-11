@@ -1,0 +1,24 @@
+algorithm:
+  name: "acktr"
+  verbose: 10
+  policy:
+    name: CnnPolicy
+  tensorboard_log: true
+  learning_rate: 0.001
+  n_steps: 512
+  gamma: 0.9999
+  ent_coef: 0.0014
+
+env:
+  name: "Maze0318Continuous-v0"
+  wrappers:
+    - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
+        skip: 4
+  n_envs: 32
+  robot_count: 256
+
+meta:
+  seed: 82
+  n_timesteps: 3000000
+  log_dir: "./logs/Labtest"
+  save_interval: 200000
