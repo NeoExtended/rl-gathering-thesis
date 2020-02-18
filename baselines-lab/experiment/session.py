@@ -12,7 +12,8 @@ from env.environment import create_environment
 from model.model import create_model
 from model.checkpoints import CheckpointManager
 from experiment import TensorboardLogger, Runner, HyperparameterOptimizer, Sampler
-from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper
+from env.wrappers import VecGifRecorder
+from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
 
 
 class Session(ABC):
@@ -139,7 +140,7 @@ class TrainSession(Session):
         save_interval = self.config['meta'].get('save_interval', 250000)
         n_keep = self.config['meta'].get('n_keep', 5)
         keep_best = self.config['meta'].get('keep_best', True)
-        n_eval_episodes = self.config['meta'].get('n_eval_episodes', 16)
+        n_eval_episodes = self.config['meta'].get('n_eval_episodes', 32)
 
         saver = CheckpointManager(
             model_dir=os.path.join(self.log, "checkpoints"),

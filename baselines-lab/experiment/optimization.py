@@ -5,13 +5,12 @@ from copy import deepcopy
 import numpy as np
 from optuna.pruners import SuccessiveHalvingPruner, MedianPruner, NopPruner
 from optuna.samplers import RandomSampler, TPESampler
-from stable_baselines.common.vec_env import VecNormalize, VecEnv
+from stable_baselines.common.vec_env import VecEnv
 
 from model.model import create_model
 from env.environment import create_environment
-from env.wrappers import VecEvaluationWrapper, EvaluationWrapper
-from utils import unwrap_env, unwrap_vec_env
-from experiment import Runner, TensorboardLogger, Sampler
+from env.evaluation import Evaluator
+from experiment import TensorboardLogger, Sampler
 
 
 class HyperparameterOptimizer:
@@ -39,13 +38,11 @@ class HyperparameterOptimizer:
         self.eval_method = search_config.get('eval_method', 'normal')
         self.deterministic_evaluation = search_config.get('deterministic', False)
         self.train_env = None
-        self.test_env = None
+        self.evaluator = None
         self.log_dir = log_dir
         self.logger = TensorboardLogger()
         self.callbacks = [self._evaluation_callback, self.logger.step]
         self.integrated_evaluation = True if self.eval_method == "fast" else False
-
-        self._initialize_test_env()
 
     def optimize(self):
         """
@@ -72,20 +69,6 @@ class HyperparameterOptimizer:
             pass
 
         return study
-
-    def _initialize_test_env(self):
-        if not self.integrated_evaluation:
-            test_env_config = deepcopy(self.config)
-            if self.eval_method == "slow":
-                test_env_config['env']['num_envs'] = 1
-
-            if not test_env_config['env'].get('n_envs', None):
-                test_env_config['env']['n_envs'] = 8
-
-            self.test_env = create_environment(test_env_config['env'],
-                                               self.config['algorithm']['name'],
-                                               test_env_config['meta']['seed'],
-                                               evaluation=True)
 
     def _make_pruner(self):
         if isinstance(self.pruner_method, str):
@@ -140,23 +123,14 @@ class HyperparameterOptimizer:
         self_.last_time_evaluated = self_.num_timesteps
         logging.debug("Evaluating model at {} timesteps".format(self_.num_timesteps))
 
-        if self.eval_method == "fast":
-            mean_reward = self._evaluate_fast()
-        elif self.eval_method == "normal":
-            mean_reward = self._evaluate_normal(self_)
-        elif self.eval_method == "slow":
-            # Slow means only a single env is used in parallel.
-            mean_reward = self._evaluate_normal(self_)
-        else:
-            raise NotImplementedError("Unknown evaluation method '{}'".format(self.eval_method))
-
+        mean_reward, mean_steps = self.evaluator.evaluate(self_)
         logging.info("Evaluated model at {} timesteps. Reached a mean reward of {}".format(self_.num_timesteps, mean_reward))
         self_.last_mean_test_reward = mean_reward
         self_.eval_idx += 1
 
         # report best or report current ?
         # report num_timesteps or elasped time ?
-        trial.report(-1 * mean_reward, self_.num_timesteps) #TODO: Change to num_timesteps?
+        trial.report(-1 * mean_reward, self_.num_timesteps)
         # Prune trial if need
         if trial.should_prune(self_.num_timesteps):
             logging.debug("Pruning - aborting training...")
@@ -164,24 +138,6 @@ class HyperparameterOptimizer:
             return False
 
         return True
-
-    def _evaluate_fast(self):
-        return self.test_env.aggregator.reward_rms
-
-    def _evaluate_normal(self, model):
-        eval = unwrap_env(self.test_env, VecEvaluationWrapper, EvaluationWrapper)
-        eval.reset_statistics()
-
-        if self.config['env'].get('normalize', None):
-            norm = unwrap_vec_env(self.test_env, VecNormalize)
-            model_norm = unwrap_vec_env(model.env, VecNormalize)
-            norm.obs_rms = model_norm.obs_rms
-            norm.ret_rms = model_norm.ret_rms
-            norm.training = False
-
-        runner = Runner(self.test_env, model, render=False, deterministic=self.deterministic_evaluation, close_env=False)
-        runner.run(self.n_test_episodes)
-        return eval.aggregator.mean_reward
 
     def _get_train_env(self, config):
         if self.train_env:
@@ -206,8 +162,13 @@ class HyperparameterOptimizer:
                                             config['meta']['seed'],
                                             evaluation=self.integrated_evaluation,
                                             log_dir=self.log_dir)
-        if self.integrated_evaluation:
-            self.test_env = unwrap_env(self.train_env, VecEvaluationWrapper, EvaluationWrapper)
+
+        self.evaluator = Evaluator(config['algorithm']['name'],
+                                   n_eval_episodes=self.n_test_episodes,
+                                   deterministic=self.deterministic_evaluation,
+                                   eval_method=self.eval_method,
+                                   env_config=config['env'],
+                                   env=self.train_env)
 
     def _create_objective_function(self):
         sampler = Sampler.create_sampler(self.config)

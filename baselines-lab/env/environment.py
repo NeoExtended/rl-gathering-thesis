@@ -10,7 +10,9 @@ from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack, ScaledFloatFrame
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
-from env.wrappers import VecGifRecorder, VecEvaluationWrapper, EvaluationWrapper, VecScaledFloatFrame
+from env.wrappers import VecGifRecorder, VecScaledFloatFrame
+from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
+
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
@@ -24,7 +26,7 @@ def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     :return (function) a function to create environments, e.g. for use in SubprocVecEnv or DummyVecEnv
     """
     def _init():
-        set_global_seeds(seed + rank)
+        # set_global_seeds(seed + rank)
         env = gym.make(env_id, **env_kwargs)
         env.seed(seed + rank)
         env.action_space.seed(seed + rank)
