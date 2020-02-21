@@ -70,7 +70,6 @@ class MazeBase(gym.Env):
         if self.randomize_n_robots:
             self.robot_count = self.np_random.randint(1, len(locations) // 5)
             self.reward_generator.set_robot_count(self.robot_count)
-            print(self.robot_count)
 
         # Randomize goal position if necessary
         if self.randomize_goal:
