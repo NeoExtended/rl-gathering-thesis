@@ -1,0 +1,37 @@
+algorithm:
+  name: "acer"
+  verbose: 10
+  policy:
+    name: CnnPolicy
+  tensorboard_log: true
+
+env:
+  name: "Maze0318Continuous-v0"
+  wrappers:
+    - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
+        skip: 4
+  robot_count: 256
+
+meta:
+  seed: 82
+  n_timesteps: 5000000
+  log_dir: "./logs/Labtest_Acer"
+  save_interval: 200000
+
+search:
+  n_timesteps: 3000000
+  eval_method: "normal"
+  n_test_episodes: 20
+  n_trials: 40
+  sampler: "tpe"
+  pruner:
+    method: "halving"
+    min_resource: 600000
+  algorithm:
+    n_steps:
+      method: "categorical"
+      choices: [64, 128, 256, 512]
+  env:
+    n_envs:
+      method: "categorical"
+      choices: [16, 32]

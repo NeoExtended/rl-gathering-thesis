@@ -1,8 +1,89 @@
 import logging
 import os
 from collections import deque
+from copy import deepcopy
 
-from utils import get_timestamp, config_util, safe_mean
+import gym
+from gym.utils.seeding import create_seed
+from stable_baselines.common.vec_env import VecNormalize, VecEnvWrapper
+
+from experiment import Runner
+from utils import get_timestamp, config_util, safe_mean, unwrap_env, unwrap_vec_env
+
+
+class Evaluator:
+    """
+    Class for easy model evaluation. Supports multiple evaluation methods for speed/accuracy tradeoff.
+    Evaluates average reward and number of steps.
+
+    :param algorithm_name: (str) Name of the used algorithm (needed for environment creation)
+    :param n_eval_episodes: (int) Number of episodes for evaluation.
+    :param deterministic: (bool) Weather model actions should be deterministic or stochastic.
+    :param render: (bool) Weather or not to render the environment during evaluation.
+    :param eval_method: (str) One of the available evaluation types ("fast", "normal", "slow").
+        Slow will only use a single env and will be the most accurate.
+        Normal uses VecEnvs and fast requires env to be set and wrapped in a Evaluation Wrapper.
+    :param env_config: (dict) Config used to create the evaluation environment for normal and slow evaluation mode.
+    :param env: (gym.Env or VecEnv) Environment used in case of eval_mode=="fast". Must be wrapped in an evaluation wrapper.
+    :param seed: (int) Seed for the evaluation environment. If None a random seed will be generated.
+    """
+    def __init__(self, algorithm_name, n_eval_episodes=32, deterministic=True, render=False, eval_method="normal",
+                 env_config=None, env=None, seed=None):
+        self.eval_method = eval_method
+        self.config = env_config
+        self.n_eval_episodes = n_eval_episodes
+        self.deterministic = deterministic
+        self.render = render
+
+        if eval_method in ["normal", "slow"]:
+            assert env_config, "You must provide an environment configuration, if the eval_method is not fast!"
+            test_env_config = deepcopy(env_config)
+            if eval_method == "slow":
+                test_env_config['num_envs'] = 1
+
+            if not test_env_config.get('n_envs', None):
+                test_env_config['n_envs'] = 8
+
+            from env.environment import create_environment
+            if not seed:
+                seed = create_seed()
+            self.test_env = create_environment(test_env_config,
+                                               algorithm_name,
+                                               seed,
+                                               evaluation=True)
+            self.eval_wrapper = unwrap_env(self.test_env, VecEvaluationWrapper, EvaluationWrapper)
+        elif eval_method == "fast":
+            assert env, "You must provide an environment with an EvaluationWrapper if the eval_method is fast!"
+            self.test_env = None
+            self.eval_wrapper = unwrap_env(self.test_env, VecEvaluationWrapper, EvaluationWrapper)
+        else:
+            raise AttributeError("Unknown eval method '{}'".format(eval_method))
+
+    def evaluate(self, model):
+        """
+        Evaluates the given model on the evaluation environment.
+        """
+        if self.eval_method == "fast":
+            return self._evaluate_fast()
+        else:
+            return self._evaluate_normal(model)
+
+    def _evaluate_fast(self):
+        return self.eval_wrapper.aggregator.reward_rms, self.eval_wrapper.aggregator.step_rms
+
+    def _evaluate_normal(self, model):
+        self.eval_wrapper.reset_statistics()
+
+        if self.config.get('normalize', None): # Update normalization running means if necessary
+            norm = unwrap_vec_env(self.test_env, VecNormalize)
+            model_norm = unwrap_vec_env(model.env, VecNormalize)
+            norm.obs_rms = model_norm.obs_rms
+            norm.ret_rms = model_norm.ret_rms
+            norm.training = False
+
+        runner = Runner(self.test_env, model, render=self.render, deterministic=self.deterministic, close_env=False)
+        runner.run(self.n_eval_episodes)
+        return self.eval_wrapper.aggregator.mean_reward, self.eval_wrapper.aggregator.mean_steps
 
 
 class EpisodeInformationAggregator:
@@ -134,3 +215,56 @@ class EpisodeInformationAggregator:
         output_path = os.path.join(self.path, "evaluation_{}.yml".format(get_timestamp()))
         logging.info("Saving results to {}".format(output_path))
         config_util.save_config(output, output_path)
+
+
+class EvaluationWrapper(gym.Wrapper):
+    """
+    Evaluation class for goal based environments (reaching max_episode_steps is counted as fail)
+    :param env: (gym.Env or gym.Wrapper) The environment to wrap.
+    :param path: (str) Path to save the evaluation results to.
+    """
+
+    def __init__(self, env, path=None):
+        gym.Wrapper.__init__(self, env)
+        self.aggregator = EpisodeInformationAggregator(num_envs=1, path=path)
+
+    def step(self, action):
+        obs, rew, done, info = gym.Wrapper.step(self, action)
+        self.aggregator.step([rew], [done], [info])
+        return obs, rew, done, info
+
+    def reset_statistics(self):
+        self.aggregator.reset_statistics()
+
+    def close(self):
+        gym.Wrapper.close(self)
+        self.aggregator.close()
+
+
+class VecEvaluationWrapper(VecEnvWrapper):
+    """
+    Evaluation class for vectorized goal based environments (reaching max_episode_steps is counted as fail)
+    :param env: (VecEnv or VecEnvWrapper) The environment to wrap.
+    :param path: (str) Path to save the evaluation results to.
+    """
+
+    def __init__(self, env, path=None):
+        VecEnvWrapper.__init__(self, env)
+        num_envs = env.unwrapped.num_envs
+        self.aggregator = EpisodeInformationAggregator(num_envs=num_envs, path=path)
+
+    def reset(self):
+        obs = self.venv.reset()
+        return obs
+
+    def reset_statistics(self):
+        self.aggregator.reset_statistics()
+
+    def step_wait(self):
+        obs, rews, dones, infos = self.venv.step_wait()
+        self.aggregator.step(rews, dones, infos)
+        return obs, rews, dones, infos
+
+    def close(self):
+        VecEnvWrapper.close(self)
+        self.aggregator.close()

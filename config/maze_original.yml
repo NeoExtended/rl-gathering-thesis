@@ -27,4 +27,4 @@ meta:
   seed: 82
   n_timesteps: 120000000
   log_dir: "./logs/OriginalMaze"
-  save_interval: 250000
+  save_interval: 500000

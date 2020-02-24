@@ -3,11 +3,11 @@ import logging
 import os
 import copy
 import tensorflow as tf
-from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines.common.vec_env import VecNormalize
 
 from utils import util
 from env.environment import create_environment
+from env.evaluation import Evaluator
 
 
 class CheckpointManager:
@@ -25,8 +25,8 @@ class CheckpointManager:
         the given env will be saved along with the model.
     :param tb_log: Set to true if the evaluation results should be logged. (Only works with keep_best=True)
     """
-    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=16, config=None,
-                 env=None, tb_log=False):
+    def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=32, eval_method="normal",
+                 config=None, env=None, tb_log=False):
         os.makedirs(model_dir, exist_ok=True)
         self.model_dir = model_dir
         self.save_interval = save_interval
@@ -49,7 +49,6 @@ class CheckpointManager:
 
         if config:
             env_desc = copy.deepcopy(config['env'])
-            env_desc['n_envs'] = 1
             normalization = env_desc.get('normalize', False)
 
             if normalization:
@@ -57,7 +56,12 @@ class CheckpointManager:
                 # Remove unnecessary keys
                 normalization.pop('precompute', None)
                 normalization.pop('samples', None)
-            self.eval_env = create_environment(env_desc, config['algorithm']['name'], config['meta']['seed'])
+
+            self.evaluator = Evaluator(config['algorithm']['name'],
+                                       n_eval_episodes=n_eval_episodes,
+                                       deterministic=True,
+                                       eval_method=eval_method,
+                                       env_config=env_desc)
 
     def step(self, locals_, globals_):
         """
@@ -117,13 +121,8 @@ class CheckpointManager:
 
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
-        if self.env: # Update normalization running means if necessary
-            norm_wrapper = util.unwrap_vec_env(self.eval_env, VecNormalize)
-            norm_wrapper.obs_rms = self.env.obs_rms
-            norm_wrapper.ret_rms = self.env.ret_rms
-
-        reward, steps = evaluate_policy(model, self.eval_env, n_eval_episodes=self.n_eval_episodes)
-        logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps/self.n_eval_episodes))
+        reward, steps = self.evaluator.evaluate(model)
+        logging.debug("Evaluation result: Avg reward: {:.4f}, Avg Episode Length: {:.2f}".format(reward, steps))
 
         if reward > self.best_score:
             logging.info("Found new best model with a mean reward of {:.4f}".format(reward))
@@ -143,7 +142,7 @@ class CheckpointManager:
         length_summary = tf.Summary(value=[
             tf.Summary.Value(
                 tag='episode_length/eval_ep_length_mean',
-                simple_value=steps/self.n_eval_episodes)
+                simple_value=steps)
         ])
         self.writer.add_summary(length_summary, self.update_counter)
 
