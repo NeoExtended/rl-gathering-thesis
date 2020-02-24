@@ -1,6 +1,6 @@
 algorithm:
   name: "dqn"
-  verbose: 0
+  verbose: 1
   policy:
     name: CnnPolicy
   tensorboard_log: true
