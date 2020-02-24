@@ -1,9 +1,18 @@
 import logging
 
 import numpy as np
+from stable_baselines.common.vec_env import VecEnv
 
 
 class Runner:
+    """
+    Executes the basic agent - environment interaction loop.
+    :param env: (gym.Env or VecEnv) The environment for the agent
+    :param agent: The agent to make predictions from observations.
+    :param render: (bool) Weather or not to render the environment during execution.
+    :param deterministic: (bool) Weather or not the agent should make deterministic predictions.
+    :param close_env: (bool) Weather or not the environment should be closed after a call to run().
+    """
     def __init__(self, env, agent, render=True, deterministic=True, close_env=True):
         self.env = env
         self.agent = agent
@@ -11,23 +20,38 @@ class Runner:
         self.render = render
         self.close_env = close_env
 
+        self.episode_counter = 0
+        self.step_counter = 0
+        self.total_reward = 0
+
+        if type(env) == VecEnv:
+            self.vec_env = True
+        else:
+            self.vec_env = False
+
     def run(self, n_episodes):
         """
         Simulates at least n_episodes of environment interactions.
         """
         obs = self.env.reset()
-        episode_counter = 0
-        step_counter = 0
-        total_reward = 0
-        while episode_counter < n_episodes:
+
+        while self.episode_counter < n_episodes:
             action, _states = self.agent.predict(obs, deterministic=self.deterministic)
             obs, rewards, dones, info = self.env.step(action)
             if self.render:
                 self.env.render(mode='human')
-            episode_counter += np.sum(dones)
-            step_counter += len(obs)
-            total_reward += sum(rewards)
+            self.update_values(obs, rewards, dones, info)
 
         # logging.info("Performed {} episodes with an avg length of {} and {} avg reward".format(episode_counter, step_counter / episode_counter, total_reward / episode_counter))
         if self.close_env:
             self.env.close()
+
+    def update_values(self, obs, reward, done, info):
+        if self.vec_env:
+            self.episode_counter += np.sum(done)
+            self.step_counter += len(obs)
+            self.total_reward += sum(reward)
+        else:
+            self.episode_counter += done
+            self.step_counter += 1
+            self.total_reward += reward

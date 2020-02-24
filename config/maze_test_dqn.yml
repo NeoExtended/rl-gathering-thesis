@@ -4,12 +4,23 @@ algorithm:
   policy:
     name: CnnPolicy
   tensorboard_log: true
+  gamma: 0.999
+  learning_rate: 0.0000625
+  buffer_size: 1000000
+  train_freq: 4
+  batch_size: 32
+  target_network_update_freq: 32000
+  prioritized_replay: True
+  learning_starts: 80000
 
 env:
   name: "Maze0318Continuous-v0"
   wrappers:
+    - env.wrappers.WarpGrayscaleFrame
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
+  frame_stack:
+    n_frames: 4
   robot_count: 256
 
 meta:
