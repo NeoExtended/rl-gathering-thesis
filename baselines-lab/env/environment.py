@@ -92,10 +92,7 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
         else:
             raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
-    if algo_name in ['dqn', 'ddpg']:
-        return _create_standard_env(env_id, config, seed, log_dir, wrappers, normalize, frame_stack, evaluation, scale)
-    else:
-        return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale)
+    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale)
 
 
 def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale):

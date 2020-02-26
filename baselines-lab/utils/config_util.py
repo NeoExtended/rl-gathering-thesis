@@ -2,6 +2,7 @@
 Defines helper functions for reading and writing the lab config file
 """
 
+import logging
 import os
 import json
 import yaml
@@ -60,6 +61,11 @@ def clean_config(config, args):
             if config['algorithm']['trained_agent'] in ['best', 'last']:
                 path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
                 set_checkpoints(config, path, config['algorithm']['trained_agent'])
+        if config['algorithm']['name'] in ["dqn", "ddpg"]:
+            if config['env'].get('n_envs', 1) > 1:
+                logging.warning("Number of envs must be 1 for dqn and ddpg! Reducing n_envs to 1.")
+                config['env']['n_envs'] = 1
+
     elif args.lab_mode == "search":
         resume = config['search'].get("resume", False)
         if resume and isinstance(resume, bool):

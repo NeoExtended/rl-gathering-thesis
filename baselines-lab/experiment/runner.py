@@ -24,7 +24,7 @@ class Runner:
         self.step_counter = 0
         self.total_reward = 0
 
-        if type(env) == VecEnv:
+        if isinstance(env, VecEnv):
             self.vec_env = True
         else:
             self.vec_env = False
@@ -41,6 +41,11 @@ class Runner:
             if self.render:
                 self.env.render(mode='human')
             self.update_values(obs, rewards, dones, info)
+
+            # Reset env after done. DummyVecEnv and SubprocVecEnvs have an integrated reset mechanism.
+            if not self.vec_env:
+                if dones:
+                    self.env.reset()
 
         # logging.info("Performed {} episodes with an avg length of {} and {} avg reward".format(episode_counter, step_counter / episode_counter, total_reward / episode_counter))
         if self.close_env:
