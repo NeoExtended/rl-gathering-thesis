@@ -22,6 +22,7 @@ meta:
   save_interval: 200000
 
 search:
+  resume: "./logs/Labtest_Dqn/2020_02_27_153359"
   n_timesteps: 3000000
   eval_method: "normal"
   n_test_episodes: 32

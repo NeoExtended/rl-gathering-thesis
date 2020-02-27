@@ -148,7 +148,7 @@ class HyperparameterOptimizer:
                     self._make_train_env(config)
             # Create new environments if num_envs changed.
             if isinstance(self.train_env, VecEnv):
-                if self.train_env.unwrapped.num_envs != config['env']['n_envs']:
+                if self.train_env.unwrapped.num_envs != config['env'].get('n_envs', 1):
                     self.train_env.close()
                     self._make_train_env(config)
         else:
