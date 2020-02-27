@@ -7,7 +7,7 @@ class Sampler(ABC):
     Base class for all samplers. Generates parameter sets from a specific sampler for hyperparameter optimization.
     :param config: (dict) Lab configuration.
     """
-    def __init__(self, config):
+    def __init__(self, config, parameters=None):
         self.config = config
         self.alg_parameters = {}
         self.env_parameters = {}
@@ -23,6 +23,9 @@ class Sampler(ABC):
             if search_config.get('env', None):
                 for sample_name in search_config['env']:
                     self.env_parameters[sample_name] = self._parse_config(search_config['env'][sample_name])
+
+        parameters.update(self.alg_parameters)
+        self.alg_parameters.update(parameters)
 
     def __call__(self, *args, **kwargs):
         return self.sample(**kwargs)
@@ -127,8 +130,33 @@ class Sampler(ABC):
             return ACKTRSampler(config)
         elif alg_name == 'acer':
             return ACERSampler(config)
+        elif alg_name == 'dqn':
+            return DQNSampler(config)
         else:
             raise NotImplementedError("There is currently no parameter sampler available for {}".format(alg_name))
+
+
+class DQNSampler(Sampler):
+    """
+    Sampler for DQN Parameters
+    """
+    def __init__(self, config):
+        parameters = {'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+                      'prioritized_replay' : ('categorical', [True, False]),
+                      'learning_rate': ('loguniform', (0.5e-5, 0.05)),
+                      'buffer_size': ('categorical', [250000, 500000, 1000000, 1500000]),
+                      'train_freq': ('categorical', [2, 4, 8, 16]),
+                      'batch_size': ('categorical', [8, 16, 32, 64]),
+                      #'target_network_update_freq': ('categorical', [16000, 32000, 64000]),
+                      'exploration_fraction': ('categorical', [0.1, 0.2, 0.3, 0.4, 0.5]),
+                      'exploration_final_eps': ('categorical', [0.01, 0.02, 0.04, 0.07, 0.1]),
+                      'prioritized_replay_alpha': ('uniform', (0.2, 0.8)),
+                      'prioritized_replay_beta0': ('uniform', (0.2, 0.8)),
+                      'learning_starts': ('categorical', [20000, 40000, 80000, 160000])}
+        super().__init__(config, parameters)
+
+    def transform_samples(self, alg_sample, env_sample):
+        return alg_sample, env_sample
 
 
 class PPO2Sampler(Sampler):
@@ -136,7 +164,6 @@ class PPO2Sampler(Sampler):
     Sampler for basic PPO2 parameters.
     """
     def __init__(self, config):
-        super().__init__(config)
         parameters = {'batch_size': ('categorical', [32, 64, 128, 256]),
                       'n_steps': ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
                       'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
@@ -146,8 +173,7 @@ class PPO2Sampler(Sampler):
                       'cliprange_vf': ('categorical', [-1, None]),
                       'noptepochs': ('categorical', [1, 5, 10, 20, 30, 50]),
                       'lam': ('categorical', [0.8, 0.9, 0.92, 0.95, 0.98, 0.99, 1.0])}
-        parameters.update(self.alg_parameters)
-        self.alg_parameters.update(parameters)
+        super().__init__(config, parameters)
 
     def transform_samples(self, alg_sample, env_sample):
         batch_size = alg_sample.pop('batch_size')
@@ -161,16 +187,14 @@ class PPO2Sampler(Sampler):
 
 class ACKTRSampler(Sampler):
     def __init__(self, config):
-        super().__init__(config)
-
-        parameters = {'gamma' : ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
-                      'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
-                      'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
+        parameters = {'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+                      'n_steps': ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
+                      'lr_schedule': (
+                      'categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
                       'learning_rate': ('loguniform', (1e-5, 0.2)),
                       'ent_coef': ('loguniform', (1e-8, 0.1)),
                       'vf_coef': ('uniform', (0, 1))}
-        parameters.update(self.alg_parameters)
-        self.alg_parameters.update(parameters)
+        super().__init__(config, parameters)
 
     def transform_samples(self, alg_sample, env_sample):
         return alg_sample, env_sample
@@ -178,17 +202,15 @@ class ACKTRSampler(Sampler):
 
 class ACERSampler(Sampler):
     def __init__(self, config):
-        super().__init__(config)
-
-        parameters = {'gamma' : ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
-                      'n_steps' : ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
-                      'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
+        parameters = {'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
+                      'n_steps': ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
+                      'lr_schedule': (
+                      'categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
                       'learning_rate': ('loguniform', (1e-5, 0.2)),
                       'ent_coef': ('loguniform', (1e-8, 0.1)),
-                      'q_coef' : ('uniform', (0.01, 0.9)),
+                      'q_coef': ('uniform', (0.01, 0.9)),
                       'buffer_size': ('categorical', [5000, 10000, 20000, 40000, 50000])}
-        parameters.update(self.alg_parameters)
-        self.alg_parameters.update(parameters)
+        super().__init__(config, parameters)
 
     def transform_samples(self, alg_sample, env_sample):
         alg_sample['replay_start'] = int(alg_sample['buffer_size'] // 5)
