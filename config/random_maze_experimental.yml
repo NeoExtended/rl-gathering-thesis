@@ -26,6 +26,6 @@ env:
 
 meta:
   seed: 82
-  n_timesteps: 3000000
+  n_timesteps: 6000000
   log_dir: "./logs/Maze_Experimental"
-  save_interval: 200000
+  save_interval: 250000

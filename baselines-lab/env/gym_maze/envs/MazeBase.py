@@ -32,10 +32,6 @@ class MazeBase(gym.Env):
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
         self.np_random = None
         self.seed()
-        self.map_file = map_file
-        self.map_index = None
-        self.goal_proposition = goal
-        self._load_map(map_file, goal)
 
         if robot_count < 0:
             self.randomize_n_robots = True
@@ -45,6 +41,12 @@ class MazeBase(gym.Env):
             self.robot_count = robot_count
 
         self.reward_generator = reward_generator(None, goal_range, self.robot_count)  # Costmap will be set after constmap computation
+
+        self.map_file = map_file
+        self.map_index = -1
+        self.goal_proposition = goal
+        self._load_map(map_file, goal)
+
         self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
                            4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
@@ -67,7 +69,7 @@ class MazeBase(gym.Env):
             map = map_file
 
         # Load map if necessary
-        if self.map_index != self.last_map_index:
+        if isinstance(map_file, str) or self.map_index != self.last_map_index:
             self.freespace = np.loadtxt(map).astype(int)  # 1: Passable terrain, 0: Wall
             self.maze = np.ones(self.freespace.shape,
                                 dtype=int) - self.freespace  # 1-freespace: 0: Passable terrain, 0: Wall
@@ -76,7 +78,7 @@ class MazeBase(gym.Env):
 
         if goal:
             self.randomize_goal = False
-            if self.map_index:
+            if isinstance(map_file, list):
                 self.goal = goal[self.map_index]
             else:
                 self.goal = goal
