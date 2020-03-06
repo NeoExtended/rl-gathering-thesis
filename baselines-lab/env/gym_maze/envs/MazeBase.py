@@ -16,8 +16,9 @@ ROBOT_COLOR = (150, 150, 180)
 class MazeBase(gym.Env):
     """
     Base class for a maze-like environment for particle navigation tasks.
-    :param map_file: (str) *.csv file containing the map data.
-    :param goal: (list) A point coordinate in form [x, y] ([column, row]).
+    :param map_file: (str or list) *.csv file containing the map data. May be a list for random randomized maps.
+    :param goal: (list(list) or list) A point coordinate in form [x, y] ([column, row]).
+        In case of multiple maps, multiple maps, multiple goal positions can be given.
         Can be set to None for a random goal position.
     :param goal_range: (list) Circle radius around the goal position that should be counted as goal reached.
     :param reward_generator: (RewardGenerator) A class of type RewardGenerator generating reward
@@ -31,9 +32,10 @@ class MazeBase(gym.Env):
     def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
         self.np_random = None
         self.seed()
-        self.freespace = np.loadtxt(map_file).astype(int) # 1: Passable terrain, 0: Wall
-        self.maze = np.ones(self.freespace.shape, dtype=int)-self.freespace # 1-freespace: 0: Passable terrain, 0: Wall
-        self.cost = None
+        self.map_file = map_file
+        self.map_index = None
+        self.goal_proposition = goal
+        self._load_map(map_file, goal)
 
         if robot_count < 0:
             self.randomize_n_robots = True
@@ -42,28 +44,52 @@ class MazeBase(gym.Env):
             self.randomize_n_robots = False
             self.robot_count = robot_count
 
-        self.reward_generator = reward_generator(self.cost, goal_range, self.robot_count)
+        self.reward_generator = reward_generator(None, goal_range, self.robot_count)  # Costmap will be set after constmap computation
         self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
         self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
                            4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
         self.rev_action_map = {v : k for k, v in self.action_map.items()}
         self.action_space = gym.spaces.Discrete(len(self.actions))
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
-        self.height, self.width = self.maze.shape
 
         self.goal_range = goal_range
+        self.robot_locations = []
+        self.reset()
+
+    def _load_map(self, map_file, goal):
+        if isinstance(map_file, list):
+            self.randomize_map = True
+            self.last_map_index = self.map_index
+            self.map_index = self.np_random.randint(len(map_file))
+            map = map_file[self.map_index]
+        else:
+            self.map_index = None
+            map = map_file
+
+        # Load map if necessary
+        if self.map_index != self.last_map_index:
+            self.freespace = np.loadtxt(map).astype(int)  # 1: Passable terrain, 0: Wall
+            self.maze = np.ones(self.freespace.shape,
+                                dtype=int) - self.freespace  # 1-freespace: 0: Passable terrain, 0: Wall
+            self.height, self.width = self.maze.shape
+            self.cost = None
+
         if goal:
             self.randomize_goal = False
-            self.goal = goal
+            if self.map_index:
+                self.goal = goal[self.map_index]
+            else:
+                self.goal = goal
             self._calculate_cost_map()
         else:
             self.randomize_goal = True
             self.goal = [0, 0]
-
-        self.robot_locations = []
-        self.reset()
+            # Random goals require a dynamic cost map which will be calculated on each reset.
 
     def reset(self):
+        if self.randomize_map:
+            self._load_map(self.map_file, self.goal_proposition)
+
         locations = np.transpose(np.nonzero(self.freespace))
 
         # Randomize number of robots if necessary
