@@ -65,6 +65,7 @@ class MazeBase(gym.Env):
             self.map_index = self.np_random.randint(len(map_file))
             map = map_file[self.map_index]
         else:
+            self.randomize_map = False
             self.map_index = None
             map = map_file
 
@@ -138,6 +139,7 @@ class MazeBase(gym.Env):
             plt.imshow(rgb_image.astype(np.uint8), vmin=0, vmax=255)
             plt.show(False)
             plt.pause(0.0001)
+        # rgb_image = cv2.resize(rgb_image.astype(np.uint8), (100, 100), interpolation=cv2.INTER_AREA)
         return rgb_image.astype(np.uint8)
 
     def _generate_observation(self):
