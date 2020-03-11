@@ -116,6 +116,7 @@ class HyperparameterOptimizer:
             self_.last_mean_test_reward = -np.inf
             self_.last_time_evaluated = 0
             self_.eval_idx = 0
+            self_.best_test_mean_reward = -np.inf
 
         if (self_.num_timesteps - self_.last_time_evaluated) < self.evaluation_interval:
             return True
@@ -128,9 +129,12 @@ class HyperparameterOptimizer:
         self_.last_mean_test_reward = mean_reward
         self_.eval_idx += 1
 
+        if mean_reward > self_.best_test_mean_reward:
+            self_.best_test_mean_reward = mean_reward
+
         # report best or report current ?
         # report num_timesteps or elasped time ?
-        trial.report(-1 * mean_reward, self_.num_timesteps)
+        trial.report(-1 * self_.best_test_mean_reward, self_.num_timesteps)
         # Prune trial if need
         if trial.should_prune(self_.num_timesteps):
             logging.debug("Pruning - aborting training...")

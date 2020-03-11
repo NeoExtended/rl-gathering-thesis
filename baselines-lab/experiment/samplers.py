@@ -169,7 +169,7 @@ class PPO2Sampler(Sampler):
                       'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
                       'learning_rate': ('loguniform', (0.5e-5, 0.2)),
                       'ent_coef': ('loguniform', (1e-8, 0.1)),
-                      'cliprange': ('categorical', [0.1, 0.2, 0.3, 0.4]),
+                      'cliprange': ('categorical', [0.05, 0.1, 0.2, 0.3, 0.4]),
                       'cliprange_vf': ('categorical', [-1, None]),
                       'noptepochs': ('categorical', [1, 5, 10, 20, 30, 50]),
                       'lam': ('categorical', [0.8, 0.9, 0.92, 0.95, 0.98, 0.99, 1.0])}
