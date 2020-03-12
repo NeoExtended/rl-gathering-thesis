@@ -75,7 +75,7 @@ def main(args=None):
     s.run()
 
     if args.mail:
-        send_email(args.mail, "Finished Training", "Finished training for " + str(args))
+        send_email(args.mail, "Finished Training", "Finished training for {}".format(args))
 
 
 if __name__ == "__main__":

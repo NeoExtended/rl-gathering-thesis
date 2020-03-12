@@ -213,7 +213,7 @@ class HyperparameterOptimizer:
                 self.current_best = best_mean_reward
                 if self.verbose_mail:
                     send_email(self.verbose_mail,
-                               "Hyperparametersearch new best mean reward {.4f}".format(best_mean_reward),
+                               "Hyperparametersearch new best mean reward {:.4f}".format(best_mean_reward),
                                "Found new parameters with mean of {} and parameters {} {}".format(best_mean_reward, alg_sample, env_sample))
 
             if is_pruned:
