@@ -182,6 +182,10 @@ class PPO2Sampler(Sampler):
         else:
             alg_sample['nminibatches'] = int(alg_sample['n_steps'] / batch_size)
 
+        if alg_sample['n_steps'] < 100:
+            if alg_sample['noptepochs'] > 20:
+                alg_sample['noptepochs'] = 20
+
         return alg_sample, env_sample
 
 

@@ -174,7 +174,7 @@ class SearchSession(Session):
         else:
             self._create_log_dir()
 
-        self.optimizer = HyperparameterOptimizer(config, self.log)
+        self.optimizer = HyperparameterOptimizer(config, self.log, args.mail)
         self.plot = args.plot
 
     def run(self):

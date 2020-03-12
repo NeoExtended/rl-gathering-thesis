@@ -5,7 +5,7 @@ import sys
 import argparse
 import logging
 
-from utils import config_util
+from utils import config_util, send_email
 from experiment import Session
 
 # Import env package to init gym registry
@@ -50,6 +50,7 @@ def parse_args(args):
 
     parser.add_argument("config_file", type=str, help="Location of the lab config file")
     parser.add_argument("--verbose", type=int, default=10, help="Verbosity level - corresponds to python logging levels")
+    parser.add_argument("--mail", type=str, default=None, help="Set your mail address to be informed when training is finished (requires mailx)")
     return parser.parse_args(args=args)
 
 
@@ -72,6 +73,9 @@ def main(args=None):
 
     s = Session.create_session(config, args)
     s.run()
+
+    if args.mail:
+        send_email(args.mail, "Finished Training", "Finished training for " + str(args))
 
 
 if __name__ == "__main__":

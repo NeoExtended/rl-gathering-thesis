@@ -5,6 +5,8 @@ General helper functions.
 from datetime import datetime
 import time
 import os
+from subprocess import Popen, PIPE
+
 import numpy as np
 import gym
 
@@ -117,3 +119,13 @@ def unwrap_vec_env(env, target_wrapper):
     while not isinstance(env, target_wrapper) and isinstance(env.venv, VecEnvWrapper):
         env = env.venv
     return env
+
+
+def send_email(receiver, subject, content):
+    run_command_line_command('echo "{}" | mail -s "[baselines-lab] {}" {}'.format(content, subject, receiver))
+
+
+def run_command_line_command(command):
+    process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    response = process.communicate()
+    return response

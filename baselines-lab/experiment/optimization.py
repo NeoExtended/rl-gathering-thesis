@@ -11,15 +11,16 @@ from model.model import create_model
 from env.environment import create_environment
 from env.evaluation import Evaluator
 from experiment import TensorboardLogger, Sampler
-
+from utils import send_email
 
 class HyperparameterOptimizer:
     """
     Class for automated hyperparameter optimization with optuna.
     :param config: (dict) Lab config.
     :param log_dir: (str) Global log directory.
+    :param mail: (str) Weather or not to send mail information about training progress.
     """
-    def __init__(self, config, log_dir):
+    def __init__(self, config, log_dir, mail=None):
         search_config = config['search']
         self.config = config
 
@@ -43,6 +44,8 @@ class HyperparameterOptimizer:
         self.logger = TensorboardLogger()
         self.callbacks = [self._evaluation_callback, self.logger.step]
         self.integrated_evaluation = True if self.eval_method == "fast" else False
+        self.verbose_mail = mail
+        self.current_best = -np.inf
 
     def optimize(self):
         """
@@ -199,10 +202,19 @@ class HyperparameterOptimizer:
                 raise
             is_pruned = False
             cost = np.inf
+            best_mean_reward = -np.inf
             if hasattr(model, 'is_pruned'):
                 is_pruned = model.is_pruned
-                cost = -1 * model.last_mean_test_reward
+                cost = -1 * model.best_test_mean_reward # Report best or last? Currently: Best
+                best_mean_reward = model.best_test_mean_reward
             del model
+
+            if best_mean_reward > self.current_best:
+                self.current_best = best_mean_reward
+                if self.verbose_mail:
+                    send_email(self.verbose_mail,
+                               "Hyperparametersearch new best mean reward {.4f}".format(best_mean_reward),
+                               "Found new parameters with mean of {} and parameters {} {}".format(best_mean_reward, alg_sample, env_sample))
 
             if is_pruned:
                 logging.info("Pruned trial.")
