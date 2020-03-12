@@ -126,6 +126,6 @@ def send_email(receiver, subject, content):
 
 
 def run_command_line_command(command):
-    process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
     response = process.communicate()
     return response
