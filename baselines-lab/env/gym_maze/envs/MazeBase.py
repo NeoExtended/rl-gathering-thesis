@@ -116,10 +116,10 @@ class MazeBase(gym.Env):
         info = {}
         dy, dx = self.action_map[action]
 
-        for i, (ry, rx) in enumerate(self.robot_locations):
-            x2, y2 = rx + dx, ry + dy
-            if 0 <= x2 < self.width and 0 <= y2 < self.height and self.freespace[y2, x2] == 1:
-                self.robot_locations[i] = [y2, x2]
+        new_loc = self.robot_locations + [dx, dy]
+        #validate_locations = (np.array([self.freespace[tuple(new_loc.T)]]) & (0 <= new_loc[:, 0]) & (new_loc[:, 0] < self.height) & (0 <= new_loc[:, 1]) & (new_loc[:, 1] < self.width)).transpose()
+        validate_locations = (np.array([self.freespace[tuple(new_loc.T)]])).transpose() # Border does not need to be checked as long as all maps have borders.
+        self.robot_locations = np.where(validate_locations, new_loc, self.robot_locations)
 
         done, reward = self.reward_generator.step(action, self.robot_locations)
         return (self._generate_observation(), reward, done, info)
@@ -145,7 +145,8 @@ class MazeBase(gym.Env):
     def _generate_observation(self):
         self.state_img = np.zeros(self.maze.shape)
 
-        self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
+        #self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
+        self.state_img[tuple(self.robot_locations.T)] = ROBOT_MARKER
         observation = self.state_img + self.maze * 255
         if self.randomize_goal:
             cv2.circle(observation, tuple(self.goal), self.goal_range, (GOAL_MARKER))
