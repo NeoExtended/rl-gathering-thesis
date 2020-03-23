@@ -4,13 +4,14 @@ algorithm:
   policy:
     name: CnnPolicy
   tensorboard_log: true
-  learning_rate:
-    type: "linear"
-    initial_value: 1.5e-4
-    final_value: 5.0e-5
-    final_point: 0.5
-  nminibatches: 16
+  cliprange: 0.1
+  ent_coef: 0.0014
+  gamma: 0.9999
+  lam: 0.95
+  learning_rate: 0.001
   n_steps: 512
+  nminibatches: 8
+  noptepochs: 20
 
 env:
   name: "Maze0318Continuous-v0"
@@ -25,6 +26,6 @@ env:
 
 meta:
   seed: 82
-  n_timesteps: 100000000
+  n_timesteps: 3000000
   log_dir: "./logs/Labtest"
   save_interval: 200000
