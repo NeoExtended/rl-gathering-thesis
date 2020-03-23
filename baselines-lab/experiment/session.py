@@ -85,9 +85,7 @@ class ReplaySession(Session):
                                       video_path=data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 
-        # TODO: Reenable agent seeding once the stable-baselines bug is fixed
-        # self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
-        self.agent = create_model(config['algorithm'], self.env, seed=None)
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
         obs = self.env.reset()
 
@@ -131,9 +129,8 @@ class TrainSession(Session):
                                       algo_name=config['algorithm']['name'],
                                       seed=self.config['meta']['seed'],
                                       log_dir=self.log)
-        # TODO: Reenable agent seeding once the stable-baselines bug is fixed
-        # self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
-        self.agent = create_model(config['algorithm'], self.env, seed=None)
+
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
     def run(self):
         logging.info("Starting training.")

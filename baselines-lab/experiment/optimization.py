@@ -187,9 +187,7 @@ class HyperparameterOptimizer:
             logging.info("Sampled new configuration: algorithm: {} env: {}".format(alg_sample, env_sample))
 
             train_env = self._get_train_env(trial_config)
-            model = create_model(trial_config['algorithm'], train_env, None)
-            # model = create_model(trial_config['algorithm'], train_env, trial_config['meta']['seed'])
-            # TODO: Reenable once stable-baselines bug is fixed
+            model = create_model(trial_config['algorithm'], train_env, trial_config['meta']['seed'])
 
             self.logger.reset()
             model.trial = trial
