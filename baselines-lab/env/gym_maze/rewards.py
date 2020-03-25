@@ -41,8 +41,8 @@ class GoalRewardGenerator(RewardGenerator):
         self.reward_grad = np.zeros(40).astype(np.uint8)
 
     def step(self, action, locations):
-        cost_to_go = np.sum(self.costmap[locations[:, 0], locations[:, 1]])
-        max_cost_agent = np.max(self.costmap[locations[:, 0], locations[:, 1]])
+        cost_to_go = np.sum(self.costmap[tuple(locations.T)])
+        max_cost_agent = np.max(self.costmap[tuple(locations.T)])
 
         done = False
         reward = -0.1
@@ -109,23 +109,34 @@ class ContinuousRewardGenerator(RewardGenerator):
     Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
     initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, costmap, goal_range, robot_count):
+    def __init__(self, costmap, goal_range, robot_count, reward_gathering=True):
         super().__init__(costmap, goal_range, robot_count)
         self.initialCost = 0
         self.lastCost = 0
+        self.uniqueParticles = robot_count
+        self.reward_gathering = reward_gathering
 
     def reset(self, robot_locations):
         self.initial_robot_locations = np.copy(robot_locations)
-        self.initialCost = np.sum(self.costmap[robot_locations[:, 0], robot_locations[:, 1]])
+        self.initialCost = np.sum(self.costmap[tuple(robot_locations.T)])
         self.lastCost = self.initialCost
 
     def step(self, action, locations):
         done = False
-        cost_to_go = np.sum(self.costmap[locations[:, 0], locations[:, 1]])
-        max_cost_agent = np.max(self.costmap[locations[:, 0], locations[:, 1]])
+        cost_to_go = np.sum(self.costmap[tuple(locations.T)])
+        max_cost_agent = np.max(self.costmap[tuple(locations.T)])
 
-        reward = ((self.lastCost - cost_to_go) / self.initialCost) - 0.001
+        if self.reward_gathering:
+            particles = len(np.unique(locations, axis=0))
+            gathering_reward = (self.uniqueParticles - particles) / self.robot_count
+            self.uniqueParticles = particles
+        else:
+            gathering_reward = 0
+
+        goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
         self.lastCost = cost_to_go
+
+        reward = gathering_reward + goal_reward - 0.001
 
         if max_cost_agent <= self.goal_range:
             done = True
