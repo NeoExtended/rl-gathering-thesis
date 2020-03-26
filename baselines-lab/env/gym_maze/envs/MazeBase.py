@@ -29,9 +29,10 @@ class MazeBase(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, robot_count=256):
+    def __init__(self, map_file, goal, goal_range, reward_generator=ContinuousRewardGenerator, reward_kwargs=None, robot_count=256):
         self.np_random = None
         self.seed()
+        self.reward_kwargs = {} if reward_kwargs is None else reward_kwargs
 
         if robot_count < 0:
             self.randomize_n_robots = True
@@ -40,7 +41,7 @@ class MazeBase(gym.Env):
             self.randomize_n_robots = False
             self.robot_count = robot_count
 
-        self.reward_generator = reward_generator(None, goal_range, self.robot_count)  # Costmap will be set after constmap computation
+        self.reward_generator = reward_generator(None, goal_range, self.robot_count, **self.reward_kwargs)  # Costmap will be set after constmap computation
 
         self.map_file = map_file
         self.map_index = -1
@@ -118,8 +119,8 @@ class MazeBase(gym.Env):
 
         new_loc = self.robot_locations + [dx, dy]
         #validate_locations = (np.array([self.freespace[tuple(new_loc.T)]]) & (0 <= new_loc[:, 0]) & (new_loc[:, 0] < self.height) & (0 <= new_loc[:, 1]) & (new_loc[:, 1] < self.width)).transpose()
-        validate_locations = (np.array([self.freespace[tuple(new_loc.T)]])).transpose() # Border does not need to be checked as long as all maps have borders.
-        self.robot_locations = np.where(validate_locations, new_loc, self.robot_locations)
+        valid_locations = (np.array([self.freespace[tuple(new_loc.T)]])).transpose() # Border does not need to be checked as long as all maps have borders.
+        self.robot_locations = np.where(valid_locations, new_loc, self.robot_locations)
 
         done, reward = self.reward_generator.step(action, self.robot_locations)
         return (self._generate_observation(), reward, done, info)

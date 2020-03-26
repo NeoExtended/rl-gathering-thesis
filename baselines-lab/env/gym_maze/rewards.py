@@ -109,12 +109,12 @@ class ContinuousRewardGenerator(RewardGenerator):
     Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
     initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, costmap, goal_range, robot_count, reward_gathering=True):
+    def __init__(self, costmap, goal_range, robot_count, gathering_reward=1.0):
         super().__init__(costmap, goal_range, robot_count)
         self.initialCost = 0
         self.lastCost = 0
         self.uniqueParticles = robot_count
-        self.reward_gathering = reward_gathering
+        self.gathering_reward_scale = gathering_reward
 
     def reset(self, robot_locations):
         self.initial_robot_locations = np.copy(robot_locations)
@@ -126,9 +126,9 @@ class ContinuousRewardGenerator(RewardGenerator):
         cost_to_go = np.sum(self.costmap[tuple(locations.T)])
         max_cost_agent = np.max(self.costmap[tuple(locations.T)])
 
-        if self.reward_gathering:
+        if self.gathering_reward_scale > 0.0:
             particles = len(np.unique(locations, axis=0))
-            gathering_reward = (self.uniqueParticles - particles) / self.robot_count
+            gathering_reward = self.gathering_reward_scale * ((self.uniqueParticles - particles) / self.robot_count)
             self.uniqueParticles = particles
         else:
             gathering_reward = 0
