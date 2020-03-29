@@ -5,6 +5,7 @@ from stable_baselines.common.policies import CnnPolicy, MlpPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv, VecFrameStack, VecNormalize
 from stable_baselines.common.env_checker import check_env
 from stable_baselines.common import make_vec_env
+from stable_baselines import DQN
 
 from env.wrappers import VecScaledFloatFrame
 from env.gym_maze.rewards import GoalRewardGenerator, ContinuousRewardGenerator
@@ -15,18 +16,20 @@ import logging
 
 
 if __name__ == '__main__':
-    env = make_vec_env("Maze0318Continuous-v0", n_envs=8, vec_env_cls=SubprocVecEnv)
-    env = VecNormalize(env)
+    env = make_vec_env("CartPole-v0", n_envs=1)
+    env2 = make_vec_env("CartPole-v0", n_envs=8, vec_env_cls=SubprocVecEnv)
+    # env = VecNormalize(env)
     # env = VecScaledFloatFrame(env)
     #env = VecFrameStack(env, n_stack=4)
     obs = env.reset()
 
 
-    model = PPO2(MlpPolicy, env, verbose=1)
+    #model = PPO2(MlpPolicy, env, verbose=1)
+    model = DQN("MlpPolicy", env, verbose=1)
     model.learn(total_timesteps=10000)
 
-    obs = env.reset()
+    obs = env2.reset()
     for i in range(1000):
         action, _states = model.predict(obs)
-        obs, rewards, dones, info = env.step(action)
-        env.render()
+        obs, rewards, dones, info = env2.step(action)
+        env2.render()

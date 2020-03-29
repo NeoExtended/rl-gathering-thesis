@@ -115,16 +115,16 @@ class ContinuousRewardGenerator(RewardGenerator):
         self.lastCost = 0
         self.uniqueParticles = robot_count
         self.gathering_reward_scale = gathering_reward
-        self.max_cost = np.max(costmap)
 
     def reset(self, robot_locations):
         self.initial_robot_locations = np.copy(robot_locations)
         self.initialCost = np.sum(self.costmap[tuple(robot_locations.T)])
         self.lastCost = self.initialCost
+        self.time_penalty = 1 / self.initialCost
 
     def set_costmap(self, costmap):
         super().set_costmap(costmap)
-        self.max_cost = np.max(costmap)
+        #self.max_cost = np.max(costmap)
 
     def step(self, action, locations):
         done = False
@@ -141,7 +141,7 @@ class ContinuousRewardGenerator(RewardGenerator):
         goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
         self.lastCost = cost_to_go
 
-        reward = gathering_reward + goal_reward - (2 / (self.max_cost ** 2))     # -0.001
+        reward = gathering_reward + goal_reward - self.time_penalty     # -0.001
 
         if max_cost_agent <= self.goal_range:
             done = True
