@@ -157,7 +157,7 @@ When modeling a RL problem as MDP we have a problem: The Markov assumption. If w
 
  This sound logical, since the agent might also work with a stochastic policy which picks actions partially at random. Also reaching a state might influence other states or their transition probabilities. This not only violates the Markov assumption, it makes it extremely hard for an agent to approximate that underlying transition function for $P$ to make reasonable decisions in our environment. Therefore we need to simplify our model to:  
 
- \[s_{t+1} \sim P(s_{t+1}|(s_t, a_t)\]
+ \[s_{t+1} \sim P(s_{t+1}|s_t, a_t)\]
 
 This form sacrifices some freedom, but is still powerful enough and leads to much simpler transition functions which can be learned much easier. Despite the fact that a state transitions now only can depend on the last state and action, we can look at it from a different angle to reintroduce some of our freedom again. Any state can be defined to include any necessary information and there can be an unlimited (but fixed) number of states in our model. For example imagine a game where you if you win round one get a slight bonus for round two. Then the states and their transitions of round two would depend on round one. What we can do is introduce two completely new sets of states for round two where one set has the information attached that we won and one that we lost. This way the states for round two do not depend on round one, we just have more states and transitions. Using this trick helps us model many complex environments as MDP.
 
@@ -504,24 +504,24 @@ The vanilla actor-critic method can be trained in a similar fashion as we did wi
 \end{itemize}
 
 \paragraph{Estimating Advantage.}
-The vanilla actor-critic algorithm is usually not used on its own. Instead a first extension is used: The \textit{Advantage Actor-Critic} (A2C) algorithm. When we talked about DQN Extensions in Section \ref{ssec:DQNExtensions} we briefly mentioned the advantage function $A(s, a)$. The advantage is a measure of how good an action is compared to all other actions. For DQN we compared the action only to other actions given that we know the optimal policy. This resulted in a maximal advantage of zero for the best action and a negative advantage for all other actions. This time we are instead looking at $A_\pi(s, a) = Q_\pi(s, a) - V_\pi(s)$. This is the advantage which measures the change in return if we take action $a$ and then always act according to our current policy. In other words, the advantage provides us with a relative measure of how good an action is compared to the average action our policy would choose. Before we look at how to estimate the advantage, let us first discuss why we should even care about advantage. Why do we need advantage when we have state-values?
+The vanilla actor-critic algorithm is usually not used on its own. Instead a first extension is used: The \textit{Advantage Actor-Critic} (A2C) algorithm. When we talked about DQN Extensions in Section \ref{ssec:DQNExtensions} we briefly mentioned the advantage function $A(s, a)$. The advantage is a measure of how good an action is compared to all other actions. For DQN we compared the action only to other actions given that we know the optimal policy. This resulted in a maximal advantage of zero for the best action and a negative advantage for all other actions. This time we are instead looking at $A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)$. This is the advantage which measures the change in return if we take action $a$ and then always act according to our current policy. In other words, the advantage provides us with a relative measure of how good an action is compared to the average action our policy would choose. Before we look at how to estimate the advantage, let us first discuss why we should even care about advantage. Why do we need advantage when we have state-values?
 
 Remember that we are currently training our policy by computing gradients based on the return we get by following the current policy in the environment. Our goal is to reinforce good actions and discourage bad actions. Since we compute our gradients from the return, we need the return to be negative for bad and positive for good actions to actually compute gradients which reflect reinforcement or discouragement of actions. Unfortunately this is not what usually happens: Many environments do not provide negative but only positive reward. So all actions are actually reinforced. To change this we need a relative measure which tells us how good an action is compared tp all other actions and this is exactly what the advantage function does. 
 
-To compute the advantage we need two things: $V_\pi(s)$ and $Q_\pi(s, a)$. Currently our network only computes the value function, so should we further extend it to also compute the Q-Values? While this would be possible, it actually adds overhead into the network and Q-Values are harder to estimate than state-values, since Q-Value functions are more complex. Also learning Q-Values in continuous environments produces additional problems. So instead we want to estimate the Q-Values from the already estimated state-values. If we assume, that our estimate $V_\pi(s)$ is sufficiently accurate, we can estimate the Q-Value by:
+To compute the advantage we need two things: $V^\pi(s)$ and $Q^\pi(s, a)$. Currently our network only computes the value function, so should we further extend it to also compute the Q-Values? While this would be possible, it actually adds overhead into the network and Q-Values are harder to estimate than state-values, since Q-Value functions are more complex. Also learning Q-Values in continuous environments produces additional problems. So instead we want to estimate the Q-Values from the already estimated state-values. If we assume, that our estimate $V^\pi(s)$ is sufficiently accurate, we can estimate the Q-Value by:
 
 \begin{align*}
-Q_\pi(s_t, a_t) &= E_{\tau\sim\pi}\left[r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n}\right] + \gamma^{n+1}V^*(s_{t+n+1}) \\
-&\approx r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n} + \gamma^{n+1}V_\pi(s_{t+n+1}) \\[15pt]
-A_\pi(s_t, a_t) &= Q_\pi(s_t, a_t) - V_\pi(s_t) \\
-&\approx r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n} + \gamma^{n+1}V_\pi(s_{t+n+1}) - V_\pi(s_t)
+Q^\pi(s_t, a_t) &= E_{\tau\sim\pi}\left[r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n}\right] + \gamma^{n+1}V^*(s_{t+n+1}) \\
+&\approx r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n} + \gamma^{n+1}V^\pi(s_{t+n+1}) \\[15pt]
+A^\pi(s_t, a_t) &= Q^\pi(s_t, a_t) - V^\pi(s_t) \\
+&\approx r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} \dots + \gamma^n r_{t+n} + \gamma^{n+1}V^\pi(s_{t+n+1}) - V^\pi(s_t)
 \end{align*}
 
-Using this $n$-step unrolling technique, we can estimate the Q-value with $n$ as a tradeoff parameter between variance and bias. Using more steps reduces bias, since $V_\pi(s)$ may be inaccurate, but at the same time it induces variance, since all rewards are sampled from a single trajectory. The idea is that variance increases the further we look into the future starting at step $t$ while the bias decreases. This means we are combining both to get the best result. Unfortunately deciding for an $n$ is not an easy choice and would require careful tuning. Therefore unrolling is done with a similar technique called \textit{Generalized Advantage Estimation} (GAE) which was proposed by Schulman et al. in 2015 \cite{schulman2015high}. Instead of using a fixed $n$ we instead compute the advantage using a weighted average over $n$-step advantages with $n = 1, 2, 3, \dots, k$. This technique further reduces the influence of variance and bias, while also making the choice of a hyperparameter easier. GAE can be written as:
+Using this $n$-step unrolling technique, we can estimate the Q-value with $n$ as a tradeoff parameter between variance and bias. Using more steps reduces bias, since $V^\pi(s)$ may be inaccurate, but at the same time it induces variance, since all rewards are sampled from a single trajectory. The idea is that variance increases the further we look into the future starting at step $t$ while the bias decreases. This means we are combining both to get the best result. Unfortunately deciding for an $n$ is not an easy choice and would require careful tuning. Therefore unrolling is done with a similar technique called \textit{Generalized Advantage Estimation} (GAE) which was proposed by Schulman et al. in 2015 \cite{schulman2015high}. Instead of using a fixed $n$ we instead compute the advantage using a weighted average over $n$-step advantages with $n = 1, 2, 3, \dots, k$. This technique further reduces the influence of variance and bias, while also making the choice of a hyperparameter easier. GAE can be written as:
 
 \begin{align*}
-  A_\pi(s_t, a_t) &= \sum^\infty_{l=0} (\gamma\lambda)^l \delta_{t+l} \\
-  &\text{with } \delta_t = r_t + \gamma V_\pi(s_{t + 1}) - V_\pi(s_t) 
+  A^\pi(s_t, a_t) &= \sum^\infty_{l=0} (\gamma\lambda)^l \delta_{t+l} \\
+  &\text{with } \delta_t = r_t + \gamma V^\pi(s_{t + 1}) - V^\pi(s_t) 
 \end{align*}
 
 While GAE still introduces a new hyperparameter in the form of $\lambda$ which controls how much we weight estimated advantages with further unrolling, this parameter does not introduce a hard boundary and therefore is much easier to tune. 
@@ -534,14 +534,14 @@ While GAE still introduces a new hyperparameter in the form of $\lambda$ which c
    Sample trajectory $\tau = ((s_0, a_0, r_0), \dots, (s_T, a_T, r_T))$ with $\pi_\theta$ from the environment \;
     \For{$t=0, \dots, T$}  {
       Calculate $V_{\theta_C}(s_t)$ using the value network \;
-      Calculate the advantage $A_\pi(s_t, a_t)$ using GAE. \;
+      Calculate the advantage $A^\pi(s_t, a_t)$ using GAE. \;
       Calculate $V_{tar}(s_t)$ using the advantage. \;
       Calculate Entropy $H_t = - \sum_a \pi_{\theta_A}(a|s_t) \log \pi_{\theta_A}(a|s_t)$ \;
     }
     \tcc{Calculate loss}
     $\mathcal{L}_{val}(\theta_C) = \frac{1}{T} \sum^T_{t=0}(V_{\theta_C}(s_t) - V_{tar}(s_t))^2$ \tcp*{Value loss using MSE}
 
-    $\mathcal{L}_{pol}(\theta_A) = \frac{1}{T} \sum^T_{t=0}\left(-A_\pi(s_t, a_t) \log \pi_{\theta_A}(a_t|s_t) - \beta H_t\right)$ \tcp*{Policy loss}
+    $\mathcal{L}_{pol}(\theta_A) = \frac{1}{T} \sum^T_{t=0}\left(-A^\pi(s_t, a_t) \log \pi_{\theta_A}(a_t|s_t) - \beta H_t\right)$ \tcp*{Policy loss}
 
     \tcc{Update parameters with SGD optimizer}
     $\theta_C \leftarrow \theta_C - \alpha_C \nabla_{\theta_C} \mathcal{L}_{val}(\theta_C)$ \tcp*{Update Critic}
@@ -553,7 +553,7 @@ While GAE still introduces a new hyperparameter in the form of $\lambda$ which c
   \caption[The Advantage Actor-Critic Algorithm]{The Advantage Actor-Critic (A2C) algorithm with entropy regularization.}\label{alg:A2C}
  \end{algorithm}
 
-Algorithm \ref{alg:A2C} shows an updated version of the original actor-critic algorithm with GAE. Note that in praxis $V_{tar}$ is often calculated as $V_{tar} = A_{GAE}(s_t, a_t) + V_\pi(s_t)$ when using advantage estimation to avoid additional computation. 
+Algorithm \ref{alg:A2C} shows an updated version of the original actor-critic algorithm with GAE. Note that in praxis $V_{tar}$ is often calculated as $V_{tar} = A_{GAE}(s_t, a_t) + V^\pi(s_t)$ when using advantage estimation to avoid additional computation. 
 
 \paragraph{Parallel environment interactions.}
 We already developed techniques to solve most of the problems shown in Section \ref{ssec:ImprovingPG}, but there is still one remaining problem: Sample correlation. Since we cannot introduce a replay buffer - we are dealing with an on-policy algorithm - we have to generate a lot of training data to reduce sample correlation and variance before each update. Sampling all that data from a single environment running in a single process takes a lot of time and since episodes may be significantly dependent on the random initial state, we would need the agent to play through several whole episodes to gather good training data. In 2016 Mnih et al. showed, that it is possible to train an A2C agent in parallel on multiple environments with their \textit{Asynchronous Advantage Actor-Critic} (A3C) algorithm \cite{mnih2016asynchronous}.
@@ -567,7 +567,7 @@ Both parallelization methods have their pros and cons. While synchronous paralle
 
 
 \subsection{Proximal Policy Optimization} \label{ssec:PPO}
-The A2C algorithm addresses every problem we talked about in Section \ref{ssec:ImprovingPG}. Still if we look at the learning curve in in Figure \ref{fig:a2c_cartpole} which shows the training progress on the simple environment CartPole, we can see that learning tends to still be unstable and even suffers from \textit{performance collapse}. How is that possible? To understand the origin of this problem, we need to look back at our basic procedure of how we are improving our policy using policy gradients.
+The A2C algorithm addresses every problem we talked about in Section \ref{ssec:ImprovingPG}. Still if we look at the learning curve in in Figure \ref{fig:a2c_cartpole} which shows the training progress on the simple environment CartPole, we can see that learning tends to still be unstable and even suffers from \textit{performance collapse}. How is that possible? To understand the origin of this problem, we need to look back at our basic procedure of how we are improving the policy using policy gradients.
 
 \begin{figure}[ht]
   
@@ -581,11 +581,11 @@ The A2C algorithm addresses every problem we talked about in Section \ref{ssec:I
   %\vspace*{-12pt}
 \end{figure}
 
-In PG algorithms, we use a policy $\pi_\theta$ which is parameterized by the weights of our neural network. This policy is used to generate a trajectory in our environment from which we compute the policy gradient $\nabla_\theta J(\pi_\theta)$. During optimization we therefore generate a sequence of policies $\pi_1, \pi_2, \dots, \pi_n$ from the the policy space $\Pi$ (the set of all policies). The problem is we are not actually directly searching for a policy in that space. Instead we are searching the policy in the parameter space $\Theta = \{\theta \in \mathbb{R}^m\}$ with $m$ being the number of parameters in our network. Unfortunately distances in policy space and in parameter space are not the same with respect to $\theta$. If we take two pairs of parameters $(\theta_1, \theta_2)$ and $(\theta_2, \theta_3)$ with the same distance in the parameter space, their mapped policies in policy space might not have the same distance:
+In PG algorithms, we use a policy $\pi_\theta$ which is parameterized by the weights of our neural network. This policy is used to generate a trajectory in our environment from which we compute the policy gradient $\nabla_\theta J(\pi_\theta)$. During optimization we iteratively generate a sequence of policies $\pi_1, \pi_2, \dots, \pi_n$ from the the policy space $\Pi$ (the set of all policies). While in each iteration we aim at improving the policy, we are not actually directly searching for a policy in policy space. Instead we are searching the policy in the parameter space $\Theta = \{\theta \in \mathbb{R}^m\}$ with $m$ being the number of parameters in our network. Unfortunately distances in policy space and in parameter space are not the same with respect to $\theta$. If we take two pairs of parameters $(\theta_1, \theta_2)$ and $(\theta_2, \theta_3)$ with the same distance in the parameter space, their mapped policies in policy space might not have the same distance:
 
 \[d(\theta_1, \theta_2) = d(\theta_2, \theta_3) \cancel{\Leftrightarrow} d(\pi_{\theta_1}, \pi_{\theta_2}) = d(\pi_{\theta_2}, \pi_{\theta_3}) \]
 
-The hypersurface on which we are performing our gradient ascent is not equal to the hypersurface we actually care about. This produces a semantic gap in our training process. Simply adjusting the learning rate $\alpha$ to a small value does not simply fix this problem. A small learning rate will only slow down learning and raise the probability of getting stuck in a local maximum. On the other hand we cannot accept occasional learning collapses, since learning collapses mean that we will immediately and dramatically reduce the quality of our training data. Recovering from a performance collapse can therefore take a long time. So how can we prevent them, while still learning in parameter space? The answer to this are \textit{trust regions}. The idea is to estimate the change in policy space. We then define a maximal distance "around" our old policy in policy space - called trust region - which is the maximum distance the new policy is allowed to deviate from the old policy. Moreover we want to guarantee, that the performance of the new policy is always better than the performance of the old policy.
+The hypersurface on which we are performing our gradient ascent is not equal to the hypersurface we actually care about. Simply adjusting the learning rate $\alpha$ to a small value does not fix this problem. A small learning rate will only slow down learning and raise the probability of getting stuck in a local maximum. On the other hand we cannot accept occasional learning collapses, since learning collapses mean that we will immediately and dramatically reduce the quality of the training data. Recovering from a performance collapse can therefore take a long time. So how can we prevent them, while still learning in parameter space? The answer to this are \textit{trust regions}. The idea is to estimate the change in policy space by looking at the difference of the probability distributions between the old and new policy. We then define a maximal distance "around" our old policy in policy space - called trust region - which is the maximum distance the new policy is allowed to deviate from the old policy. Moreover we want to guarantee, that the performance of the new policy is always better than the performance of the old policy.
 
 In 2015 Schulman et al. were able to provide mathematical foundations with made the computation of trust regions and \textit{guaranteed monotonic improvement} of the policy possible. They also proposed an algorithm called \textit{Trust Region Policy Optimization} (TRPO) \cite{schulman2015trust}. Unfortunately even though their algorithm works, it is hard to implement and computationally very expensive, since it relies on second order derivates. To overcome these problems, they extended their work in 2017, proposing a simplified algorithm called \textit{Proximal Policy Optimization} (PPO) which even outperforms their pervious one in many environments \cite{schulman2017proximal}. PPO is computationally as expensive as vanilla actor-critic variants and thus PPO is one of the most used reinforcement learning algorithms today. In the remainder of this Section, we want to take a look at how PPO achieves its goal of monotonic policy improvement, while staying computationally inexpensive.
 
@@ -593,20 +593,20 @@ In 2015 Schulman et al. were able to provide mathematical foundations with made 
 Instead of trying to directly maximize the expected return $J(\pi)$, we can instead maximize a different objective. To achieve monotonic improvement, we formulate a new objective based on the \textit{relative policy performance identity}. If we have some policy $\pi$ and update that policy to get $\pi'$, we define their relative policy performance identity as
 
 \begin{equation} \label{eq:MonotonicImprovement}
-  J(\pi') - J(\pi) = E_{\tau \sim \pi'}\left[\sum_{t\geq0} A_\pi(s_t, a_t)\right]
+  J(\pi') - J(\pi) = E_{\tau \sim \pi'}\left[\sum_{t\geq0} A^\pi(s_t, a_t)\right]
 \end{equation}
 
-which is their difference in expected return. With this objective our optimization problem becomes $\max_\pi' (J(\pi') - J(\pi))$ which ensures, that $J(\pi') - J(\pi) \geq 0$. The worst case is simply not changing the policy, such that $\pi'=\pi$.
+which is their difference in expected return. With this objective our optimization problem becomes $\max_\pi' (J(\pi') - J(\pi))$ which ensures, that $J(\pi') - J(\pi) \geq 0$. The worst case is not changing the policy, such that $\pi'=\pi$.
 
 The problem with Equation \ref{eq:MonotonicImprovement} is that it uses an expectation over a trajectory sampled from $\pi'$ - which we obviously do not have access to at that point. We therefore need a way to estimate trajectories from $\pi'$. If we assume that two successive policies $\pi$ and $\pi'$ are relatively close, we can also assume that the resulting state distributions we observe when interacting with the environment are also similar. Therefore we can use a method known as \textit{importance sampling} which estimates an unknown distribution from data sampled from a known distribution. This is done by computing weights which increase rewards which are more likely under $\pi'$ and decrease rewards which are less likely. These weights are calculated by the ratio of action probabilities between $\pi$ and $\pi'$: $\frac{\pi'(a_t, s_t)}{\pi(a_t, s_t)}$. We then can estimate the relative policy performance identity by
 
 \begin{equation}
-  J(\pi') - J(\pi) = E_{\tau \sim \pi}\left[\sum_{t\geq0} A_\pi(s_t, a_t) \frac{\pi'(a_t, s_t)}{\pi(a_t, s_t)}\right] = J^{CPI}_\pi(\pi')
+  J(\pi') - J(\pi) = E_{\tau \sim \pi}\left[\sum_{t\geq0} A^\pi(s_t, a_t) \frac{\pi'(a_t, s_t)}{\pi(a_t, s_t)}\right] = J^{CPI}_\pi(\pi')
 \end{equation}
 
-thus being only dependent on samples generated by the current policy. The new objective called the \textit{conservative policy iteration} (CPI) $J^{CPI}_\pi(\pi')$  is also called the \textit{surrogate objective}, since it indirectly optimizes the original objective. It can be proven that the gradient with respect to $\theta$ of the surrogate objective is equal to the gradient of the original objective. We omit the proof here, but it can be found in \cite{foundations2019graesser}. 
+thus being only dependent on samples generated by the current policy. The new objective with the name \textit{conservative policy iteration} (CPI) $J^{CPI}_\pi(\pi')$ is also called the \textit{surrogate objective}, since it indirectly optimizes the original objective. It can be proven that the gradient with respect to $\theta$ of the surrogate objective is equal to the gradient of the original objective. We omit the proof here, but it can be found in \cite{foundations2019graesser}. 
 
-If the gradient of the original and the surrogate objective is the same, one could ask the question why we even need the new objective. Also we only approximate $J(\pi') - J(\pi)$, so how do we guarantee that $J(\pi') - J(\pi) \geq 0$? The reason behind our new objective is that it allows us to bound the error. Achim et al. \cite{achiam2017constrained} showed that using the Kullback-Leibler (KL) divergence between two successive policies, we can bound the error to
+If the gradient of the original and the surrogate objective is the same, one could ask the question why we even need the new objective. Also we only approximate $J(\pi') - J(\pi)$, so how do we guarantee that $J(\pi') - J(\pi) \geq 0$? The reason behind our new objective is that it allows us to bound the error. Achim et al. \cite{achiam2017constrained} showed that - using the surrogate objective - we can bound the error in terms of Kullback-Leibler (KL) divergence between two successive policies to
 
 \[|(J(\pi') - J(\pi)) - J^{CPI}_\pi(\pi')| \leq C \cdot \sqrt{E_t\left[KL\left(\pi'(a_t, s_t)||\pi(a_t, s_t)\right)\right]}\]
 
@@ -616,7 +616,7 @@ From this, we can easily derive a form which allows us to determine if $J(\pi') 
   J(\pi') - J(\pi) \geq J^{CPI}_\pi(\pi') - C \cdot \sqrt{E_t\left[KL\left(\pi'(a_t, s_t)||\pi(a_t, s_t)\right)\right]}
 \end{equation}
 
-Looking at Equation \ref{eq:MonotonicImprovement2} we can see, that $J(\pi') - J(\pi) \geq 0$ only holds, if $J^{CPI}_\pi(\pi')$ is greater than the maximum error. If we only update our policy if this condition holds, we can guarantee policy improvement even if we only estimated  $J(\pi') - J(\pi)$. In a worst case scenario the best new policy will be the old policy, since if $J^{CPI}_\pi(\pi') = 0$ and $KL(\pi||\pi) = 0$ we can still accept the old policy as new policy. Using Equation \ref{eq:MonotonicImprovement2} we can finally formulate an updated version of the optimization problem:
+Looking at Equation \ref{eq:MonotonicImprovement2} we can see, that $J(\pi') - J(\pi) \geq 0$ only holds, if $J^{CPI}_\pi(\pi')$ is greater than the maximum error. If we only update our policy if this condition holds, we can guarantee policy improvement even if we only estimated $J(\pi') - J(\pi)$. In a worst case scenario the best new policy will be the old policy, since if $J^{CPI}_\pi(\pi') = 0$ and $KL(\pi||\pi) = 0$ we can still accept the old policy as new policy. Using Equation \ref{eq:MonotonicImprovement2} we can finally formulate an updated version of the optimization problem:
 
 \[\argmax_{\pi'}(J^{CPI}_\pi(\pi') - C \cdot \sqrt{E_t\left[KL\left(\pi'(a_t, s_t)||\pi(a_t, s_t)\right)\right])}\]
 
@@ -624,27 +624,27 @@ The remaining question now is how to implement this optimization problem in prac
 
 \[E_t[KL(\pi_\theta(a_t|s_t)||\pi_{\theta_{old}}(a_t|s_t))] \leq \delta\]
 
-Of course $\delta$ is a hyperparameter that must be tuned for each individual RL problem. Since we are usually learning from a single step (or a small batch), our expectation is also written as an expectation over a single step. Since we are maximizing our objective in parameter space we are now writing our equation as dependent on these parameters $\theta$, with $\pi' = \pi_\theta$ and $\pi = \pi_{\theta_{old}}$. Therefore we arrive at the final surrogate objective:
+Of course $\delta$ is a hyperparameter that must be tuned for each individual RL problem. Since we are usually learning from a single step (or a small batch), the expectation is also written as an expectation over a single step. Since we are maximizing the objective in parameter space we are now writing our equation as dependent on these parameters $\theta$, with $\pi' = \pi_\theta$ and $\pi = \pi_{\theta_{old}}$. Therefore we arrive at the final surrogate objective:
 
 \begin{align*}
-  &\max_\theta E_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}A_{t,\pi_{\theta_{old}}} \right] \\
+  &\max_\theta E_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}A_t^{\pi_{\theta_{old}}} \right] \\
   &\text{subject to } E_t[KL(\pi_\theta(a_t|s_t)||\pi_{\theta_{old}}(a_t|s_t))] \leq \delta
 \end{align*}
 
-With this surrogate objective we are now maximizing a linear approximation of $J(\pi') - J(\pi)$ with an imposed trust region, limiting the difference between the old and the new policy and thus avoiding performance collapse. Our new objective also now guarantees monotonic improvement.
+When optimizing this surrogate objective we are maximizing a linear approximation of $J(\pi') - J(\pi)$ with an imposed trust region, limiting the difference between the old and the new policy and thus avoiding performance collapse. Our new objective also now guarantees monotonic improvement.
 
 \paragraph{The PPO Algorithm.}
 The \textit{Proximal Policy Optimization} (PPO) algorithm was proposed by Schulman et al. in 2017 \cite{schulman2017proximal}. It uses the idea of trust regions with a minimum of additional computation. It also replaces the hyperparameter $\delta$ with a new hyperparameter which is easier to tune. In their original paper Schulman et al. proposed two different variants for the trust region constraint: An adaptive KL penalty - which uses a variable $\delta$ - and a clipped objective. In their tests, both variants proved to have good performance, but since the clipped objective is easier to tune, easier to implement and at least as good as the version with the KL penalty we will omit further details on adaptive KL penalty. 
 
-To simplify our equations and add a little more clarity we will only write $A_t$ for $A_{t, \pi_{\theta_{old}}}$ in the following. We also define our probability ratio as $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$. This way we can rewrite our surrogate objective as
+To simplify our equations and add a little more clarity we will only write $A_t$ for $A_t^{\pi_{\theta_{old}}}$ in the following. We also define our probability ratio as $r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}$. This way we can rewrite our surrogate objective as
 
-  \[J^{CPI}(\theta) = E_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}A_{t, \pi_{\theta_{old}}}\right] = E_t[r_t(\theta)A_t]\]
+  \[J^{CPI}(\theta) = E_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)}A_t^{\pi_{\theta_{old}}}\right] = E_t[r_t(\theta)A_t]\]
 
 We will now take a look at the \textit{clipped surrogate objective}, which adds a clipping term to $J^{CPI}$:
 
 \[J^{CLIP}(\theta) = E_t[\min(r_t(\theta)A_t, clip(r_t(\theta), 1-\epsilon, 1+\epsilon)A_t)]\]
 
-The interesting thing is, that we can use this objective without adding a constraint for the KL divergence. The reason behind this can be explained by looking at the possible ways to maximize $J^{CPI}$. If we look at one step of training and some $A_t > 0$ one option to maximize $J^{CPI}$ would be to just perform a large policy update - thus maximizing $r_t(\theta)$. This is not what we want, because we already know that we are optimizing in parameter space and large policy updates are risky. In $J^{CLIP}$ we therefore clip the value of $r_t(\theta)$ to an $\epsilon$-neighborhood between $(1-\epsilon)A_t$ and $(1+\epsilon)A_t$. As long as $r_t(\theta)$ is in the interval $[1-\epsilon, 1+\epsilon]$, $J^{CLIP}$ is equal to $J^{CPI}$, but as soon as the new action probability diverges too much from the old policy the value is clipped. Hence, policy updates under the clipped objective function are always safe and we do not need an additional constraint.
+The interesting thing is, that we can use this objective without adding a constraint for the KL divergence. If we look at one step of training and some $A_t > 0$ one option to maximize $J^{CPI}$ would be to just perform a large policy update - thus maximizing $r_t(\theta)$. This is not what we want, because we already know that we are optimizing in parameter space and large policy updates are risky. In $J^{CLIP}$ we therefore clip the value of $r_t(\theta)$ to an $\epsilon$-neighborhood between $(1-\epsilon)A_t$ and $(1+\epsilon)A_t$. As long as $r_t(\theta)$ is in the interval $[1-\epsilon, 1+\epsilon]$, $J^{CLIP}$ is equal to $J^{CPI}$, but as soon as the new action probability diverges too much from the old policy the value is clipped. Hence, policy updates under the clipped objective function are always within an $\epsilon$ neighborhood and we do not need an additional constraint.
 
 \begin{algorithm}[h!]
   \KwData{Actor learning rate $\alpha_A$, Critic Learning Rate $\alpha_C$ Entropy coefficient $\beta \geq 0$, Clipping variable $\epsilon \geq 0$, Number of Epochs $K$, Number of Actors $N$, Time Horizon $T$}
@@ -689,7 +689,7 @@ The interesting thing is, that we can use this objective without adding a constr
  \end{algorithm}
 
 
-Removing the KL divergence constraint makes the clipped objective function computationally inexpensive. The only computations that are done are the probability ratio $r_t(\theta)$ and the advantage $A_t$. Both of them are the minimal computational cost we have to invest for any policy update. Algorithm \ref{alg:PPO} shows PPO with a clipped objective function as an extension of the actor-critic algorithm from Section \ref{ssec:A2C}. We also use synchronous parallelization.
+Removing the KL divergence constraint makes the clipped objective function computationally inexpensive. The only computations that are done are the probability ratio $r_t(\theta)$ and the advantage $A_t$. Both of them are the minimal computational cost we have to invest for any policy update optimizing the surrogate objective. Algorithm \ref{alg:PPO} shows PPO with a clipped objective function as an extension of the actor-critic algorithm from Section \ref{ssec:A2C}. We also use synchronous parallelization.
 
  The algorithm shown has some major differences with the original A2C algorithm from Algorithm \ref{alg:A2C} so lets go over them:
 \begin{itemize}
@@ -709,7 +709,7 @@ We already presented one of the most well-known members of the actor-critic fami
 At its base, ACER changes the actor-critic architecture to learn Q-Values instead of state-values. They do this, by using the Retrace algorithm by Munos et al. \cite{munos2016safe} which estimates target Q-Values with minimal bias and variance and has been proven to converge:
 
 \begin{align*}
-  &Q^{ret}(s_t, a_t) = r_t + \gamma \bar{r}_{t+1}(\theta) \left[Q^{ret}(s_{t+1}, a_{t+1}) - Q_\pi(s_{t+1}, a_{t+1})\right] + \gamma V_\pi(s_{t+1}) \\
+  &Q^{ret}(s_t, a_t) = r_t + \gamma \bar{r}_{t+1}(\theta) \left[Q^{ret}(s_{t+1}, a_{t+1}) - Q^\pi(s_{t+1}, a_{t+1})\right] + \gamma V^\pi(s_{t+1}) \\
   &\text{with } \bar{r}_t(\theta) = \min(c, r_t(\theta))
 \end{align*}
 
