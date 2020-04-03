@@ -192,12 +192,13 @@ class PPO2Sampler(Sampler):
 class ACKTRSampler(Sampler):
     def __init__(self, config):
         parameters = {'gamma': ('categorical', [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]),
-                      'n_steps': ('categorical', [16, 32, 64, 128, 256, 512, 1024, 2048]),
-                      'lr_schedule': (
-                      'categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop', 'double_middle_drop']),
-                      'learning_rate': ('loguniform', (1e-5, 0.2)),
+                      'n_steps': ('categorical', [16, 32, 64, 128]),
+                      'lr_schedule': ('categorical', ['linear', 'constant', 'double_linear_con', 'middle_drop']),
+                      'learning_rate': ('loguniform', (1e-5, 1.0)),
                       'ent_coef': ('loguniform', (1e-8, 0.1)),
-                      'vf_coef': ('uniform', (0, 1))}
+                      'vf_coef': ('uniform', (0, 1)),
+                      'gae_lambda': ('categorical', [0.8, 0.9, 0.95, 0.99, None]),
+                      'async_eigen_decomp': ('categorical', [True, False])}
         super().__init__(config, parameters)
 
     def transform_samples(self, alg_sample, env_sample):
