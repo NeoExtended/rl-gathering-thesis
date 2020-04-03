@@ -12,7 +12,7 @@ from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNor
 
 from env.wrappers import VecGifRecorder, VecScaledFloatFrame
 from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
-
+from env.curiosity import CuriosityWrapper
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
@@ -77,6 +77,7 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
     normalize = config.pop('normalize', None)
     frame_stack = config.pop('frame_stack', None)
     multiprocessing = config.pop('multiprocessing', True)
+    curiosity = config.pop('curiosity', False)
     scale = config.pop('scale', None)
     logging.info("Creating environment with id {} and {} instances.".format(env_id, n_envs))
 
@@ -92,10 +93,10 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
         else:
             raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
-    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale)
+    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity)
 
 
-def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity):
     if n_envs == 1:
         env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
     else:
@@ -109,6 +110,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
 
     if evaluation:
         env = VecEvaluationWrapper(env)
+
+    if curiosity:
+        env = CuriosityWrapper(env)
 
     if normalize:
         if isinstance(normalize, bool):
