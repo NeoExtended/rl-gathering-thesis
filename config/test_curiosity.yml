@@ -1,0 +1,31 @@
+algorithm:
+  name: "ppo2"
+  tensorboard_log: true
+  policy:
+    name: CnnPolicy
+  n_steps: 128
+  nminibatches: 4
+  noptepochs: 4
+  learning_rate: 0.0001
+  lam: 0.95
+  ent_coef: 0.001
+  gamma: 0.999
+  cliprange: 0.1
+
+env:
+  name: "PongNoFrameskip-v4"
+  n_envs: 64
+  wrappers:
+    - stable_baselines.common.atari_wrappers.WarpFrame
+    - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
+        skip: 4
+  frame_stack:
+    n_stack: 4
+
+  curiosity: true
+
+meta:
+  seed: 82
+  n_timesteps: 10000000
+  log_dir: "./logs/Test_Curiosity"
+  save_interval: 500000

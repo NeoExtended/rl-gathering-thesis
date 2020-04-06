@@ -47,6 +47,9 @@ class Evaluator:
             from env.environment import create_environment
             if not seed:
                 seed = create_seed()
+            if test_env_config['n_envs'] > 32:
+                test_env_config['n_envs'] = 32
+            test_env_config['curiosity'] = False # TODO: Sync train and test curiosity wrappers and reenable
             self.test_env = create_environment(test_env_config,
                                                algorithm_name,
                                                seed,

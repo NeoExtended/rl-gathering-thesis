@@ -13,7 +13,7 @@ import numpy as np
 
 class CuriosityWrapper(VecEnvWrapper):
 
-    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=10000, train_freq=200, gradient_steps=4, batch_size=50, learning_starts=100):
+    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096, learning_starts=100):
         super().__init__(env)
 
 
@@ -26,13 +26,20 @@ class CuriosityWrapper(VecEnvWrapper):
         self.learning_starts = learning_starts
         self.intrinsic_reward_weight = intrinsic_reward_weight
 
+        # TODO: Parameters
+        self.filter_extrinsic_reward = True
+        self.clip_rewards = True
+        self.clip_rews = 1
+        self.clip_obs = 5
+        self.norm_obs = True
         self.last_action = None
         self.last_obs = None
         self.steps = 0
         self.last_update = 0
         self.epsilon = 1e-8
         self.gamma = 0.99
-        self.running_mean = RunningMeanStd(shape=(), epsilon=self.epsilon)
+        self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
+        self.obs_rms = RunningMeanStd(shape=self.observation_space.shape)
         self.ret = np.zeros(self.num_envs)
 
         self._setup_model()
@@ -80,13 +87,23 @@ class CuriosityWrapper(VecEnvWrapper):
 
     def step_wait(self):
         obs, rews, dones, infos = self.venv.step_wait()
+
+        if self.clip_rewards:
+            rews = np.clip(rews, -self.clip_rews, self.clip_rews)
+
         self.buffer.extend(self.last_obs, self.last_action, rews, obs, dones)
 
-        loss = self.sess.run([self.loss],{self.observation_ph : obs})
+        if self.filter_extrinsic_reward:
+            rews = np.zeros(rews.shape)
+
+        self.obs_rms.update(obs)
+        obs_n = self.normalize_obs(obs)
+
+        loss = self.sess.run([self.loss],{self.observation_ph : obs_n})
 
         if self.steps > self.train_freq * 10:
             self.update_mean(loss)
-            intrinsic_reward = np.array(loss) / np.sqrt(self.running_mean.var + self.epsilon)
+            intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
         else:
             intrinsic_reward = np.array(np.zeros(self.num_envs))
         #logging.info(loss)
@@ -108,10 +125,23 @@ class CuriosityWrapper(VecEnvWrapper):
 
     def learn(self):
         #logging.info("Training predictor")
-        obs_batch, act_batch, rews_batch, next_obs_batch, done_mask = self.buffer.sample(self.batch_size)
 
-        self.sess.run(self.training_op, {self.observation_ph : obs_batch})
+        for _ in range(self.gradient_steps):
+            obs_batch, act_batch, rews_batch, next_obs_batch, done_mask = self.buffer.sample(self.batch_size)
+            obs_batch = self.normalize_obs(obs_batch)
+            self.sess.run(self.training_op, {self.observation_ph : obs_batch})
 
     def update_mean(self, reward):
         self.ret = self.gamma * self.ret + reward
-        self.running_mean.update(self.ret)
+        self.int_rwd_rms.update(self.ret)
+
+    def normalize_obs(self, obs: np.ndarray) -> np.ndarray:
+        """
+        Normalize observations using this VecNormalize's observations statistics.
+        Calling this method does not update statistics.
+        """
+        if self.norm_obs:
+            obs = np.clip((obs - self.obs_rms.mean) / np.sqrt(self.obs_rms.var + self.epsilon),
+                          -self.clip_obs,
+                          self.clip_obs)
+        return obs
