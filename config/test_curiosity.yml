@@ -1,5 +1,6 @@
 algorithm:
   name: "ppo2"
+  verbose: 10
   tensorboard_log: true
   policy:
     name: CnnPolicy
@@ -9,8 +10,9 @@ algorithm:
   learning_rate: 0.0001
   lam: 0.95
   ent_coef: 0.001
-  gamma: 0.999
+  gamma: 0.99
   cliprange: 0.1
+#  cliprange_vf: -1
 
 env:
   name: "PongNoFrameskip-v4"
@@ -26,6 +28,6 @@ env:
 
 meta:
   seed: 82
-  n_timesteps: 10000000
+  n_timesteps: 15000000
   log_dir: "./logs/Test_Curiosity"
   save_interval: 500000

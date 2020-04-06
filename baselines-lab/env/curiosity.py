@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 from stable_baselines.common.vec_env import VecEnvWrapper
 from stable_baselines.common.buffers import ReplayBuffer
@@ -11,11 +12,20 @@ from stable_baselines.common.running_mean_std import RunningMeanStd
 import tensorflow as tf
 import numpy as np
 
+
+def small_convnet(x, activ = tf.nn.relu, **kwargs):
+    layer_1 = activ(tf_layers.conv(x, 'c1', n_filters=32, filter_size=8, stride=4, init_scale=np.sqrt(2), **kwargs))
+    layer_2 = activ(tf_layers.conv(layer_1, 'c2', n_filters=64, filter_size=4, stride=2, init_scale=np.sqrt(2), **kwargs))
+    layer_3 = activ(tf_layers.conv(layer_2, 'c3', n_filters=64, filter_size=3, stride=1, init_scale=np.sqrt(2), **kwargs))
+    layer_3 = tf_layers.conv_to_fc(layer_3)
+    return tf_layers.linear(layer_3, 'fc1', n_hidden=512, init_scale=np.sqrt(2))
+
+
 class CuriosityWrapper(VecEnvWrapper):
 
-    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096, learning_starts=100):
+    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=32768, train_freq=8192, gradient_steps=4, batch_size=2048, learning_starts=100):
         super().__init__(env)
-
+        #buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096,
 
         self.network_type = network
 
@@ -27,7 +37,7 @@ class CuriosityWrapper(VecEnvWrapper):
         self.intrinsic_reward_weight = intrinsic_reward_weight
 
         # TODO: Parameters
-        self.filter_extrinsic_reward = True
+        self.filter_extrinsic_reward = False
         self.clip_rewards = True
         self.clip_rews = 1
         self.clip_obs = 5
@@ -41,6 +51,7 @@ class CuriosityWrapper(VecEnvWrapper):
         self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
         self.obs_rms = RunningMeanStd(shape=self.observation_space.shape)
         self.ret = np.zeros(self.num_envs)
+        self.updates = 0
 
         self._setup_model()
 
@@ -55,22 +66,23 @@ class CuriosityWrapper(VecEnvWrapper):
             self.observation_ph, self.processed_obs = observation_input(self.venv.observation_space, scale=(self.network_type == "cnn"))
 
             with tf.variable_scope("target_model"):
-                self.target_network = nature_cnn(self.processed_obs)
-                self.target_network = tf_layers.linear(self.target_network, "out", 512)
+                self.target_network = small_convnet(self.processed_obs, tf.nn.leaky_relu)
+                #self.target_network = tf_layers.linear(self.target_network, "out", 512)
 
             with tf.variable_scope("predictor_model"):
-                self.predictor_network = nature_cnn(self.processed_obs)
+                self.predictor_network = tf.nn.relu(small_convnet(self.processed_obs, tf.nn.leaky_relu))
                 self.predictor_network = tf_layers.linear(self.predictor_network, "out", 512)
 
             with tf.name_scope("loss"):
-                self.loss = tf.reduce_mean(tf.squared_difference(self.predictor_network, tf.stop_gradient(self.target_network)), axis=1)
+                self.int_reward = tf.reduce_mean(tf.square(tf.stop_gradient(self.target_network) - self.predictor_network), axis=1)
+                self.aux_loss = tf.reduce_mean(tf.square(tf.stop_gradient(self.target_network) - self.predictor_network))
                 #self.loss = tf.losses.mean_squared_error(labels=self.target_network, predictions=self.predictor_network, reduction=tf.losses.Reduction.SUM_OVER_BATCH_SIZE)
 
-            learning_rate = 0.01
+            learning_rate = 0.001
 
             with tf.name_scope("train"):
                 optimizer = tf.train.AdamOptimizer(learning_rate)
-                self.training_op = optimizer.minimize(self.loss)
+                self.training_op = optimizer.minimize(self.aux_loss)
             #tf.variables_initializer().run(self.sess)
             tf.global_variables_initializer().run(session=self.sess)
             #tf.initialize_all_variables().run(session=self.sess)
@@ -99,13 +111,10 @@ class CuriosityWrapper(VecEnvWrapper):
         self.obs_rms.update(obs)
         obs_n = self.normalize_obs(obs)
 
-        loss = self.sess.run([self.loss],{self.observation_ph : obs_n})
+        target, predictor, loss = self.sess.run([self.target_network, self.predictor_network, self.int_reward], {self.observation_ph : obs_n})
 
-        if self.steps > self.train_freq * 10:
-            self.update_mean(loss)
-            intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
-        else:
-            intrinsic_reward = np.array(np.zeros(self.num_envs))
+        self.update_mean(loss)
+        intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
         #logging.info(loss)
 
         self.intrinsic_sum += np.squeeze(intrinsic_reward)
@@ -113,6 +122,7 @@ class CuriosityWrapper(VecEnvWrapper):
         reward = np.squeeze(rews + self.intrinsic_reward_weight * intrinsic_reward)
 
         if self.steps > self.learning_starts and self.steps - self.last_update > self.train_freq:
+            self.updates += 1
             self.last_update = self.steps
             self.learn()
             #logging.info("{} {}".format(self.intrinsic_sum, np.array(self.intrinsic_sum) / self.train_freq))
@@ -125,11 +135,14 @@ class CuriosityWrapper(VecEnvWrapper):
 
     def learn(self):
         #logging.info("Training predictor")
-
+        total_loss = 0
         for _ in range(self.gradient_steps):
             obs_batch, act_batch, rews_batch, next_obs_batch, done_mask = self.buffer.sample(self.batch_size)
             obs_batch = self.normalize_obs(obs_batch)
-            self.sess.run(self.training_op, {self.observation_ph : obs_batch})
+            test = self.sess.run(self.aux_loss, {self.observation_ph : obs_batch})
+            train, loss = self.sess.run([self.training_op, self.aux_loss], {self.observation_ph : obs_batch})
+            total_loss += loss
+        logging.info("Trained predictor. Avg loss: {}".format(total_loss / self.gradient_steps))
 
     def update_mean(self, reward):
         self.ret = self.gamma * self.ret + reward
@@ -145,3 +158,5 @@ class CuriosityWrapper(VecEnvWrapper):
                           -self.clip_obs,
                           self.clip_obs)
         return obs
+
+
