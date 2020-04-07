@@ -59,7 +59,6 @@ def parse_args(args):
 def main(args=None):
     # TODO: HER/GAIL - experience replay / expert training
     # TODO: Allow user to run multiple experiments
-    # TODO: Make GoalRewardGenerator configurable
     # TODO: New MazeEnv with random maze
     # TODO: Config dependencies: Link configs together for clearer params between configs.
     # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.

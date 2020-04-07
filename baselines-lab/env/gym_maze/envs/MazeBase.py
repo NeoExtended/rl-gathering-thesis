@@ -34,6 +34,7 @@ class MazeBase(gym.Env):
         self.np_random = None
         self.seed()
         self.reward_kwargs = {} if reward_kwargs is None else reward_kwargs
+        self.goal_range = goal_range
 
         if n_particles < 0:
             self.randomize_n_particles = True
@@ -42,7 +43,8 @@ class MazeBase(gym.Env):
             self.randomize_n_particles = False
             self.n_particles = n_particles
 
-        self.reward_generator = reward_generator(None, goal_range, self.n_particles, **self.reward_kwargs)  # Costmap will be set after constmap computation
+        self.reward_generator_class = reward_generator
+        self.reward_generator = None
 
         self.map_file = map_file
         self.map_index = -1
@@ -56,7 +58,6 @@ class MazeBase(gym.Env):
         self.action_space = gym.spaces.Discrete(len(self.actions))
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
 
-        self.goal_range = goal_range
         self.particle_locations = []
         self.reset()
 
@@ -75,7 +76,7 @@ class MazeBase(gym.Env):
         if isinstance(map_file, str) or self.map_index != self.last_map_index:
             self.freespace = np.loadtxt(map).astype(int)  # 1: Passable terrain, 0: Wall
             self.maze = np.ones(self.freespace.shape,
-                                dtype=int) - self.freespace  # 1-freespace: 0: Passable terrain, 0: Wall
+                                dtype=int) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
             self.height, self.width = self.maze.shape
             self.cost = None
 
@@ -85,7 +86,7 @@ class MazeBase(gym.Env):
                 self.goal = goal[self.map_index]
             else:
                 self.goal = goal
-            self._calculate_cost_map()
+            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, **self.reward_kwargs)
         else:
             self.randomize_goal = True
             self.goal = [0, 0]
@@ -98,21 +99,43 @@ class MazeBase(gym.Env):
         locations = np.transpose(np.nonzero(self.freespace))
 
         # Randomize number of particles if necessary
-        if self.randomize_n_particles:
-            self.n_particles = self.np_random.randint(1, len(locations) // 5)
-            self.reward_generator.set_particle_count(self.n_particles)
+        self._randomize_n_particles(locations)
 
         # Randomize goal position if necessary
-        if self.randomize_goal:
-            new_goal = locations[self.np_random.randint(0, len(locations))]
-            self.goal = [new_goal[1], new_goal[0]]
-            self._calculate_cost_map()
+        self._randomize_goal_position(locations)
 
         # Reset particle positions
+        self._randomize_particle_locations(locations)
+        return self._generate_observation()
+
+    def _randomize_particle_locations(self, locations):
+        """
+        Computes new locations for all particles.
+        :param locations: (list) Number of possible locations for the particles.
+        """
         choice = self.np_random.choice(len(locations), self.n_particles, replace=False)
         self.particle_locations = locations[choice, :]  # Particle Locations are in y, x (row, column) order
         self.reward_generator.reset(self.particle_locations)
-        return self._generate_observation()
+
+    def _randomize_goal_position(self, locations):
+        """
+        Computes a new random goal position.
+        :param locations: (list) List of possible goal locations to choose from.
+        """
+        if self.randomize_goal:
+            new_goal = locations[self.np_random.randint(0, len(locations))]
+            self.goal = [new_goal[1], new_goal[0]]
+            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, **self.reward_kwargs)
+
+    def _randomize_n_particles(self, locations, fan_out=5):
+        """
+        Computes a random number of particles for the current map.
+        :param locations: (list) Number of free locations for particles
+        :param fan_out: (int) Parameter to control the maximum number of particles as a fraction of possible particle locations.
+        """
+        if self.randomize_n_particles:
+            self.n_particles = self.np_random.randint(1, len(locations) // fan_out)
+            self.reward_generator.set_particle_count(self.n_particles)
 
     def step(self, action):
         info = {}
@@ -141,6 +164,10 @@ class MazeBase(gym.Env):
         # rgb_image = cv2.resize(rgb_image.astype(np.uint8), (100, 100), interpolation=cv2.INTER_AREA)
         return rgb_image.astype(np.uint8)
 
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+
     def _generate_observation(self):
         self.state_img = np.zeros(self.maze.shape)
 
@@ -152,32 +179,6 @@ class MazeBase(gym.Env):
             observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
         return np.expand_dims(observation, axis=2).astype(np.uint8)  # Convert to single channel image and uint8 to save memory
-
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
-    def _calculate_cost_map(self):
-        """
-        Calculates the cost map based on a given goal position via bfs
-        """
-
-        queue = collections.deque([self.goal])  # [x, y] pairs in point notation order!
-        seen = np.zeros(self.maze.shape, dtype=int)
-        seen[self.goal[1], self.goal[0]] = 1
-        self.cost = np.zeros(self.maze.shape, dtype=int)
-
-        while queue:
-            x, y = queue.popleft()
-            for x2, y2 in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-                if 0 <= x2 < self.width and 0 <= y2 < self.height and self.maze[y2, x2] != 1 and seen[y2, x2] != 1:
-                    queue.append([x2, y2])
-                    seen[y2, x2] = 1
-                    self.cost[y2, x2] = self.cost[y, x] + 1
-
-        if self.reward_generator:
-            self.reward_generator.set_costmap(self.cost)
-        return self.cost
 
     def _update_locations(self, new_locations):
         """
