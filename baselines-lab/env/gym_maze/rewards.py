@@ -54,7 +54,7 @@ class GoalRewardGenerator(RewardGenerator):
     Current rewards include measurements about the average and maximum distance to the goal position.
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, n_subgoals=80, final_reward=100, min_performance=0.999, min_reward=2, max_reward=4):
+    def __init__(self, maze, goal, goal_range, n_particles, n_subgoals=30, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4):
         super().__init__(maze, goal, goal_range, n_particles)
         self.final_reward = final_reward
         self.min_reward = min_reward

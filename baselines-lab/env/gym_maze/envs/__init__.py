@@ -1,1 +1,1 @@
-from env.gym_maze.envs.MazeBase import MazeBase
+from env.gym_maze.envs.maze_base import MazeBase

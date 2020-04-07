@@ -142,6 +142,7 @@ class MazeBase(gym.Env):
         dy, dx = self.action_map[action]
 
         new_loc = self.particle_locations + [dx, dy]
+        self._update_locations(new_loc)
 
         done, reward = self.reward_generator.step(action, self.particle_locations)
         return (self._generate_observation(), reward, done, info)
