@@ -23,7 +23,7 @@ def small_convnet(x, activ = tf.nn.relu, **kwargs):
 
 class CuriosityWrapper(VecEnvWrapper):
 
-    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=32768, train_freq=8192, gradient_steps=4, batch_size=2048, learning_starts=100):
+    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096, learning_starts=100):
         super().__init__(env)
         #buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096,
 
