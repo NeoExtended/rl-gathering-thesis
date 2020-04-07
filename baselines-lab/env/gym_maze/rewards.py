@@ -9,18 +9,18 @@ class RewardGenerator(ABC):
     :param costmap (np.ndarray) two dimensional array defining a cost-to-go value (distance) for each pixel to the
         the goal position.
     :param goal_range: (int) Range around the goal position which should be treated as 'goal reached'.
-    :param robot_count: (int) Total number of robots.
+    :param n_particles: (int) Total number of robots.
     """
-    def __init__(self, costmap, goal_range, robot_count):
+    def __init__(self, costmap, goal_range, n_particles):
         self.costmap = costmap
         self.goal_range = goal_range
-        self.robot_count = robot_count
+        self.n_particles = n_particles
 
     def reset(self, robot_locations):
         self.initial_robot_locations = np.copy(robot_locations)
 
-    def set_robot_count(self, num_robots):
-        self.robot_count = num_robots
+    def set_particle_count(self, n_particles):
+        self.n_particles = n_particles
 
     def set_costmap(self, costmap):
         self.costmap = costmap
@@ -36,8 +36,8 @@ class GoalRewardGenerator(RewardGenerator):
     Current rewards include measurements about the average and maximum distance to the goal position.
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, costmap, goal_range, robot_count):
-        super().__init__(costmap, goal_range, robot_count)
+    def __init__(self, costmap, goal_range, n_particles):
+        super().__init__(costmap, goal_range, n_particles)
         self.reward_grad = np.zeros(40).astype(np.uint8)
 
     def step(self, action, locations):
@@ -76,28 +76,28 @@ class GoalRewardGenerator(RewardGenerator):
             self.reward_grad[7] = 1
             reward += 2
 
-        if cost_to_go <= self.goal_range * self.robot_count and not self.reward_grad[20]:
+        if cost_to_go <= self.goal_range * self.n_particles and not self.reward_grad[20]:
             self.reward_grad[20] = 1
             reward += 4
-        elif cost_to_go <= 2 * self.goal_range * self.robot_count and not self.reward_grad[21]:
+        elif cost_to_go <= 2 * self.goal_range * self.n_particles and not self.reward_grad[21]:
             self.reward_grad[21] = 1
             reward += 4
-        elif cost_to_go <= 3 * self.goal_range * self.robot_count and not self.reward_grad[22]:
+        elif cost_to_go <= 3 * self.goal_range * self.n_particles and not self.reward_grad[22]:
             self.reward_grad[22] = 1
             reward += 2
-        elif cost_to_go <= 4 * self.goal_range * self.robot_count and not self.reward_grad[23]:
+        elif cost_to_go <= 4 * self.goal_range * self.n_particles and not self.reward_grad[23]:
             self.reward_grad[23] = 1
             reward += 2
-        elif cost_to_go <= 6 * self.goal_range * self.robot_count and not self.reward_grad[24]:
+        elif cost_to_go <= 6 * self.goal_range * self.n_particles and not self.reward_grad[24]:
             self.reward_grad[24] = 1
             reward += 2
-        elif cost_to_go <= 8 * self.goal_range * self.robot_count and not self.reward_grad[25]:
+        elif cost_to_go <= 8 * self.goal_range * self.n_particles and not self.reward_grad[25]:
             self.reward_grad[25] = 1
             reward += 2
-        elif cost_to_go <= 10 * self.goal_range * self.robot_count and not self.reward_grad[26]:
+        elif cost_to_go <= 10 * self.goal_range * self.n_particles and not self.reward_grad[26]:
             self.reward_grad[26] = 1
             reward += 2
-        elif cost_to_go <= 12 * self.goal_range * self.robot_count and not self.reward_grad[27]:
+        elif cost_to_go <= 12 * self.goal_range * self.n_particles and not self.reward_grad[27]:
             self.reward_grad[27] = 1
             reward += 2
 
@@ -109,11 +109,11 @@ class ContinuousRewardGenerator(RewardGenerator):
     Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
     initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, costmap, goal_range, robot_count, gathering_reward=1.0):
-        super().__init__(costmap, goal_range, robot_count)
+    def __init__(self, costmap, goal_range, n_particles, gathering_reward=1.0):
+        super().__init__(costmap, goal_range, n_particles)
         self.initialCost = 0
         self.lastCost = 0
-        self.uniqueParticles = robot_count
+        self.uniqueParticles = n_particles
         self.gathering_reward_scale = gathering_reward
         self.time_penalty = 0.0
 
@@ -133,7 +133,7 @@ class ContinuousRewardGenerator(RewardGenerator):
 
         if self.gathering_reward_scale > 0.0:
             particles = len(np.unique(locations, axis=0))
-            gathering_reward = self.gathering_reward_scale * ((self.uniqueParticles - particles) / self.robot_count)
+            gathering_reward = self.gathering_reward_scale * ((self.uniqueParticles - particles) / self.n_particles)
             self.uniqueParticles = particles
         else:
             gathering_reward = 0
