@@ -37,7 +37,8 @@ class CuriosityWrapper(VecEnvWrapper):
         self.intrinsic_reward_weight = intrinsic_reward_weight
 
         # TODO: Parameters
-        self.filter_extrinsic_reward = False
+        self.filter_end_of_episode = True
+        self.filter_extrinsic_reward = True
         self.clip_rewards = True
         self.clip_rews = 1
         self.clip_obs = 5
@@ -71,6 +72,7 @@ class CuriosityWrapper(VecEnvWrapper):
 
             with tf.variable_scope("predictor_model"):
                 self.predictor_network = tf.nn.relu(small_convnet(self.processed_obs, tf.nn.leaky_relu))
+                self.predictor_network = tf.nn.relu(tf_layers.linear(self.predictor_network, "fc2", 512))
                 self.predictor_network = tf_layers.linear(self.predictor_network, "out", 512)
 
             with tf.name_scope("loss"):
@@ -78,7 +80,7 @@ class CuriosityWrapper(VecEnvWrapper):
                 self.aux_loss = tf.reduce_mean(tf.square(tf.stop_gradient(self.target_network) - self.predictor_network))
                 #self.loss = tf.losses.mean_squared_error(labels=self.target_network, predictions=self.predictor_network, reduction=tf.losses.Reduction.SUM_OVER_BATCH_SIZE)
 
-            learning_rate = 0.001
+            learning_rate = 0.0001
 
             with tf.name_scope("train"):
                 optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -107,6 +109,8 @@ class CuriosityWrapper(VecEnvWrapper):
 
         if self.filter_extrinsic_reward:
             rews = np.zeros(rews.shape)
+        if self.filter_end_of_episode:
+            dones = np.zeros(dones.shape)
 
         self.obs_rms.update(obs)
         obs_n = self.normalize_obs(obs)
