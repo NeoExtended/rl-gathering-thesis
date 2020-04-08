@@ -108,7 +108,7 @@ class ContinuousRewardGenerator(RewardGenerator):
     Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
     initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, gathering_reward=1.0):
+    def __init__(self, maze, goal, goal_range, n_particles, gathering_reward=0.0):
         super().__init__(maze, goal, goal_range, n_particles)
         self.initialCost = 0
         self.lastCost = 0

@@ -1,5 +1,5 @@
 algorithm:
-  name: "ppo2"
+  name: "acktr"
   verbose: 10
   policy:
     name: CnnPolicy
@@ -14,12 +14,14 @@ env:
         skip: 4
   frame_stack:
     n_stack: 4
-  robot_count: 256
+  n_particles: 256
+  reward_kwargs:
+    gathering_reward: 0.0
 
 meta:
   seed: 82
   n_timesteps: 100000000
-  log_dir: "./logs/Labtest_Search"
+  log_dir: "./logs/Acktr_Search"
   save_interval: 200000
 
 search:

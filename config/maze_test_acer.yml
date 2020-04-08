@@ -4,22 +4,26 @@ algorithm:
   policy:
     name: CnnPolicy
   tensorboard_log: true
-  buffer_size: 50000
-  replay_start: 5000
+  buffer_size: 32000
+  replay_start: 50000
   ent_coef: 0.00001
-  n_steps: 128
-  gamma: 0.99
-  q_coef: 0.65
+  n_steps: 512
+  gamma: 0.9999
+  replay_ratio: 0
+  q_coef: 0.5
   lr_schedule: "linear"
-  learning_rate: 0.025
+  learning_rate: 0.001
 
 env:
   name: "Maze0318Continuous-v0"
   wrappers:
+    - env.wrappers.WarpGrayscaleFrame
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
   n_envs: 32
-  robot_count: 256
+  frame_stack:
+    n_stack: 4
+  n_particles: 256
 
 meta:
   seed: 82

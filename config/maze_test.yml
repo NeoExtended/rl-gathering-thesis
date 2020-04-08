@@ -22,7 +22,10 @@ env:
   n_envs: 32
   frame_stack:
     n_stack: 4
-  robot_count: 256
+  n_particles: 256
+  reward_kwargs:
+    gathering_reward: 0.0
+  curiosity: false
 
 meta:
   seed: 82

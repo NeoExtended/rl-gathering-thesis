@@ -4,18 +4,29 @@ algorithm:
   policy:
     name: CnnPolicy
   tensorboard_log: true
-  n_steps: 64
+  n_steps: 32
   gamma: 0.9999
   ent_coef: 0.0014
+  gae_lambda: 0.95
   n_cpu_tf_sess:
+  async_eigen_decomp: true
+  learning_rate: 0.025
+  lr_schedule: "constant"
 
 env:
   name: "Maze0318Continuous-v0"
   wrappers:
+    - env.wrappers.WarpGrayscaleFrame:
+        width: 84
+        height: 84
     - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
         skip: 4
+  frame_stack:
+    n_stack: 4
   n_envs: 16
-  robot_count: 256
+  n_particles: 256
+  reward_kwargs:
+    gathering_reward: 0.0
 
 meta:
   seed: 82

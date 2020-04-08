@@ -13,7 +13,7 @@ env:
         skip: 4
   frame_stack:
     n_stack: 4
-  robot_count: 256
+  n_particles: 256
 
 meta:
   seed: 82
