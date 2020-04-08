@@ -2,7 +2,7 @@ from typing import Tuple, Union, List
 
 import numpy as np
 
-from env.gym_maze.envs import MazeBase
+from env.gym_maze.envs.maze_base import MazeBase
 from env.gym_maze.rewards import RewardGenerator, ContinuousRewardGenerator
 
 
