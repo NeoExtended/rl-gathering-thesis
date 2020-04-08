@@ -1,16 +1,12 @@
 import logging
-from functools import partial
 
-from stable_baselines.common.vec_env import VecEnvWrapper
-from stable_baselines.common.buffers import ReplayBuffer
-from stable_baselines.common.policies import CnnPolicy
-from stable_baselines.common.policies import mlp_extractor, nature_cnn
-from stable_baselines.common.input import observation_input
-from stable_baselines.common import tf_util, tf_layers
-from stable_baselines.common.running_mean_std import RunningMeanStd
-
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+from stable_baselines.common import tf_util, tf_layers
+from stable_baselines.common.buffers import ReplayBuffer
+from stable_baselines.common.input import observation_input
+from stable_baselines.common.running_mean_std import RunningMeanStd
+from stable_baselines.common.vec_env import VecEnvWrapper
 
 
 def small_convnet(x, activ = tf.nn.relu, **kwargs):
@@ -23,47 +19,59 @@ def small_convnet(x, activ = tf.nn.relu, **kwargs):
 
 class CuriosityWrapper(VecEnvWrapper):
 
-    def __init__(self, env, network="cnn", intrinsic_reward_weight = 1.0, buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096, learning_starts=100):
+    def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 16384, gradient_steps: int = 4,
+                 batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, normalize_obs: bool = True,
+                 gamma: float = 0.99, learning_rate: float = 0.0001):
+        """
+
+        :param env: (gym.Env) Environment to wrap.
+        :param network: (str) Network type. Can be a "cnn" or a "mlp".
+        :param intrinsic_reward_weight: (float) Weight for the intrinsic reward.
+        :param buffer_size: (int) Size of the replay buffer for predictor training.
+        :param train_freq: (int) Frequency of predictor training in steps.
+        :param gradient_steps: (int) Number of optimization epochs.
+        :param batch_size: (int) Number of samples to draw from the replay buffer per optimization epoch.
+        :param learning_starts: (int) Number of steps to wait before training the predictor for the first time.
+        :param filter_end_of_episode: (bool) Weather or not to filter end of episode signals (dones).
+        :param filter_reward: (bool) Weather or not to filter extrinsic reward from the environment.
+        :param normalize_obs: (bool) Weather or not to normalize and clip obs for the target/predictor network. Note that obs returned will be unaffected.
+        :param gamma: (float) Reward discount factor for intrinsic reward normalization.
+        :param learning_rate: (float) Learning rate for the Adam optimizer of the predictor network.
+        """
         super().__init__(env)
-        #buffer_size=65536, train_freq=16384, gradient_steps=4, batch_size=4096,
 
         self.network_type = network
-
         self.buffer = ReplayBuffer(buffer_size)
         self.train_freq = train_freq
         self.gradient_steps = gradient_steps
         self.batch_size = batch_size
         self.learning_starts = learning_starts
         self.intrinsic_reward_weight = intrinsic_reward_weight
-
-        # TODO: Parameters
-        self.filter_end_of_episode = True
-        self.filter_extrinsic_reward = True
-        self.clip_rewards = True
-        self.clip_rews = 1
+        self.filter_end_of_episode = filter_end_of_episode
+        self.filter_extrinsic_reward = filter_reward
         self.clip_obs = 5
-        self.norm_obs = True
-        self.last_action = None
-        self.last_obs = None
-        self.steps = 0
-        self.last_update = 0
+        self.norm_obs = normalize_obs
+        self.gamma = gamma
+        self.learning_rate = learning_rate
+
         self.epsilon = 1e-8
-        self.gamma = 0.99
         self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
         self.obs_rms = RunningMeanStd(shape=self.observation_space.shape)
-        self.ret = np.zeros(self.num_envs)
+        self.ret = np.zeros(self.num_envs) # discounted return
+
         self.updates = 0
+        self.steps = 0
+        self.last_action = None
+        self.last_obs = None
+        self.last_update = 0
 
         self._setup_model()
-
-        self.intrinsic_sum = np.zeros(self.num_envs)
 
     def _setup_model(self):
         self.graph = tf.Graph()
 
         with self.graph.as_default():
             self.sess = tf_util.make_session(num_cpu=None, graph=self.graph)
-
             self.observation_ph, self.processed_obs = observation_input(self.venv.observation_space, scale=(self.network_type == "cnn"))
 
             with tf.variable_scope("target_model"):
@@ -78,16 +86,12 @@ class CuriosityWrapper(VecEnvWrapper):
             with tf.name_scope("loss"):
                 self.int_reward = tf.reduce_mean(tf.square(tf.stop_gradient(self.target_network) - self.predictor_network), axis=1)
                 self.aux_loss = tf.reduce_mean(tf.square(tf.stop_gradient(self.target_network) - self.predictor_network))
-                #self.loss = tf.losses.mean_squared_error(labels=self.target_network, predictions=self.predictor_network, reduction=tf.losses.Reduction.SUM_OVER_BATCH_SIZE)
-
-            learning_rate = 0.0001
 
             with tf.name_scope("train"):
-                optimizer = tf.train.AdamOptimizer(learning_rate)
-                self.training_op = optimizer.minimize(self.aux_loss)
-            #tf.variables_initializer().run(self.sess)
+                self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
+                self.training_op = self.optimizer.minimize(self.aux_loss)
+
             tf.global_variables_initializer().run(session=self.sess)
-            #tf.initialize_all_variables().run(session=self.sess)
 
     def reset(self):
         obs = self.venv.reset()
@@ -101,9 +105,6 @@ class CuriosityWrapper(VecEnvWrapper):
 
     def step_wait(self):
         obs, rews, dones, infos = self.venv.step_wait()
-
-        if self.clip_rewards:
-            rews = np.clip(rews, -self.clip_rews, self.clip_rews)
 
         self.buffer.extend(self.last_obs, self.last_action, rews, obs, dones)
 
@@ -119,9 +120,6 @@ class CuriosityWrapper(VecEnvWrapper):
 
         self.update_mean(loss)
         intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
-        #logging.info(loss)
-
-        self.intrinsic_sum += np.squeeze(intrinsic_reward)
 
         reward = np.squeeze(rews + self.intrinsic_reward_weight * intrinsic_reward)
 
@@ -129,8 +127,6 @@ class CuriosityWrapper(VecEnvWrapper):
             self.updates += 1
             self.last_update = self.steps
             self.learn()
-            #logging.info("{} {}".format(self.intrinsic_sum, np.array(self.intrinsic_sum) / self.train_freq))
-            self.intrinsic_sum = np.zeros(self.num_envs)
 
         return obs, reward, dones, infos
 
@@ -138,7 +134,6 @@ class CuriosityWrapper(VecEnvWrapper):
         VecEnvWrapper.close(self)
 
     def learn(self):
-        #logging.info("Training predictor")
         total_loss = 0
         for _ in range(self.gradient_steps):
             obs_batch, act_batch, rews_batch, next_obs_batch, done_mask = self.buffer.sample(self.batch_size)
@@ -154,7 +149,7 @@ class CuriosityWrapper(VecEnvWrapper):
 
     def normalize_obs(self, obs: np.ndarray) -> np.ndarray:
         """
-        Normalize observations using this VecNormalize's observations statistics.
+        Normalize observations using observations statistics.
         Calling this method does not update statistics.
         """
         if self.norm_obs:
@@ -162,5 +157,3 @@ class CuriosityWrapper(VecEnvWrapper):
                           -self.clip_obs,
                           self.clip_obs)
         return obs
-
-
