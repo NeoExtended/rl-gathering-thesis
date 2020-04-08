@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Type
 
 import cv2
 import gym
@@ -30,8 +30,8 @@ class MazeBase(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int, reward_generator: RewardGenerator = ContinuousRewardGenerator,
-                 reward_kwargs=None, n_particles:int = 256):
+    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
+                 reward_generator: Type[RewardGenerator] = ContinuousRewardGenerator, reward_kwargs=None, n_particles:int = 256) -> None:
 
         self.np_random = None
         self.seed()
@@ -60,7 +60,7 @@ class MazeBase(gym.Env):
         self.action_space = gym.spaces.Discrete(len(self.actions))
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
 
-        self.particle_locations = []
+        self.particle_locations = np.array([])
         self.reset()
 
     def _load_map(self, map_file, goal):
