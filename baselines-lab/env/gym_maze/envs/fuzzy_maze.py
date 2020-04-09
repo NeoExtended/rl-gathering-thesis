@@ -3,7 +3,6 @@ from typing import Tuple, Union, List
 import numpy as np
 
 from env.gym_maze.envs.maze_base import MazeBase
-from env.gym_maze.rewards import RewardGenerator, ContinuousRewardGenerator
 
 
 class FuzzyMaze(MazeBase):
@@ -15,8 +14,9 @@ class FuzzyMaze(MazeBase):
     :param random_move_distance: (int) Distance (per dimension) every particle may randomly move.
     :param fuzzy_action_probability: (float) Probability for each particle to be not affected by an action.
     """
-    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int, reward_generator: RewardGenerator = ContinuousRewardGenerator,
-                 reward_kwargs=None, n_particles:int = 256, random_move_chance: float = 0.1, random_move_distance: int = 1, fuzzy_action_probability: float = 0.1):
+    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
+                 reward_generator: str, reward_kwargs=None, n_particles:int = 256,
+                 random_move_chance: float = 0.1, random_move_distance: int = 1, fuzzy_action_probability: float = 0.1):
 
         super().__init__(map_file, goal, goal_range, reward_generator, reward_kwargs, n_particles)
         self.random_move_chance = random_move_chance

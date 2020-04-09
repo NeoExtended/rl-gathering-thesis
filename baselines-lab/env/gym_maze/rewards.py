@@ -81,8 +81,9 @@ class GoalRewardGenerator(RewardGenerator):
         self.next_avg_cost_goal = 0
 
     def step(self, action, locations):
-        cost_to_go = np.sum(self.cost[tuple(locations.T)])
-        max_cost_agent = np.max(self.cost[tuple(locations.T)])
+        step_cost = self.cost[tuple(locations.T)]
+        cost_to_go = np.sum(step_cost)
+        max_cost_agent = np.max(step_cost)
 
         done = False
         reward = -0.1
@@ -107,14 +108,18 @@ class ContinuousRewardGenerator(RewardGenerator):
     """
     Gives a continuous reward signal after every step based on the total cost-to-go. The cost is normalized by the
     initial cost. Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
+    :param gathering_reward: (float) Scaling factor for the gathering reward
+    :param positive_only: (bool) Weather or not to suppress negative rewards from moving particles further away from the goal position.
+        Note that positive rewards will not be granted more than once in this setting.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, gathering_reward=0.0):
+    def __init__(self, maze, goal, goal_range, n_particles, gathering_reward=0.0, positive_only=False):
         super().__init__(maze, goal, goal_range, n_particles)
         self.initialCost = 0
         self.lastCost = 0
         self.uniqueParticles = n_particles
         self.gathering_reward_scale = gathering_reward
         self.time_penalty = 0.0
+        self.positive_only = positive_only
 
     def reset(self, locations):
         super().reset(locations)
@@ -126,22 +131,42 @@ class ContinuousRewardGenerator(RewardGenerator):
 
     def step(self, action, locations):
         done = False
-        cost_to_go = np.sum(self.cost[tuple(locations.T)])
-        max_cost_agent = np.max(self.cost[tuple(locations.T)])
+        step_cost = self.cost[tuple(locations.T)]
 
+        gathering_reward = self._calculate_gathering_reward(locations)
+        goal_reward = self._calculate_goal_reward(step_cost)
+        reward = gathering_reward + goal_reward - self.time_penalty     # -0.001
+
+        if np.max(step_cost) <= self.goal_range:
+            done = True
+
+        return done, reward
+
+    def _calculate_goal_reward(self, step_cost):
+        cost_to_go = np.sum(step_cost)
+        goal_reward = 0.0
+
+        if self.positive_only:
+            if self.lastCost - cost_to_go > 0:
+                goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
+                self.lastCost = cost_to_go
+        else:
+            goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
+            self.lastCost = cost_to_go
+
+        return goal_reward
+
+    def _calculate_gathering_reward(self, locations):
+        gathering_reward = 0.0
         if self.gathering_reward_scale > 0.0:
             particles = len(np.unique(locations, axis=0))
             gathering_reward = self.gathering_reward_scale * ((self.uniqueParticles - particles) / self.n_particles)
             self.uniqueParticles = particles
-        else:
-            gathering_reward = 0
 
-        goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
-        self.lastCost = cost_to_go
+        return gathering_reward
 
-        reward = gathering_reward + goal_reward - self.time_penalty     # -0.001
 
-        if max_cost_agent <= self.goal_range:
-            done = True
-
-        return done, reward
+GENERATORS = {
+    'goal': GoalRewardGenerator,
+    'continuous': ContinuousRewardGenerator
+}

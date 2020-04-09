@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List, Type
+from typing import Tuple, Union, List
 
 import cv2
 import gym
@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from gym.utils import seeding
 
-from env.gym_maze.rewards import RewardGenerator, ContinuousRewardGenerator
+from env.gym_maze.rewards import GENERATORS
 
 PARTICLE_MARKER = 150
 GOAL_MARKER = 200
@@ -22,7 +22,7 @@ class MazeBase(gym.Env):
         In case of multiple maps, multiple maps, multiple goal positions can be given.
         Can be set to None for a random goal position.
     :param goal_range: (int) Circle radius around the goal position that should be counted as goal reached.
-    :param reward_generator: (RewardGenerator) A class of type RewardGenerator generating reward
+    :param reward_generator: (str) The type of RewardGenerator to use for reward generation. (e.g. "goal" or "continuous")
         based on the current state.
     :param n_particles: (int) Number of particles to spawn in the maze.
         Can be set to -1 for a random number of particles.
@@ -31,7 +31,7 @@ class MazeBase(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
-                 reward_generator: Type[RewardGenerator] = ContinuousRewardGenerator, reward_kwargs=None, n_particles:int = 256) -> None:
+                 reward_generator: str, reward_kwargs=None, n_particles:int = 256) -> None:
 
         self.np_random = None
         self.seed()
@@ -45,7 +45,7 @@ class MazeBase(gym.Env):
             self.randomize_n_particles = False
             self.n_particles = n_particles
 
-        self.reward_generator_class = reward_generator
+        self.reward_generator_class = GENERATORS[reward_generator]
         self.reward_generator = None
 
         self.map_file = map_file
