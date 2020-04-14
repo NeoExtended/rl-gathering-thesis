@@ -38,7 +38,7 @@ class CuriosityWrapper(BaseTFWrapper):
     :param gamma: (float) Reward discount factor for intrinsic reward normalization.
     :param learning_rate: (float) Learning rate for the Adam optimizer of the predictor network.
     """
-    def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 2048, gradient_steps: int = 4,
+    def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 16384, gradient_steps: int = 4,
                  batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, normalize_obs: bool = True,
                  gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, _init_setup_model=True):
 
