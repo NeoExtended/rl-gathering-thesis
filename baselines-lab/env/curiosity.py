@@ -8,6 +8,8 @@ from stable_baselines.common.input import observation_input
 from stable_baselines.common.running_mean_std import RunningMeanStd
 from stable_baselines.common.vec_env import VecEnvWrapper
 
+from env.tf_wrapper import BaseTFWrapper
+
 
 def small_convnet(x, activ = tf.nn.relu, **kwargs):
     layer_1 = activ(tf_layers.conv(x, 'c1', n_filters=32, filter_size=8, stride=4, init_scale=np.sqrt(2), **kwargs))
@@ -17,28 +19,30 @@ def small_convnet(x, activ = tf.nn.relu, **kwargs):
     return tf_layers.linear(layer_3, 'fc1', n_hidden=512, init_scale=np.sqrt(2))
 
 
-class CuriosityWrapper(VecEnvWrapper):
+class CuriosityWrapper(BaseTFWrapper):
+    """
+    Random Network Distillation (RND) curiosity reward.
+    https://arxiv.org/abs/1810.12894
 
-    def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 16384, gradient_steps: int = 4,
+    :param env: (gym.Env) Environment to wrap.
+    :param network: (str) Network type. Can be a "cnn" or a "mlp".
+    :param intrinsic_reward_weight: (float) Weight for the intrinsic reward.
+    :param buffer_size: (int) Size of the replay buffer for predictor training.
+    :param train_freq: (int) Frequency of predictor training in steps.
+    :param gradient_steps: (int) Number of optimization epochs.
+    :param batch_size: (int) Number of samples to draw from the replay buffer per optimization epoch.
+    :param learning_starts: (int) Number of steps to wait before training the predictor for the first time.
+    :param filter_end_of_episode: (bool) Weather or not to filter end of episode signals (dones).
+    :param filter_reward: (bool) Weather or not to filter extrinsic reward from the environment.
+    :param normalize_obs: (bool) Weather or not to normalize and clip obs for the target/predictor network. Note that obs returned will be unaffected.
+    :param gamma: (float) Reward discount factor for intrinsic reward normalization.
+    :param learning_rate: (float) Learning rate for the Adam optimizer of the predictor network.
+    """
+    def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 2048, gradient_steps: int = 4,
                  batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, normalize_obs: bool = True,
-                 gamma: float = 0.99, learning_rate: float = 0.0001):
-        """
+                 gamma: float = 0.99, learning_rate: float = 0.0001, _init_setup_model=True):
 
-        :param env: (gym.Env) Environment to wrap.
-        :param network: (str) Network type. Can be a "cnn" or a "mlp".
-        :param intrinsic_reward_weight: (float) Weight for the intrinsic reward.
-        :param buffer_size: (int) Size of the replay buffer for predictor training.
-        :param train_freq: (int) Frequency of predictor training in steps.
-        :param gradient_steps: (int) Number of optimization epochs.
-        :param batch_size: (int) Number of samples to draw from the replay buffer per optimization epoch.
-        :param learning_starts: (int) Number of steps to wait before training the predictor for the first time.
-        :param filter_end_of_episode: (bool) Weather or not to filter end of episode signals (dones).
-        :param filter_reward: (bool) Weather or not to filter extrinsic reward from the environment.
-        :param normalize_obs: (bool) Weather or not to normalize and clip obs for the target/predictor network. Note that obs returned will be unaffected.
-        :param gamma: (float) Reward discount factor for intrinsic reward normalization.
-        :param learning_rate: (float) Learning rate for the Adam optimizer of the predictor network.
-        """
-        super().__init__(env)
+        super().__init__(env, _init_setup_model)
 
         self.network_type = network
         self.buffer = ReplayBuffer(buffer_size)
@@ -65,9 +69,20 @@ class CuriosityWrapper(VecEnvWrapper):
         self.last_obs = None
         self.last_update = 0
 
-        self._setup_model()
+        self.graph = None
+        self.sess = None
+        self.predictor_network = None
+        self.target_network = None
+        self.params = None
+        self.int_reward = None
+        self.aux_loss = None
+        self.optimizer = None
+        self.training_op = None
 
-    def _setup_model(self):
+        if _init_setup_model:
+            self.setup_model()
+
+    def setup_model(self):
         self.graph = tf.Graph()
 
         with self.graph.as_default():
@@ -91,6 +106,7 @@ class CuriosityWrapper(VecEnvWrapper):
                 self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
                 self.training_op = self.optimizer.minimize(self.aux_loss)
 
+            self.params = tf.trainable_variables()
             tf.global_variables_initializer().run(session=self.sess)
 
     def reset(self):
@@ -157,3 +173,30 @@ class CuriosityWrapper(VecEnvWrapper):
                           -self.clip_obs,
                           self.clip_obs)
         return obs
+
+    def get_parameter_list(self):
+        return self.params
+
+    def save(self, save_path):
+        #os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        #self.saver.save(self.sess, save_path)
+
+        data = {
+            'network': self.network_type,
+            'intrinsic_reward_weight': self.intrinsic_reward_weight,
+            'buffer_size': self.buffer.buffer_size,
+            'train_freq': self.train_freq,
+            'gradient_steps': self.gradient_steps,
+            'batch_size': self.batch_size,
+            'learning_starts': self.learning_starts,
+            'filter_end_of_episode': self.filter_end_of_episode,
+            'filter_extrinsic_reward': self.filter_extrinsic_reward,
+            'norm_obs': self.norm_obs,
+            'gamma': self.gamma,
+            'learning_rate': self.learning_rate,
+            'int_rwd_rms': self.int_rwd_rms,
+            'obs_rms': self.obs_rms
+        }
+
+        params_to_save = self.get_parameters()
+        self._save_to_file_zip(save_path, data=data, params=params_to_save)

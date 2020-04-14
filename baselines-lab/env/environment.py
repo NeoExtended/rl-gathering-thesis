@@ -1,18 +1,17 @@
-import importlib
-import os
-import logging
 import copy
+import importlib
+import logging
+import os
 
 import gym
-from gym.envs.classic_control import CartPoleEnv
 from stable_baselines.bench import Monitor
-from stable_baselines.common import set_global_seeds
 from stable_baselines.common.atari_wrappers import FrameStack, ScaledFloatFrame
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
-from env.wrappers import VecGifRecorder, VecScaledFloatFrame
-from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
 from env.curiosity import CuriosityWrapper
+from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
+from env.wrappers import VecGifRecorder, VecScaledFloatFrame
+
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
     """
@@ -112,7 +111,13 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
         env = VecEvaluationWrapper(env)
 
     if curiosity:
-        env = CuriosityWrapper(env)
+        if isinstance(curiosity, bool):
+            env = CuriosityWrapper(env)
+        else:
+            if 'trained_agent' in curiosity:
+                env = CuriosityWrapper.load(curiosity['trained_agent'], env)
+            else:
+                env = CuriosityWrapper(env, **curiosity)
 
     if normalize:
         if isinstance(normalize, bool):
