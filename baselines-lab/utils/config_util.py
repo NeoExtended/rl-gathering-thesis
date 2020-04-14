@@ -2,9 +2,10 @@
 Defines helper functions for reading and writing the lab config file
 """
 
+import json
 import logging
 import os
-import json
+
 import yaml
 
 from utils import util
@@ -30,60 +31,82 @@ def clean_config(config, args):
     :param args: (dict) parsed args dict
     :return: (dict) The cleaned config dictionary
     """
-    from model.checkpoints import CheckpointManager
 
     if args.lab_mode == 'enjoy':
-        # Do not change running averages in enjoy mode
-        if 'normalize' in config['env']:
-            if isinstance(config['env']['normalize'], bool):
-                config['env'].pop('normalize')
-                config['env']['normalize'] = {'training' : False}
-            else:
-                config['env']['normalize']['training'] = False
-
-        # Find checkpoints
-        if len(args.checkpoint_path) > 0:
-            set_checkpoints(config, args.checkpoint_path, args.type)
-        else:
-            path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
-            set_checkpoints(config, path, args.type)
-
-        # Reduce number of envs if there are too many
-        if config['env']['n_envs'] > 32:
-            config['env']['n_envs'] = 32
-
-        if args.strict:
-            config['env']['n_envs'] = 1
-
+        return _clean_enjoy_config(args, config)
     elif args.lab_mode == 'train':
-        # Allow fast loading of recently trained agents via "last" and "best" checkpoints
-        if config['algorithm'].get('trained_agent', None):
-            if config['algorithm']['trained_agent'] in ['best', 'last']:
-                path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
-                set_checkpoints(config, path, config['algorithm']['trained_agent'])
-        if config['algorithm']['name'] in ["dqn", "ddpg"]:
-            if config['env'].get('n_envs', 1) > 1:
-                logging.warning("Number of envs must be 1 for dqn and ddpg! Reducing n_envs to 1.")
-                config['env']['n_envs'] = 1
-
+        _clean_train_config(config)
     elif args.lab_mode == "search":
-        resume = config['search'].get("resume", False)
-        if resume and isinstance(resume, bool):
-            path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
-            config['search']['resume'] = path
+        _clean_search_config(config)
 
+    return config
+
+
+def _clean_search_config(config):
+    resume = config['search'].get("resume", False)
+    if resume and isinstance(resume, bool):
+        from model.checkpoints import CheckpointManager
+        path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+        config['search']['resume'] = path
+    return config
+
+
+def _clean_train_config(config):
+    # Allow fast loading of recently trained agents via "last" and "best" checkpoints
+    if config['algorithm'].get('trained_agent', None):
+        if config['algorithm']['trained_agent'] in ['best', 'last']:
+            from model.checkpoints import CheckpointManager
+            path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+            set_checkpoints(config, path, config['algorithm']['trained_agent'])
+    if config['algorithm']['name'] in ["dqn", "ddpg"]:
+        if config['env'].get('n_envs', 1) > 1:
+            logging.warning("Number of envs must be 1 for dqn and ddpg! Reducing n_envs to 1.")
+            config['env']['n_envs'] = 1
+    return config
+
+
+def _clean_enjoy_config(args, config):
+    # Do not change running averages in enjoy mode
+    if 'normalize' in config['env']:
+        if isinstance(config['env']['normalize'], bool):
+            config['env'].pop('normalize')
+            config['env']['normalize'] = {'training': False}
+        else:
+            config['env']['normalize']['training'] = False
+    # Do not train curiosity networks in enjoy mode
+    if 'curiosity' in config['env']:
+        if isinstance(config['env']['curiosity'], bool):
+            config['env'].pop('curiosity')
+            config['env']['curiosity'] = {'training': False}
+        else:
+            config['env']['curiosity']['training'] = False
+    # Find checkpoints
+    if len(args.checkpoint_path) > 0:
+        set_checkpoints(config, args.checkpoint_path, args.type)
+    else:
+        from model.checkpoints import CheckpointManager
+        path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+        set_checkpoints(config, path, args.type)
+    # Reduce number of envs if there are too many
+    if config['env']['n_envs'] > 32:
+        config['env']['n_envs'] = 32
+    if args.strict:
+        config['env']['n_envs'] = 1
     return config
 
 
 def set_checkpoints(config, path, type):
     from model.checkpoints import CheckpointManager
     normalization = 'normalize' in config['env']
-    model_checkpoint, norm_checkpoint = CheckpointManager.get_checkpoint(path,
-                                                                         type=type,
-                                                                         normalization=normalization)
-    config['algorithm']['trained_agent'] = model_checkpoint
+    curiosity = 'curiosity' in config['env']
+
+    checkpoint = CheckpointManager.get_checkpoint(path, type=type)
+    config['algorithm']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "model")
     if normalization:
-        config['env']['normalize']['trained_agent'] = norm_checkpoint
+        config['env']['normalize']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "normalization")
+
+    if curiosity:
+        config['env']['curiosity']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "curiosity")
 
 
 def read_config(config_file):
@@ -133,4 +156,3 @@ def extend_meta_data(config):
     }
     config['meta'].update(extended_info)
     return config
-

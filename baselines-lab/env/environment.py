@@ -114,7 +114,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
         if isinstance(curiosity, bool):
             env = CuriosityWrapper(env)
         else:
-            if 'trained_agent' in curiosity:
+            if 'trained_agent' in curiosity: #TODO: Give kwargs on load
                 env = CuriosityWrapper.load(curiosity['trained_agent'], env)
             else:
                 env = CuriosityWrapper(env, **curiosity)
@@ -124,7 +124,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
             env = VecNormalize(env)
         elif isinstance(normalize, dict):
             if 'trained_agent' in normalize:
-                env = VecNormalize.load(normalize['trained_agent'], env)
+                env = VecNormalize.load(normalize['trained_agent'], env) # TODO: Provide training=false if set
             elif normalize.pop('precompute', False):
                 samples = normalize.pop('samples', 10000)
                 env = _precompute_normalization(env, n_envs, samples, normalize)

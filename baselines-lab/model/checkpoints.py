@@ -1,13 +1,14 @@
-from datetime import datetime
+import copy
 import logging
 import os
-import copy
+from datetime import datetime
+
 import tensorflow as tf
 from stable_baselines.common.vec_env import VecNormalize
 
-from utils import util
-from env.environment import create_environment
+from env.curiosity import CuriosityWrapper
 from env.evaluation import Evaluator
+from utils import util
 
 
 class CheckpointManager:
@@ -38,24 +39,28 @@ class CheckpointManager:
             assert config, "You must provide an environment configuration to evaluate the model!"
 
         self.last_models = []
-        self.all_models = set()
         self.best = None
         self.best_score = float('-inf')
         self.last_save = 0
         self.update_counter = 0
         self.env = None
+        self.wrappers = []
         self.tb_log = tb_log
         self.writer = None
 
         if config:
             env_desc = copy.deepcopy(config['env'])
             normalization = env_desc.get('normalize', False)
+            curiosity = env_desc.get('curiosity', False)
 
             if normalization:
-                self.env = util.unwrap_vec_env(env, VecNormalize)
+                self.wrappers.append(('normalization', 'pkl', util.unwrap_vec_env(env, VecNormalize)))
                 # Remove unnecessary keys
                 normalization.pop('precompute', None)
                 normalization.pop('samples', None)
+
+            if curiosity:
+                self.wrappers.append(('curiosity', 'zip', util.unwrap_vec_env(env, CuriosityWrapper)))
 
             self.evaluator = Evaluator(config['algorithm']['name'],
                                        n_eval_episodes=n_eval_episodes,
@@ -92,32 +97,26 @@ class CheckpointManager:
 
     def _save_model(self, model):
         logging.info("Saving last model at timestep {}".format(str(self.update_counter)))
-        savepoint = (self.update_counter, util.get_timestamp())
-        self._create_checkpoint(savepoint, model)
-
-        self.last_models.append(savepoint)
-        self.all_models.add(savepoint)
+        checkpoint = self._checkpoint(self.model_dir, "", self.update_counter, util.get_timestamp())
+        self._create_checkpoint(checkpoint, model)
+        self.last_models.append(checkpoint)
 
         if len(self.last_models) > self.n_keep:
-            old_savepoint = self.last_models[0]
+            old_checkpoint = self.last_models[0]
             del self.last_models[0]
-            self._remove_checkpoint(old_savepoint)
-            self.all_models.remove(old_savepoint)
+            self._remove_checkpoint(old_checkpoint)
 
-    def _get_model_path(self, checkpoint, suffix=""):
+    def _make_path(self, checkpoint, name, extension="zip"):
         return os.path.join(self.model_dir,
-                            self._build_filename(checkpoint, "model", suffix=suffix, extension="zip"))
-
-    def _get_vecnorm_path(self, checkpoint, suffix=""):
-        return os.path.join(self.model_dir,
-                            self._build_filename(checkpoint, "normalization", suffix=suffix, extension="pkl"))
+                            self._build_filename(checkpoint, name, extension=extension))
 
     @staticmethod
-    def _build_filename(checkpoint, prefix, suffix="", extension="zip"):
+    def _build_filename(checkpoint, prefix, extension="zip"):
+        suffix = checkpoint['type']
         if len(suffix) > 0:
-            return "{}_{}_{}_{}.{}".format(prefix, checkpoint[0], checkpoint[1], suffix, extension)
+            return "{}_{}_{}_{}.{}".format(prefix, checkpoint['counter'], checkpoint['time'], suffix, extension)
         else:
-            return "{}_{}_{}.{}".format(prefix, checkpoint[0], checkpoint[1], extension)
+            return "{}_{}_{}.{}".format(prefix, checkpoint['counter'], checkpoint['time'], extension)
 
     def _save_best_model(self, model):
         logging.debug("Evaluating model.")
@@ -128,10 +127,10 @@ class CheckpointManager:
             logging.info("Found new best model with a mean reward of {:.4f}".format(reward))
             self.best_score = reward
             if self.best:
-                self._remove_checkpoint(self.best, postfix="best")
+                self._remove_checkpoint(self.best)
 
-            self.best = (self.update_counter, util.get_timestamp())
-            self._create_checkpoint(self.best, model, postfix="best")
+            self.best = self._checkpoint(self.model_dir, "best", self.update_counter, util.get_timestamp())
+            self._create_checkpoint(self.best, model)
 
         return reward, steps
 
@@ -146,7 +145,6 @@ class CheckpointManager:
         ])
         self.writer.add_summary(length_summary, self.update_counter)
 
-
         reward_summary = tf.Summary(value=[
             tf.Summary.Value(
                 tag='reward/eval_ep_reward_mean',
@@ -154,29 +152,29 @@ class CheckpointManager:
         ])
         self.writer.add_summary(reward_summary, self.update_counter)
 
-    def _remove_checkpoint(self, savepoint, postfix=""):
-        model_path = self._get_model_path(savepoint, postfix)
+    def _remove_checkpoint(self, checkpoint):
+        model_path = self._make_path(checkpoint, "model", extension="zip")
         os.remove(model_path)
-        if self.env:
-            env_path = self._get_vecnorm_path(savepoint, postfix)
-            os.remove(env_path)
 
-    def _create_checkpoint(self, savepoint, model, postfix=""):
-        model_path = self._get_model_path(savepoint, postfix)
+        for wrapper in self.wrappers:
+            wrapper_path = self._make_path(checkpoint, wrapper[0], extension=wrapper[1])
+            os.remove(wrapper_path)
+
+    def _create_checkpoint(self, checkpoint, model):
+        model_path = self._make_path(checkpoint, "model", extension="zip")
         model.save(model_path)
-        if self.env:
-            env_path = self._get_vecnorm_path(savepoint, postfix)
-            self.env.save(env_path)
+
+        for wrapper in self.wrappers:
+            save_path = self._make_path(checkpoint, wrapper[0], extension=wrapper[1])
+            wrapper[2].save(save_path)
 
     @classmethod
-    def get_checkpoint(cls, path, type="best", normalization=False):
+    def get_checkpoint(cls, path: str, type: str = "best") -> dict:
         """
-        Returns paths to the files of the latest checkpoint saved in a given log directory.
+        Returns a dictionary defining a model checkpoint. The checkpoint may contain more than one archive for different objects.
         :param path: (str) Path to a log directory (should contain subdirectories for each run).
         :param type: (str) Type of the checkpoint ("last" or "best").
-        :param normalization: (bool) Weather or not to load normalization parameters.
-        :return: (str, None) or (str, str) depending on the normalization parameter, containing paths to the
-            latest checkpoint files.
+        :return: (dict) Dictionary containing information about the checkpoint.
         """
         sp_path = os.path.join(path, "checkpoints")
         assert os.path.exists(sp_path), "No checkpoints directory found in {}".format(path)
@@ -186,19 +184,21 @@ class CheckpointManager:
         else:
             model_suffix = ""
 
-        checkpoint = cls._get_latest_checkpoint(sp_path, prefix="model", suffix=model_suffix)
-        model_name = cls._build_filename(checkpoint, "model", suffix=model_suffix, extension="zip")
-        model_path = os.path.join(sp_path, model_name)
-        assert os.path.exists(model_path), "Could not find model checkpoint {} in {}".format(model_name, sp_path)
+        return cls._get_latest_checkpoint(sp_path, prefix="model", suffix=model_suffix)
 
-        if normalization:
-            norm_name = cls._build_filename(checkpoint, "normalization", suffix=model_suffix, extension="pkl")
-            norm_path = os.path.join(sp_path, norm_name)
-            assert os.path.exists(norm_path), \
-                "Could not find normalization parameter checkpoint {} in {}".format(norm_name, sp_path)
-            return model_path, norm_path
-        else:
-            return model_path, None
+    @classmethod
+    def get_file_path(cls, checkpoint: dict, archive_name: str, extension: str = "zip") -> str:
+        """
+        Returns a file according to the given checkpoint and the requested archive of that checkpoint.
+        :param checkpoint: (dict) The checkpoint.
+        :param archive_name: (str) The name of the archive from the given checkpoint.
+        :param extension: (str) The extension of the archive.
+        :return: (str) Path to the requested archive of the given checkpoint.
+        """
+        file_name = cls._build_filename(checkpoint, archive_name, extension=extension)
+        file_path = os.path.join(checkpoint['path'], file_name)
+        assert os.path.exists(file_path), "Could not find archive {} in the given checkpoint".format(file_name)
+        return file_path
 
     @staticmethod
     def get_latest_run(path):
@@ -207,8 +207,8 @@ class CheckpointManager:
         return os.path.join(path, runs[-1])  # Return latest run
 
     @staticmethod
-    def _get_latest_checkpoint(dir, prefix="", suffix=""):
-        files = os.listdir(dir)
+    def _get_latest_checkpoint(path, prefix="", suffix=""):
+        files = os.listdir(path)
 
         latest = datetime.fromisoformat('1970-01-01')
         counter = None
@@ -232,4 +232,19 @@ class CheckpointManager:
                 latest = date
                 counter = step
 
-        return (counter, latest.strftime(util.TIMESTAMP_FORMAT))
+        return CheckpointManager._checkpoint(path, suffix, counter, latest.strftime(util.TIMESTAMP_FORMAT))
+
+    @staticmethod
+    def _checkpoint(path: str, suffix: str, counter: int, time: str) -> dict:
+        """
+        Creates a dictionary object describing a checkpoint.
+        :param path: (str) Directory containing the checkpoint files.
+        :param suffix: (str) Suffix for all the files of the checkpoint.
+        :param counter: (int) Number of steps
+        :param time: (str) Timestamp
+        :return: (dict) Dictionary containing the checkpoint information
+        """
+        return {'path': path,
+                'counter': counter,
+                'time': time,
+                'type': suffix}
