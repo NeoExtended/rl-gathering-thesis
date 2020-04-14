@@ -40,7 +40,7 @@ class CuriosityWrapper(BaseTFWrapper):
     """
     def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 2048, gradient_steps: int = 4,
                  batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, normalize_obs: bool = True,
-                 gamma: float = 0.99, learning_rate: float = 0.0001, _init_setup_model=True):
+                 gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, _init_setup_model=True):
 
         super().__init__(env, _init_setup_model)
 
@@ -57,6 +57,7 @@ class CuriosityWrapper(BaseTFWrapper):
         self.norm_obs = normalize_obs
         self.gamma = gamma
         self.learning_rate = learning_rate
+        self.training = training
 
         self.epsilon = 1e-8
         self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
@@ -71,6 +72,8 @@ class CuriosityWrapper(BaseTFWrapper):
 
         self.graph = None
         self.sess = None
+        self.observation_ph = None
+        self.processed_obs = None
         self.predictor_network = None
         self.target_network = None
         self.params = None
@@ -121,7 +124,6 @@ class CuriosityWrapper(BaseTFWrapper):
 
     def step_wait(self):
         obs, rews, dones, infos = self.venv.step_wait()
-
         self.buffer.extend(self.last_obs, self.last_action, rews, obs, dones)
 
         if self.filter_extrinsic_reward:
@@ -129,17 +131,19 @@ class CuriosityWrapper(BaseTFWrapper):
         if self.filter_end_of_episode:
             dones = np.zeros(dones.shape)
 
-        self.obs_rms.update(obs)
+        if self.training:
+            self.obs_rms.update(obs)
+
         obs_n = self.normalize_obs(obs)
+        loss = self.sess.run([self.int_reward], {self.observation_ph : obs_n})
 
-        target, predictor, loss = self.sess.run([self.target_network, self.predictor_network, self.int_reward], {self.observation_ph : obs_n})
+        if self.training:
+            self._update_reward_rms(loss)
 
-        self.update_mean(loss)
         intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
-
         reward = np.squeeze(rews + self.intrinsic_reward_weight * intrinsic_reward)
 
-        if self.steps > self.learning_starts and self.steps - self.last_update > self.train_freq:
+        if self.training and self.steps > self.learning_starts and self.steps - self.last_update > self.train_freq:
             self.updates += 1
             self.last_update = self.steps
             self.learn()
@@ -159,7 +163,8 @@ class CuriosityWrapper(BaseTFWrapper):
             total_loss += loss
         logging.info("Trained predictor. Avg loss: {}".format(total_loss / self.gradient_steps))
 
-    def update_mean(self, reward):
+    def _update_reward_rms(self, reward: np.ndarray) -> None:
+        """Update reward normalization statistics."""
         self.ret = self.gamma * self.ret + reward
         self.int_rwd_rms.update(self.ret)
 
