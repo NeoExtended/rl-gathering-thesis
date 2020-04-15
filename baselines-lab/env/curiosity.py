@@ -34,13 +34,14 @@ class CuriosityWrapper(BaseTFWrapper):
     :param learning_starts: (int) Number of steps to wait before training the predictor for the first time.
     :param filter_end_of_episode: (bool) Weather or not to filter end of episode signals (dones).
     :param filter_reward: (bool) Weather or not to filter extrinsic reward from the environment.
-    :param normalize_obs: (bool) Weather or not to normalize and clip obs for the target/predictor network. Note that obs returned will be unaffected.
+    :param norm_obs: (bool) Weather or not to normalize and clip obs for the target/predictor network. Note that obs returned will be unaffected.
+    :param norm_ext_reward: (bool) Weather or not to normalize extrinsic reward.
     :param gamma: (float) Reward discount factor for intrinsic reward normalization.
     :param learning_rate: (float) Learning rate for the Adam optimizer of the predictor network.
     """
     def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 16384, gradient_steps: int = 4,
-                 batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, normalize_obs: bool = True,
-                 gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, _init_setup_model=True):
+                 batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, norm_obs: bool = True,
+                 norm_ext_reward: bool = True, gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, _init_setup_model=True):
 
         super().__init__(env, _init_setup_model)
 
@@ -54,15 +55,18 @@ class CuriosityWrapper(BaseTFWrapper):
         self.filter_end_of_episode = filter_end_of_episode
         self.filter_extrinsic_reward = filter_reward
         self.clip_obs = 5
-        self.norm_obs = normalize_obs
+        self.norm_obs = norm_obs
+        self.norm_ext_reward = norm_ext_reward
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.training = training
 
         self.epsilon = 1e-8
         self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
+        self.ext_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
         self.obs_rms = RunningMeanStd(shape=self.observation_space.shape)
-        self.ret = np.zeros(self.num_envs) # discounted return
+        self.int_ret = np.zeros(self.num_envs) # discounted return for intrinsic reward
+        self.ext_ret = np.zeros(self.num_envs)  # discounted return for extrinsic reward
 
         self.updates = 0
         self.steps = 0
@@ -93,12 +97,21 @@ class CuriosityWrapper(BaseTFWrapper):
             self.observation_ph, self.processed_obs = observation_input(self.venv.observation_space, scale=(self.network_type == "cnn"))
 
             with tf.variable_scope("target_model"):
-                self.target_network = small_convnet(self.processed_obs, tf.nn.leaky_relu)
-                #self.target_network = tf_layers.linear(self.target_network, "out", 512)
+                if self.network_type == 'cnn':
+                    self.target_network = small_convnet(self.processed_obs, tf.nn.leaky_relu)
+                elif self.network_type == 'mlp':
+                    self.target_network = tf_layers.mlp(self.processed_obs, [1024, 512])
+                    self.target_network = tf_layers.linear(self.target_network, "out", 512)
+                else:
+                    raise ValueError("Unknown network type {}!".format(self.network_type))
 
             with tf.variable_scope("predictor_model"):
-                self.predictor_network = tf.nn.relu(small_convnet(self.processed_obs, tf.nn.leaky_relu))
-                self.predictor_network = tf.nn.relu(tf_layers.linear(self.predictor_network, "fc2", 512))
+                if self.network_type == 'cnn':
+                    self.predictor_network = tf.nn.relu(small_convnet(self.processed_obs, tf.nn.leaky_relu))
+                elif self.network_type == 'mlp':
+                    self.predictor_network = tf_layers.mlp(self.processed_obs, [1024, 512])
+
+                self.predictor_network = tf.nn.relu(tf_layers.linear(self.predictor_network, "pred_fc1", 512))
                 self.predictor_network = tf_layers.linear(self.predictor_network, "out", 512)
 
             with tf.name_scope("loss"):
@@ -138,10 +151,15 @@ class CuriosityWrapper(BaseTFWrapper):
         loss = self.sess.run([self.int_reward], {self.observation_ph : obs_n})
 
         if self.training:
-            self._update_reward_rms(loss)
+            self._update_ext_reward_rms(rews)
+            self._update_int_reward_rms(loss)
 
         intrinsic_reward = np.array(loss) / np.sqrt(self.int_rwd_rms.var + self.epsilon)
-        reward = np.squeeze(rews + self.intrinsic_reward_weight * intrinsic_reward)
+        if self.norm_ext_reward:
+            extrinsic_reward = np.array(rews) / np.sqrt(self.ext_rwd_rms.var + self.epsilon)
+        else:
+            extrinsic_reward = rews
+        reward = np.squeeze(extrinsic_reward + self.intrinsic_reward_weight * intrinsic_reward)
 
         if self.training and self.steps > self.learning_starts and self.steps - self.last_update > self.train_freq:
             self.updates += 1
@@ -163,10 +181,15 @@ class CuriosityWrapper(BaseTFWrapper):
             total_loss += loss
         logging.info("Trained predictor. Avg loss: {}".format(total_loss / self.gradient_steps))
 
-    def _update_reward_rms(self, reward: np.ndarray) -> None:
+    def _update_int_reward_rms(self, reward: np.ndarray) -> None:
         """Update reward normalization statistics."""
-        self.ret = self.gamma * self.ret + reward
-        self.int_rwd_rms.update(self.ret)
+        self.int_ret = self.gamma * self.int_ret + reward
+        self.int_rwd_rms.update(self.int_ret)
+
+    def _update_ext_reward_rms(self, reward: np.ndarray) -> None:
+        """Update reward normalization statistics."""
+        self.ext_ret = self.gamma * self.ext_ret + reward
+        self.ext_rwd_rms.update(self.ext_ret)
 
     def normalize_obs(self, obs: np.ndarray) -> np.ndarray:
         """
@@ -197,9 +220,11 @@ class CuriosityWrapper(BaseTFWrapper):
             'filter_end_of_episode': self.filter_end_of_episode,
             'filter_extrinsic_reward': self.filter_extrinsic_reward,
             'norm_obs': self.norm_obs,
+            'norm_ext_reward': self.norm_ext_reward,
             'gamma': self.gamma,
             'learning_rate': self.learning_rate,
             'int_rwd_rms': self.int_rwd_rms,
+            'ext_rwd_rms': self.ext_rwd_rms,
             'obs_rms': self.obs_rms
         }
 
