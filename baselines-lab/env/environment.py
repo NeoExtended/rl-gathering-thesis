@@ -57,11 +57,10 @@ def get_wrapper_class(wrapper):
         return None
 
 
-def create_environment(config, algo_name, seed, log_dir=None, video_path=None, evaluation=False):
+def create_environment(config, seed, log_dir=None, video_path=None, evaluation=False):
     """
     Creates a new environment according to the parameters from the given lab config dictionary.
-    :param config: (dict) Lab config from config['env'].
-    :param algo_name: (str) Name of the algorithm which should be used with this environment.
+    :param config: (dict) Lab config.
     :param seed: (int) Pseudo-RNG seed for the environment. Vectorized environments will use linear increments
         from this seed.
     :param log_dir: (str) Path to the log directory.
@@ -70,15 +69,23 @@ def create_environment(config, algo_name, seed, log_dir=None, video_path=None, e
     :param evaluation: (bool) Weather or not to create an evaluation wrapper for the environment.
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
-    config = copy.deepcopy(config)
+    alg_config = copy.deepcopy(config['algorithm'])
+    config = copy.deepcopy(config['env'])
+    curiosity = config.pop('curiosity', False)
+    if isinstance(curiosity, dict):
+        if curiosity.pop('auto_params', False):
+            curiosity.update(_create_curiosity_parameters(config, alg_config))
+
     env_id = config.pop('name')
     n_envs = config.pop('n_envs', 1)
     normalize = config.pop('normalize', None)
     frame_stack = config.pop('frame_stack', None)
     multiprocessing = config.pop('multiprocessing', True)
-    curiosity = config.pop('curiosity', False)
+
     scale = config.pop('scale', None)
     logging.info("Creating environment with id {} and {} instances.".format(env_id, n_envs))
+
+
 
     # Get tuples with (wrapper_class, wrapper_kwargs)
     wrappers_config = config.pop('wrappers', [])
@@ -180,4 +187,8 @@ def _precompute_normalization(env, num_envs, samples, config):
     env.training = False
     return env
 
-
+def _create_curiosity_parameters(env_config, alg_config):
+    return {'gamma': alg_config['gamma'],
+            'learning_rate': alg_config['learning_rate'],
+            'train_freq': env_config['n_envs'] * alg_config['n_steps'],
+            'buffer_size': env_config['n_envs'] * alg_config['n_steps'] * 4}

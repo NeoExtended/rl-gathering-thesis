@@ -16,28 +16,28 @@ class Evaluator:
     Class for easy model evaluation. Supports multiple evaluation methods for speed/accuracy tradeoff.
     Evaluates average reward and number of steps.
 
-    :param algorithm_name: (str) Name of the used algorithm (needed for environment creation)
+    :param config: (dict) Lab config used to create the evaluation environment for normal and slow evaluation mode.
     :param n_eval_episodes: (int) Number of episodes for evaluation.
     :param deterministic: (bool) Weather model actions should be deterministic or stochastic.
     :param render: (bool) Weather or not to render the environment during evaluation.
     :param eval_method: (str) One of the available evaluation types ("fast", "normal", "slow").
         Slow will only use a single env and will be the most accurate.
         Normal uses VecEnvs and fast requires env to be set and wrapped in a Evaluation Wrapper.
-    :param env_config: (dict) Config used to create the evaluation environment for normal and slow evaluation mode.
     :param env: (gym.Env or VecEnv) Environment used in case of eval_mode=="fast". Must be wrapped in an evaluation wrapper.
     :param seed: (int) Seed for the evaluation environment. If None a random seed will be generated.
     """
-    def __init__(self, algorithm_name, n_eval_episodes=32, deterministic=True, render=False, eval_method="normal",
-                 env_config=None, env=None, seed=None):
+    def __init__(self, config=None, n_eval_episodes=32, deterministic=True, render=False, eval_method="normal",
+                 env=None, seed=None):
         self.eval_method = eval_method
-        self.config = env_config
+        self.config = config
         self.n_eval_episodes = n_eval_episodes
         self.deterministic = deterministic
         self.render = render
 
         if eval_method in ["normal", "slow"]:
-            assert env_config, "You must provide an environment configuration, if the eval_method is not fast!"
-            test_env_config = deepcopy(env_config)
+            assert config, "You must provide an environment configuration, if the eval_method is not fast!"
+            test_config = deepcopy(config)
+            test_env_config = test_config['env']
             if eval_method == "slow":
                 test_env_config['num_envs'] = 1
 
@@ -50,8 +50,7 @@ class Evaluator:
             if test_env_config['n_envs'] > 32:
                 test_env_config['n_envs'] = 32
             test_env_config['curiosity'] = False # TODO: Sync train and test curiosity wrappers and reenable
-            self.test_env = create_environment(test_env_config,
-                                               algorithm_name,
+            self.test_env = create_environment(test_config,
                                                seed,
                                                evaluation=True)
             self.eval_wrapper = unwrap_env(self.test_env, VecEvaluationWrapper, EvaluationWrapper)

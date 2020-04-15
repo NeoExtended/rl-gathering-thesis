@@ -62,11 +62,10 @@ class CheckpointManager:
             if curiosity:
                 self.wrappers.append(('curiosity', 'zip', util.unwrap_vec_env(env, CuriosityWrapper)))
 
-            self.evaluator = Evaluator(config['algorithm']['name'],
+            self.evaluator = Evaluator(config,
                                        n_eval_episodes=n_eval_episodes,
                                        deterministic=True,
-                                       eval_method=eval_method,
-                                       env_config=env_desc)
+                                       eval_method=eval_method)
 
     def step(self, locals_, globals_):
         """

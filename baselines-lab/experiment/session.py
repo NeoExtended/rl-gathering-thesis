@@ -1,19 +1,18 @@
 import distutils.spawn
 import logging
 import os
-import numpy as np
 from abc import ABC, abstractmethod
 
-from stable_baselines.common.vec_env import VecVideoRecorder
 import matplotlib.pyplot as plt
+from stable_baselines.common.vec_env import VecVideoRecorder
 
-from utils import util, config_util
 from env.environment import create_environment
-from model.model import create_model
-from model.checkpoints import CheckpointManager
-from experiment import TensorboardLogger, Runner, HyperparameterOptimizer, Sampler
-from env.wrappers import VecGifRecorder
 from env.evaluation import EvaluationWrapper, VecEvaluationWrapper
+from env.wrappers import VecGifRecorder
+from experiment import TensorboardLogger, Runner, HyperparameterOptimizer, Sampler
+from model.checkpoints import CheckpointManager
+from model.model import create_model
+from utils import util, config_util
 
 
 class Session(ABC):
@@ -78,8 +77,7 @@ class ReplaySession(Session):
         else:
             data_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
 
-        self.env = create_environment(config=config['env'],
-                                      algo_name=config['algorithm']['name'],
+        self.env = create_environment(config=config,
                                       seed=self.config['meta']['seed'],
                                       log_dir=None,
                                       video_path=data_path if args.obs_video else None,
@@ -125,8 +123,7 @@ class TrainSession(Session):
     def __init__(self, config, args):
         Session.__init__(self, config, args)
         self._create_log_dir()
-        self.env = create_environment(config=config['env'],
-                                      algo_name=config['algorithm']['name'],
+        self.env = create_environment(config=config,
                                       seed=self.config['meta']['seed'],
                                       log_dir=self.log)
 

@@ -1,17 +1,19 @@
 import logging
 import os
-import optuna
 from copy import deepcopy
+
 import numpy as np
+import optuna
 from optuna.pruners import SuccessiveHalvingPruner, MedianPruner, NopPruner
 from optuna.samplers import RandomSampler, TPESampler
 from stable_baselines.common.vec_env import VecEnv
 
-from model.model import create_model
 from env.environment import create_environment
 from env.evaluation import Evaluator
 from experiment import TensorboardLogger, Sampler
+from model.model import create_model
 from utils import send_email
+
 
 class HyperparameterOptimizer:
     """
@@ -164,17 +166,15 @@ class HyperparameterOptimizer:
         return self.train_env
 
     def _make_train_env(self, config):
-        self.train_env = create_environment(config['env'],
-                                            config['algorithm']['name'],
+        self.train_env = create_environment(config,
                                             config['meta']['seed'],
                                             evaluation=self.integrated_evaluation,
                                             log_dir=self.log_dir)
 
-        self.evaluator = Evaluator(config['algorithm']['name'],
+        self.evaluator = Evaluator(config,
                                    n_eval_episodes=self.n_test_episodes,
                                    deterministic=self.deterministic_evaluation,
                                    eval_method=self.eval_method,
-                                   env_config=config['env'],
                                    env=self.train_env)
 
     def _create_objective_function(self):
