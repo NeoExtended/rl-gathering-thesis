@@ -5,18 +5,16 @@ import sys
 import argparse
 import logging
 
-from utils import config_util, send_email
-from experiment import Session
+from utils import config_util
+from experiment import Scheduler
 
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 # Import env package to init gym registry
-import env.gym_maze
 
 # Import policies to init policy registry
-import policies
 
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")
@@ -50,7 +48,7 @@ def parse_args(args):
                                help="Weather or not to plot the distribution of choosen hyperparameters",
                                action="store_true")
 
-    parser.add_argument("config_file", type=str, help="Location of the lab config file")
+    parser.add_argument("config_file", type=str, nargs="+", help="Location of the lab config file. May be a list or a directory.")
     parser.add_argument("--verbose", type=int, default=10, help="Verbosity level - corresponds to python logging levels")
     parser.add_argument("--mail", type=str, default=None, help="Set your mail address to be informed when training is finished (requires mailx)")
     return parser.parse_args(args=args)
@@ -58,7 +56,6 @@ def parse_args(args):
 
 def main(args=None):
     # TODO: HER/GAIL - experience replay / expert training
-    # TODO: Allow user to run multiple experiments
     # TODO: New MazeEnv with random maze
     # TODO: Config dependencies: Link configs together for clearer params between configs.
     # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.
@@ -69,14 +66,10 @@ def main(args=None):
     args = parse_args(args)
 
     logging.getLogger().setLevel(args.verbose)
+    configs = config_util.parse_config_args(args.config_file, args)
 
-    config = config_util.get_config(args.config_file, args)
-
-    s = Session.create_session(config, args)
+    s = Scheduler(configs, args)
     s.run()
-
-    if args.mail:
-        send_email(args.mail, "Finished Training", "Finished training for {}".format(args))
 
 
 if __name__ == "__main__":

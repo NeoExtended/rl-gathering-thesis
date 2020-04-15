@@ -2,6 +2,7 @@
 Defines helper functions for reading and writing the lab config file
 """
 
+import glob
 import json
 import logging
 import os
@@ -9,6 +10,26 @@ import os
 import yaml
 
 from utils import util
+
+
+def parse_config_args(config_args, args):
+    """
+    Parses the config string the user provides to the lab and returns the according config dictionaries.
+    :param config_args:
+    :param args:
+    :return:
+    """
+
+    configs = []
+    for config in config_args:
+        assert os.path.exists(config), "Invalid input file/directory {}".format(config)
+        if os.path.isdir(config):
+            files = glob.glob(os.path.join(config, "*.yml"))
+            for file in files:
+                configs.append(get_config(file, args))
+        else:
+            configs.append(get_config(config, args))
+    return configs
 
 
 def get_config(config_file, args):
