@@ -10,7 +10,8 @@ from stable_baselines.common.vec_env import VecEnv
 
 from env.environment import create_environment
 from env.evaluation import Evaluator
-from experiment import TensorboardLogger, Sampler
+from experiment.samplers import Sampler
+from experiment.logger import TensorboardLogger
 from model.model import create_model
 from utils import send_email
 

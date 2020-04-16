@@ -7,7 +7,6 @@ import gym
 from gym.utils.seeding import create_seed
 from stable_baselines.common.vec_env import VecNormalize, VecEnvWrapper
 
-from experiment import Runner
 from utils import get_timestamp, config_util, safe_mean, unwrap_env, unwrap_vec_env
 
 
@@ -83,6 +82,7 @@ class Evaluator:
             norm.ret_rms = model_norm.ret_rms
             norm.training = False
 
+        from experiment import Runner
         runner = Runner(self.test_env, model, render=self.render, deterministic=self.deterministic, close_env=False)
         runner.run(self.n_eval_episodes)
         return self.eval_wrapper.aggregator.mean_reward, self.eval_wrapper.aggregator.mean_steps

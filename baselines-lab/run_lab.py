@@ -13,8 +13,10 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 # Import env package to init gym registry
+import env.gym_maze
 
 # Import policies to init policy registry
+import policies
 
 def parse_args(args):
     parser = argparse.ArgumentParser("Run script for baselines lab.")

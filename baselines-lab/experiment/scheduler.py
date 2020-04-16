@@ -1,6 +1,6 @@
 import logging
 
-from experiment import Session
+from experiment.session import Session
 from utils import send_email
 
 
