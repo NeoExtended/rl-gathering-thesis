@@ -56,7 +56,7 @@ def clean_config(config, args):
     if args.lab_mode == 'enjoy':
         return _clean_enjoy_config(args, config)
     elif args.lab_mode == 'train':
-        _clean_train_config(config)
+        _clean_train_config(args, config)
     elif args.lab_mode == "search":
         _clean_search_config(config)
 
@@ -66,19 +66,19 @@ def clean_config(config, args):
 def _clean_search_config(config):
     resume = config['search'].get("resume", False)
     if resume and isinstance(resume, bool):
-        from model.checkpoints import CheckpointManager
+        from baselines_lab.model.checkpoints import CheckpointManager
         path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
         config['search']['resume'] = path
     return config
 
 
-def _clean_train_config(config):
+def _clean_train_config(args, config):
     # Allow fast loading of recently trained agents via "last" and "best" checkpoints
     if config['algorithm'].get('trained_agent', None):
         if config['algorithm']['trained_agent'] in ['best', 'last']:
-            from model.checkpoints import CheckpointManager
+            from baselines_lab.model.checkpoints import CheckpointManager
             path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
-            set_checkpoints(config, path, config['algorithm']['trained_agent'])
+            set_checkpoints(config, path, config['algorithm']['trained_agent'], args.trial)
     if config['algorithm']['name'] in ["dqn", "ddpg"]:
         if config['env'].get('n_envs', 1) > 1:
             logging.warning("Number of envs must be 1 for dqn and ddpg! Reducing n_envs to 1.")
@@ -103,11 +103,11 @@ def _clean_enjoy_config(args, config):
             config['env']['curiosity']['training'] = False
     # Find checkpoints
     if len(args.checkpoint_path) > 0:
-        set_checkpoints(config, args.checkpoint_path, args.type)
+        set_checkpoints(config, args.checkpoint_path, args.type, args.trial)
     else:
-        from model.checkpoints import CheckpointManager
+        from baselines_lab.model.checkpoints import CheckpointManager
         path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
-        set_checkpoints(config, path, args.type)
+        set_checkpoints(config, path, args.type, args.trial)
     # Reduce number of envs if there are too many
     if config['env']['n_envs'] > 32:
         config['env']['n_envs'] = 32
@@ -116,12 +116,12 @@ def _clean_enjoy_config(args, config):
     return config
 
 
-def set_checkpoints(config, path, type):
-    from model.checkpoints import CheckpointManager
+def set_checkpoints(config, path, type, trial=-1):
+    from baselines_lab.model.checkpoints import CheckpointManager
     normalization = 'normalize' in config['env']
     curiosity = 'curiosity' in config['env']
 
-    checkpoint = CheckpointManager.get_checkpoint(path, type=type)
+    checkpoint = CheckpointManager.get_checkpoint(path, type=type, trial=trial)
     config['algorithm']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "model")
     if normalization:
         config['env']['normalize']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "normalization")

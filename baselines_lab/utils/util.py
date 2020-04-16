@@ -45,12 +45,12 @@ def create_log_directory(root):
     if not root:
         return None
 
+    timestamp = get_timestamp()
+    path = os.path.join(root, timestamp)
+
     global log_dir
-    if not log_dir:
-        timestamp = get_timestamp()
-        path = os.path.join(root, timestamp)
-        log_dir = os.path.abspath(path)
-        os.makedirs(log_dir)
+    log_dir = os.path.abspath(path)
+    os.makedirs(log_dir)
     return log_dir
 
 

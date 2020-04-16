@@ -37,8 +37,16 @@ def parse_args(args):
     enjoy_parser.add_argument("--strict",
                               help="Sets the number of environments to 1. Results in more accurate but far slower evaluation.",
                               action="store_true")
+    enjoy_parser.add_argument("--trial",
+                              type=int,
+                              help="Trial to load for enjoy mode (defaults to last trial).",
+                              default=-1)
 
     train_parser = subparsers.add_parser("train")
+    train_parser.add_argument("--trial",
+                              type=int,
+                              help="Trial to load when resuming training (defaults to last trial from previous run).",
+                              default=-1)
 
     search_parser = subparsers.add_parser("search")
     search_parser.add_argument("--plot",

@@ -66,6 +66,10 @@ class Evaluator:
         else:
             return self._evaluate_normal(model)
 
+    def close(self):
+        if self.test_env:
+            self.test_env.close()
+
     def _evaluate_fast(self):
         return self.eval_wrapper.aggregator.reward_rms, self.eval_wrapper.aggregator.step_rms
 

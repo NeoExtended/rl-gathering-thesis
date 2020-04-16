@@ -123,21 +123,24 @@ class TrainSession(Session):
     def __init__(self, config, args):
         Session.__init__(self, config, args)
         self._create_log_dir()
-        self.env = create_environment(config=config,
+        self.env = None
+        self.agent = None
+        self.saver = None
+
+    def _setup_session(self):
+        self.env = create_environment(config=self.config,
                                       seed=self.config['meta']['seed'],
-                                      log_dir=self.log)
+                                      log_dir=util.get_log_directory())
 
-        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        self.agent = create_model(self.config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
-    def run(self):
-        logging.info("Starting training.")
         save_interval = self.config['meta'].get('save_interval', 250000)
         n_keep = self.config['meta'].get('n_keep', 5)
         keep_best = self.config['meta'].get('keep_best', True)
         n_eval_episodes = self.config['meta'].get('n_eval_episodes', 32)
 
-        saver = CheckpointManager(
-            model_dir=os.path.join(self.log, "checkpoints"),
+        self.saver = CheckpointManager(
+            model_dir=os.path.join(util.get_log_directory(), "checkpoints"),
             save_interval=save_interval,
             n_keep=n_keep,
             keep_best=keep_best,
@@ -145,14 +148,34 @@ class TrainSession(Session):
             config=self.config,
             env=self.env,
             tb_log=bool(self.log))
-        self.add_callback(saver)
+        self.add_callback(self.saver)
         self.add_callback(TensorboardLogger())
 
+    def run(self):
+        n_trials = self.config['meta'].get('n_trials', 1)
+
+        if n_trials == 1:
+            self._setup_session()
+            self._run_experiment()
+        else:
+            for i in range(n_trials):
+                trial_dir = os.path.join(self.log, "trial_{}".format(i))
+                os.mkdir(trial_dir)
+                util.set_log_directory(trial_dir)
+
+                self._setup_session()
+                self._run_experiment()
+                del self.env
+                del self.agent
+
+    def _run_experiment(self):
+        logging.info("Starting training.")
         self.agent.learn(self.config['meta']['n_timesteps'], callback=self.step)
 
-        # Save model at the end of the learning process
-        saver.save(self.agent)
+        # Save model at the end of the learning process and do some cleanup.
+        self.saver.save(self.agent)
         self.env.close()
+        self.saver.close()
 
 
 class SearchSession(Session):

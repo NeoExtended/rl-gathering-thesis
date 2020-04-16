@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 
+import gym
 import tensorflow as tf
 from stable_baselines.common.vec_env import VecNormalize
 
@@ -28,7 +29,6 @@ class CheckpointManager:
     """
     def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=32, eval_method="normal",
                  config=None, env=None, tb_log=False):
-        os.makedirs(model_dir, exist_ok=True)
         self.model_dir = model_dir
         self.save_interval = save_interval
         self.n_keep = n_keep
@@ -66,6 +66,9 @@ class CheckpointManager:
                                        n_eval_episodes=n_eval_episodes,
                                        deterministic=True,
                                        eval_method=eval_method)
+
+    def close(self):
+        self.evaluator.close()
 
     def step(self, locals_, globals_):
         """
@@ -161,6 +164,8 @@ class CheckpointManager:
 
     def _create_checkpoint(self, checkpoint, model):
         model_path = self._make_path(checkpoint, "model", extension="zip")
+        if not os.path.exists(os.path.dirname(model_path)):
+            os.makedirs(os.path.dirname(model_path))
         model.save(model_path)
 
         for wrapper in self.wrappers:
@@ -168,22 +173,27 @@ class CheckpointManager:
             wrapper[2].save(save_path)
 
     @classmethod
-    def get_checkpoint(cls, path: str, type: str = "best") -> dict:
+    def get_checkpoint(cls, path: str, type: str = "best", trial: int = -1) -> dict:
         """
         Returns a dictionary defining a model checkpoint. The checkpoint may contain more than one archive for different objects.
         :param path: (str) Path to a log directory (should contain subdirectories for each run).
         :param type: (str) Type of the checkpoint ("last" or "best").
+        :param trial: (int) Trial to get the checkpoint from. Defaults to last trial.
         :return: (dict) Dictionary containing information about the checkpoint.
         """
-        sp_path = os.path.join(path, "checkpoints")
-        assert os.path.exists(sp_path), "No checkpoints directory found in {}".format(path)
+        trials = sorted([name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) and 'trial' in name])
+        if len(trials) > 0:
+            cp_path = os.path.join(path, trials[trial], "checkpoints")
+        else:
+            cp_path = os.path.join(path, "checkpoints")
+        assert os.path.exists(cp_path), "No checkpoints directory found in {}".format(path)
 
         if type == "best":
             model_suffix = "best"
         else:
             model_suffix = ""
 
-        return cls._get_latest_checkpoint(sp_path, prefix="model", suffix=model_suffix)
+        return cls._get_latest_checkpoint(cp_path, prefix="model", suffix=model_suffix)
 
     @classmethod
     def get_file_path(cls, checkpoint: dict, archive_name: str, extension: str = "zip") -> str:

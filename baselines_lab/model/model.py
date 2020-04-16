@@ -1,9 +1,12 @@
 import copy
 import logging
 
+import gym
+
 # from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
 from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, SAC, TD3
 from stable_baselines.common.schedules import Scheduler
+from stable_baselines.common.base_class import BaseRLModel
 
 from baselines_lab.model.schedules import get_schedule
 from baselines_lab.utils import util
@@ -21,7 +24,7 @@ ALGOS = {
     'td3': TD3
 }
 
-def create_model(config, env, seed):
+def create_model(config: dict, env: gym.Env, seed: int) -> BaseRLModel:
     """
     Creates a stable-baselines model according to the given lab configuration.
     :param config: (dict) The current lab model configuration (from config['algorithm']).
@@ -42,7 +45,6 @@ def create_model(config, env, seed):
         for key in ['learning_rate', "cliprange", "cliprange_vf"]:
             if key in config and isinstance(config[key], dict):
                 config[key] = get_schedule(config[key].pop("type"), **config[key])
-                config[key] = Scheduler()
 
     if 'trained_agent' in config: # Continue training
         logging.info("Loading pretrained model from {}.".format(config['trained_agent']))
