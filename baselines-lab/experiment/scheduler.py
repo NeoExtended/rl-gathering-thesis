@@ -23,8 +23,12 @@ class Scheduler:
                 session.run()
                 logging.info("Finished execution of config {}".format(config))
                 success = True
-            except Exception:
-                logging.warning("An exception occurred when executing config {} with args {}".format(config, self.args))
+            except Exception as err:
+                logging.error("An exception {} occurred when executing config {} with args {}".format(err, config, self.args))
+                if not self.args.ignore_errors:
+                    if self.args.mail:
+                        send_email(self.args.mail, "Run Failed", "Training for config {} with args {} failed.".format(config, self.args))
+                    raise err
 
             if self.args.mail:
                 if success:
