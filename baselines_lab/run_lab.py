@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore", category=FutureWarning) # Ignore future warnin
 import os
 import sys
 # Allow absolute imports even if project is not installed
-sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.path.dirname(os.getcwd()))
 
 import argparse
 import logging
