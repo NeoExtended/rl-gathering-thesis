@@ -1,7 +1,11 @@
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning) # Ignore future warnings from numpy/tensorflow version problems
 
+import os
 import sys
+# Allow absolute imports even if project is not installed
+sys.path.insert(0, os.getcwd())
+
 import argparse
 import logging
 
