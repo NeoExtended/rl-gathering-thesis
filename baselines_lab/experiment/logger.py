@@ -4,7 +4,8 @@ from collections import deque
 import tensorflow as tf
 from stable_baselines.common.vec_env.base_vec_env import VecEnv
 
-from baselines_lab.utils import safe_mean
+from baselines_lab.utils import safe_mean, unwrap_vec_env
+from baselines_lab.env.wrappers import CuriosityWrapper
 
 
 class TensorboardLogger:
@@ -14,14 +15,17 @@ class TensorboardLogger:
         will be calculated.
     :param min_log_delay: (int) Minimum number of timesteps between log entries.
     """
-    def __init__(self, smoothing=100, min_log_delay=200):
+    def __init__(self, smoothing=100, min_log_delay=500):
         self.ep_len_buffer = deque(maxlen=smoothing)
         self.reward_buffer = deque(maxlen=smoothing)
+        self.extrinsic_rew_buffer = deque(maxlen=smoothing)
+        self.intrinsic_rew_buffer = deque(maxlen=smoothing)
         self.n_episodes = None
         self.t_start = time.time()
         self.last_timesteps = 0
         self.first_step = True
         self.min_log_delay = min_log_delay
+        self.curiosity_wrapper = None
 
     def step(self, locals_, globals_):
         """
@@ -58,6 +62,12 @@ class TensorboardLogger:
         if isinstance(env, VecEnv):
             episode_rewards = env.env_method("get_episode_rewards")
             self.n_episodes = [0] * len(episode_rewards)
+
+            unwrapped_env = unwrap_vec_env(env, CuriosityWrapper)
+            if isinstance(unwrapped_env, CuriosityWrapper):
+                if unwrapped_env.monitor:
+                    self.curiosity_wrapper = unwrapped_env
+
         else:
             self.n_episodes = [0]
 
@@ -67,7 +77,10 @@ class TensorboardLogger:
         independent of the used algorithm.
         """
         if isinstance(env, VecEnv):
-            self._retrieve_from_vec_env(env)
+            if self.curiosity_wrapper:
+                self._retrieve_from_vec_env_with_curiosity(env)
+            else:
+                self._retrieve_from_vec_env(env)
         else:
             self._retrieve_from_env(env)
 
@@ -91,6 +104,21 @@ class TensorboardLogger:
             self.reward_buffer.extend(ep_reward[known:])
             self.n_episodes[i] = len(ep_reward)
 
+    def _retrieve_from_vec_env_with_curiosity(self, env):
+        # Use methods indirectly if we are dealing with a vecotorized environment
+        episode_rewards = env.env_method("get_episode_rewards")
+        episode_lengths = env.env_method("get_episode_lengths")
+        extrinsic_rewards = self.curiosity_wrapper.get_extrinsic_rewards()
+        intrinsic_rewards = self.curiosity_wrapper.get_intrinsic_rewards()
+
+        for i, (ep_reward, ep_length, ext_rews, int_rews) in enumerate(zip(episode_rewards, episode_lengths, extrinsic_rewards, intrinsic_rewards)):
+            known = self.n_episodes[i]
+            self.ep_len_buffer.extend(ep_length[known:])
+            self.reward_buffer.extend(ep_reward[known:])
+            self.intrinsic_rew_buffer.extend(int_rews[known:])
+            self.extrinsic_rew_buffer.extend(ext_rews[known:])
+            self.n_episodes[i] = len(ep_reward)
+
     def _write_summary(self, writer, num_timesteps):
         if len(self.ep_len_buffer) > 0:
             length_summary = tf.Summary(value=[
@@ -107,6 +135,21 @@ class TensorboardLogger:
             ])
             writer.add_summary(reward_summary, num_timesteps)
 
+            if self.curiosity_wrapper:
+                ext_rew_summary = tf.Summary(value=[
+                    tf.Summary.Value(
+                        tag='curiosity/ep_ext_reward_mean',
+                        simple_value=safe_mean(self.extrinsic_rew_buffer))
+                ])
+                writer.add_summary(ext_rew_summary, num_timesteps)
+
+                int_rew_summary = tf.Summary(value=[
+                    tf.Summary.Value(
+                        tag='curiosity/ep_int_reward_mean',
+                        simple_value=safe_mean(self.intrinsic_rew_buffer))
+                ])
+                writer.add_summary(int_rew_summary, num_timesteps)
+
         steps = num_timesteps - self.last_timesteps
         t_now = time.time()
         fps = int(steps / (t_now - self.t_start))
@@ -120,3 +163,4 @@ class TensorboardLogger:
             )
         ])
         writer.add_summary(fps_summary, num_timesteps)
+

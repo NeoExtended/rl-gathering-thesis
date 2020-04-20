@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import numpy as np
 import tensorflow as tf
@@ -41,7 +42,7 @@ class CuriosityWrapper(BaseTFWrapper):
     """
     def __init__(self, env, network: str = "cnn", intrinsic_reward_weight: float = 1.0, buffer_size: int = 65536, train_freq: int = 16384, gradient_steps: int = 4,
                  batch_size: int = 4096, learning_starts: int = 100, filter_end_of_episode: bool = True, filter_reward: bool = False, norm_obs: bool = True,
-                 norm_ext_reward: bool = True, gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, _init_setup_model=True):
+                 norm_ext_reward: bool = True, gamma: float = 0.99, learning_rate: float = 0.0001, training: bool = True, monitor=False, _init_setup_model=True):
 
         super().__init__(env, _init_setup_model)
 
@@ -60,6 +61,7 @@ class CuriosityWrapper(BaseTFWrapper):
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.training = training
+        self.monitor = monitor
 
         self.epsilon = 1e-8
         self.int_rwd_rms = RunningMeanStd(shape=(), epsilon=self.epsilon)
@@ -73,6 +75,10 @@ class CuriosityWrapper(BaseTFWrapper):
         self.last_action = None
         self.last_obs = None
         self.last_update = 0
+        self.ep_ext_reward_buf = np.zeros(self.num_envs)
+        self.ep_int_reward_buf = np.zeros(shape=(1, self.num_envs))
+        self.ep_ext_rewards = [list() for i in range(self.num_envs)]
+        self.ep_int_rewards = [list() for i in range(self.num_envs)]
 
         self.graph = None
         self.sess = None
@@ -141,8 +147,6 @@ class CuriosityWrapper(BaseTFWrapper):
 
         if self.filter_extrinsic_reward:
             rews = np.zeros(rews.shape)
-        if self.filter_end_of_episode:
-            dones = np.zeros(dones.shape)
 
         if self.training:
             self.obs_rms.update(obs)
@@ -166,6 +170,21 @@ class CuriosityWrapper(BaseTFWrapper):
             self.last_update = self.steps
             self.learn()
 
+        if self.monitor:
+            self.ep_int_reward_buf += intrinsic_reward
+            self.ep_ext_reward_buf += extrinsic_reward
+
+            for i, (info, done) in enumerate(zip(infos, dones)):
+                if done:
+                    info['curiosity'] = {'ext_rew': extrinsic_reward[i], 'int_rew': intrinsic_reward[0][i]}
+                    self.ep_ext_rewards[i].append(self.ep_ext_reward_buf[i])
+                    self.ep_int_rewards[i].append(self.ep_int_reward_buf[0][i])
+                    self.ep_ext_reward_buf[i] = 0
+                    self.ep_int_reward_buf[0][i] = 0
+
+        if self.filter_end_of_episode:
+            dones = np.zeros(dones.shape)
+
         return obs, reward, dones, infos
 
     def close(self):
@@ -176,7 +195,6 @@ class CuriosityWrapper(BaseTFWrapper):
         for _ in range(self.gradient_steps):
             obs_batch, act_batch, rews_batch, next_obs_batch, done_mask = self.buffer.sample(self.batch_size)
             obs_batch = self.normalize_obs(obs_batch)
-            test = self.sess.run(self.aux_loss, {self.observation_ph : obs_batch})
             train, loss = self.sess.run([self.training_op, self.aux_loss], {self.observation_ph : obs_batch})
             total_loss += loss
         logging.info("Trained predictor. Avg loss: {}".format(total_loss / self.gradient_steps))
@@ -230,3 +248,9 @@ class CuriosityWrapper(BaseTFWrapper):
 
         params_to_save = self.get_parameters()
         self._save_to_file_zip(save_path, data=data, params=params_to_save)
+
+    def get_extrinsic_rewards(self) -> List[List[float]]:
+        return self.ep_ext_rewards
+
+    def get_intrinsic_rewards(self) -> List[List[float]]:
+        return self.ep_int_rewards
