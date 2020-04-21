@@ -1,6 +1,4 @@
 import logging
-logging.getLogger('matplotlib.font_manager').disabled = True
-
 from pathlib import Path
 from typing import Tuple, List
 
@@ -8,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from scipy.signal import savgol_filter
+
+# logging.getLogger('matplotlib.font_manager').disabled = True
 
 IMAGES_PATH = "."
 
@@ -48,7 +48,7 @@ class Plotter:
 
         logging.info("Creating plots.")
         for file in self.files:
-            logging.info("Reading tensorboard logs. This may take a while...")
+            logging.info("Reading tensorboard logs from {}. This may take a while...".format(file))
             data = read_summary_values(str(file), tags)
             for tag in data:
                 if tag not in tag_values:

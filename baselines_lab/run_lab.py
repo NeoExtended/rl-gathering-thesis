@@ -61,7 +61,7 @@ def parse_args(args):
                                action="store_true")
 
     parser.add_argument("config_file", type=str, nargs="+", help="Location of the lab config file. May be a list or a directory.")
-    parser.add_argument("--verbose", type=int, default=10, help="Verbosity level - corresponds to python logging levels")
+    parser.add_argument("--verbose", type=int, default=logging.INFO, help="Verbosity level - corresponds to python logging levels")
     parser.add_argument("--mail", type=str, default=None, help="Set your mail address to be informed when training is finished (requires mailx)")
     parser.add_argument("--ignore-errors", action="store_true", help="Weather or not to supress errors when executing multiple configs.")
     return parser.parse_args(args=args)
