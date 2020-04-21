@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,14 +22,24 @@ def read_summary_values(file, tags):
 
 
 class Plotter:
-    def __init__(self, file_format, log_dir):
+    """
+    Class for automated plot creation from tensorboard log files.
+    :param file_format: (str) File format for the created plots.
+    :param log_dir: (str) Root directory for the tensorboard logs.
+    """
+    def __init__(self, file_format: str, log_dir: str) -> None:
         log_dir_path = Path(log_dir)
         self.files = list(log_dir_path.glob("**/events.out.tfevents.*"))
         self.path = log_dir_path.joinpath("figures")
         self.path.mkdir(exist_ok=True)
         self.file_format = file_format
 
-    def make_plot(self, tags, names):
+    def make_plot(self, tags: List[str], names: List[str]) -> None:
+        """
+        Creates and saves the plots defined by the given tags.
+        :param tags: (List[str]) Tags which correspond to summary tag names in the tensorboard logs
+        :param names: (List[str]) Names for the tags. Will be used as ylabel in the plot and as file name.
+        """
         assert len(tags) == len(names), "There must be a name for each tag and vise versa!"
         tag_values = {}
 
@@ -60,7 +70,7 @@ class Plotter:
                 self._make_multi_plot(step_data[0], mu, std, xlabel="steps", ylabel=name)
             else:
                 self._make_plot(step_data[0], value_data[0], xlabel="steps", ylabel=name)
-            self.save_fig(str(self.path.joinpath("{}.{}".format(name, self.file_format))))
+            self._save_fig(str(self.path.joinpath("{}.{}".format(name.replace(" ", "_"), self.file_format))))
 
     def _make_multi_plot(self, x, mu, std, xlabel=None, ylabel=None, name=None):
         self._prepare_plot(xlabel, ylabel, name)
@@ -98,7 +108,7 @@ class Plotter:
         if ylabel:
             plt.ylabel(ylabel)
 
-    def save_fig(self, path, tight_layout=True, fig_extension="pdf", resolution=300):
+    def _save_fig(self, path, tight_layout=True, fig_extension="pdf", resolution=300):
         if tight_layout:
             plt.tight_layout()
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
