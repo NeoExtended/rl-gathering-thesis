@@ -45,6 +45,9 @@ def parse_args(args):
                               type=int,
                               help="Trial to load for enjoy mode (defaults to last trial).",
                               default=-1)
+    enjoy_parser.add_argument("--plot",
+                              help="Weather or not to plot tensorboard data.",
+                              action="store_true")
 
     train_parser = subparsers.add_parser("train")
     train_parser.add_argument("--trial",

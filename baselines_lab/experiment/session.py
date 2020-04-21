@@ -13,6 +13,10 @@ from baselines_lab.experiment.samplers import Sampler
 from baselines_lab.model import create_model
 from baselines_lab.model.checkpoints import CheckpointManager
 from baselines_lab.utils import util, config_util
+from baselines_lab.utils.plotter import Plotter
+
+PLOT_TAGS = ["curiosity/ep_ext_reward_mean", "curiosity/ep_int_reward_mean", "episode_length/ep_length_mean", "episode_length/eval_ep_length_mean", "episode_reward", "reward/ep_reward_mean", "reward/eval_ep_reward_mean"]
+PLOT_NAMES = ["normalized extrinsic reward", "intrinsic reward", "episode length", "eval episode length", "total episode reward", "episode reward", "eval episode reward"]
 
 
 class Session(ABC):
@@ -64,6 +68,15 @@ class Session(ABC):
         if self.log:
             config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
 
+    def _plot(self, log_dir):
+        file_format = 'pdf'
+        if isinstance(self.config['meta']['plot'], dict):
+            file_format = self.config['meta']['plot'].get('format', file_format)
+            PLOT_TAGS.extend(self.config['meta']['plot'].get('tags'))
+            PLOT_NAMES.extend(self.config['meta']['plot'].get('names'))
+        plotter = Plotter(file_format, log_dir)
+        plotter.make_plot(PLOT_TAGS, PLOT_NAMES)
+
 
 class ReplaySession(Session):
     """
@@ -100,6 +113,9 @@ class ReplaySession(Session):
             self.num_episodes = self.config['env']['n_envs'] * 4
 
         self.runner = Runner(self.env, self.agent, deterministic=self.deterministic)
+
+        if args.plot:
+            self._plot(config['meta']['session_dir'])
 
     def _setup_video_recorder(self, video_path):
         if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
@@ -167,6 +183,9 @@ class TrainSession(Session):
                 self._run_experiment()
                 del self.env
                 del self.agent
+
+        if self.config['meta'].get('plot', False):
+            self._plot(self.log)
 
     def _run_experiment(self):
         logging.info("Starting training.")

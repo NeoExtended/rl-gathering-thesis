@@ -103,10 +103,12 @@ def _clean_enjoy_config(args, config):
             config['env']['curiosity']['training'] = False
     # Find checkpoints
     if len(args.checkpoint_path) > 0:
+        config['meta']['session_dir'] = args.checkpoint_path
         set_checkpoints(config, args.checkpoint_path, args.type, args.trial)
     else:
         from baselines_lab.model.checkpoints import CheckpointManager
         path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
+        config['meta']['session_dir'] = path
         set_checkpoints(config, path, args.type, args.trial)
     # Reduce number of envs if there are too many
     if config['env']['n_envs'] > 32:

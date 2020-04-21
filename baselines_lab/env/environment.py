@@ -186,7 +186,7 @@ def _precompute_normalization(env, num_envs, samples, config):
     return env
 
 def _create_curiosity_parameters(env_config, alg_config):
-    return {'gamma': alg_config['gamma'],
-            'learning_rate': alg_config['learning_rate'],
-            'train_freq': env_config['n_envs'] * alg_config['n_steps'],
-            'buffer_size': env_config['n_envs'] * alg_config['n_steps'] * 4}
+    return {'gamma': alg_config.get('gamma', 0.99),
+            'learning_rate': alg_config.get('learning_rate', 0.0001),
+            'train_freq': env_config.get('n_envs', 1) * alg_config.get('n_steps', 64),
+            'buffer_size': env_config.get('n_envs', 1) * alg_config.get('n_steps', 64) * 4}

@@ -46,7 +46,7 @@ class CuriosityWrapper(BaseTFWrapper):
 
         super().__init__(env, _init_setup_model)
 
-        self.network_type = network
+        self.network = network
         self.buffer = ReplayBuffer(buffer_size)
         self.train_freq = train_freq
         self.gradient_steps = gradient_steps
@@ -100,21 +100,21 @@ class CuriosityWrapper(BaseTFWrapper):
 
         with self.graph.as_default():
             self.sess = tf_util.make_session(num_cpu=None, graph=self.graph)
-            self.observation_ph, self.processed_obs = observation_input(self.venv.observation_space, scale=(self.network_type == "cnn"))
+            self.observation_ph, self.processed_obs = observation_input(self.venv.observation_space, scale=(self.network == "cnn"))
 
             with tf.variable_scope("target_model"):
-                if self.network_type == 'cnn':
+                if self.network == 'cnn':
                     self.target_network = small_convnet(self.processed_obs, tf.nn.leaky_relu)
-                elif self.network_type == 'mlp':
+                elif self.network == 'mlp':
                     self.target_network = tf_layers.mlp(self.processed_obs, [1024, 512])
                     self.target_network = tf_layers.linear(self.target_network, "out", 512)
                 else:
-                    raise ValueError("Unknown network type {}!".format(self.network_type))
+                    raise ValueError("Unknown network type {}!".format(self.network))
 
             with tf.variable_scope("predictor_model"):
-                if self.network_type == 'cnn':
+                if self.network == 'cnn':
                     self.predictor_network = tf.nn.relu(small_convnet(self.processed_obs, tf.nn.leaky_relu))
-                elif self.network_type == 'mlp':
+                elif self.network == 'mlp':
                     self.predictor_network = tf_layers.mlp(self.processed_obs, [1024, 512])
 
                 self.predictor_network = tf.nn.relu(tf_layers.linear(self.predictor_network, "pred_fc1", 512))
@@ -176,7 +176,7 @@ class CuriosityWrapper(BaseTFWrapper):
 
             for i, (info, done) in enumerate(zip(infos, dones)):
                 if done:
-                    info['curiosity'] = {'ext_rew': extrinsic_reward[i], 'int_rew': intrinsic_reward[0][i]}
+                    info['curiosity'] = {'ext_rew': self.ep_ext_reward_buf[i], 'int_rew': self.ep_int_reward_buf[0][i]}
                     self.ep_ext_rewards[i].append(self.ep_ext_reward_buf[i])
                     self.ep_int_rewards[i].append(self.ep_int_reward_buf[0][i])
                     self.ep_ext_reward_buf[i] = 0
@@ -228,7 +228,7 @@ class CuriosityWrapper(BaseTFWrapper):
         #self.saver.save(self.sess, save_path)
 
         data = {
-            'network': self.network_type,
+            'network': self.network,
             'intrinsic_reward_weight': self.intrinsic_reward_weight,
             'buffer_size': self.buffer.buffer_size,
             'train_freq': self.train_freq,
