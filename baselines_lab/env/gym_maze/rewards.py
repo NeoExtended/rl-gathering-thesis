@@ -71,7 +71,7 @@ class GoalRewardGenerator(RewardGenerator):
 
     def reset(self, locations):
         super().reset(locations)
-        cost = self.cost[tuple(locations.T)]
+        cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
         total_cost = np.sum(cost)
         max_cost = np.max(cost)
 
@@ -81,7 +81,7 @@ class GoalRewardGenerator(RewardGenerator):
         self.next_avg_cost_goal = 0
 
     def step(self, action, locations):
-        step_cost = self.cost[tuple(locations.T)]
+        step_cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
         cost_to_go = np.sum(step_cost)
         max_cost_agent = np.max(step_cost)
 
@@ -123,7 +123,7 @@ class ContinuousRewardGenerator(RewardGenerator):
 
     def reset(self, locations):
         super().reset(locations)
-        self.initialCost = np.sum(self.cost[tuple(locations.T)])
+        self.initialCost = np.sum(self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])])
         self.lastCost = self.initialCost
 
         max_cost = np.max(self.cost)
@@ -131,7 +131,7 @@ class ContinuousRewardGenerator(RewardGenerator):
 
     def step(self, action, locations):
         done = False
-        step_cost = self.cost[tuple(locations.T)]
+        step_cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
 
         gathering_reward = self._calculate_gathering_reward(locations)
         goal_reward = self._calculate_goal_reward(step_cost)
