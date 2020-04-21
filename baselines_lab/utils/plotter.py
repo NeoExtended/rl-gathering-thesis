@@ -1,3 +1,6 @@
+import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 from pathlib import Path
 from typing import Tuple, List
 
@@ -43,7 +46,9 @@ class Plotter:
         assert len(tags) == len(names), "There must be a name for each tag and vise versa!"
         tag_values = {}
 
+        logging.info("Creating plots.")
         for file in self.files:
+            logging.info("Reading tensorboard logs. This may take a while...")
             data = read_summary_values(str(file), tags)
             for tag in data:
                 if tag not in tag_values:
@@ -51,6 +56,7 @@ class Plotter:
                 tag_values[tag][0].append(data[tag][0])
                 tag_values[tag][1].append(data[tag][1])
 
+        logging.info("Saving plots to {}.".format(self.path))
         for tag, name in zip(tags, names):
             step_data, value_data = tag_values[tag]
             step_data, value_data = np.asarray(step_data), np.asarray(value_data)
