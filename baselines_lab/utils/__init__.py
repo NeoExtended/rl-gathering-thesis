@@ -1,2 +1,2 @@
-from utils import config_util
-from utils.util import *
+from baselines_lab.utils import config_util
+from baselines_lab.utils.util import *

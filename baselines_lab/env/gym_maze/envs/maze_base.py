@@ -53,9 +53,11 @@ class MazeBase(gym.Env):
         self.goal_proposition = goal
         self._load_map(map_file, goal)
 
-        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]  # {S, SE, E, NE, N, NW, W, SW}
-        self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1),
-                           4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
+        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]
+        # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
+        #                    4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
+        self.action_map = {0: (0, 1), 1: (1, 1), 2: (1, 0), 3: (1, -1), # {E, SE, S, SW, W, NW, N, NE}
+                           4: (0, -1), 5: (-1, -1), 6: (-1, 0), 7: (-1, 1)}
         self.rev_action_map = {v: k for k, v in self.action_map.items()}
         self.action_space = gym.spaces.Discrete(len(self.actions))
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
@@ -143,7 +145,7 @@ class MazeBase(gym.Env):
         info = {}
         dy, dx = self.action_map[action]
 
-        new_loc = self.particle_locations + [dx, dy]
+        new_loc = self.particle_locations + [dy, dx]
         self._update_locations(new_loc)
 
         done, reward = self.reward_generator.step(action, self.particle_locations)
