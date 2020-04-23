@@ -31,12 +31,24 @@ class MazeBase(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
-                 reward_generator: str, reward_kwargs=None, n_particles:int = 256) -> None:
+                 reward_generator: str, reward_kwargs=None, n_particles:int = 256, allow_diagonal: bool = True) -> None:
 
         self.np_random = None
         self.seed()
         self.reward_kwargs = {} if reward_kwargs is None else reward_kwargs
         self.goal_range = goal_range
+
+        if allow_diagonal:
+            # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
+            #                    4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
+            self.action_map = {0: (0, 1), 1: (1, 1), 2: (1, 0), 3: (1, -1), # {E, SE, S, SW, W, NW, N, NE}
+                               4: (0, -1), 5: (-1, -1), 6: (-1, 0), 7: (-1, 1)}
+        else:
+            self.action_map = {0: (0, 1), 1: (1, 0), 2 : (0, -1), 3: (-1, 0)} # {E, S, W, N}
+
+        self.rev_action_map = {v: k for k, v in self.action_map.items()}
+        self.actions = list(self.action_map.keys())
+        self.action_space = gym.spaces.Discrete(len(self.action_map))
 
         if n_particles < 0:
             self.randomize_n_particles = True
@@ -53,13 +65,6 @@ class MazeBase(gym.Env):
         self.goal_proposition = goal
         self._load_map(map_file, goal)
 
-        self.actions = [0, 1, 2, 3, 4, 5, 6, 7]
-        # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
-        #                    4: (-1, 0), 5: (-1, -1), 6: (0, -1), 7: (1, -1)}
-        self.action_map = {0: (0, 1), 1: (1, 1), 2: (1, 0), 3: (1, -1), # {E, SE, S, SW, W, NW, N, NE}
-                           4: (0, -1), 5: (-1, -1), 6: (-1, 0), 7: (-1, 1)}
-        self.rev_action_map = {v: k for k, v in self.action_map.items()}
-        self.action_space = gym.spaces.Discrete(len(self.actions))
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
 
         self.particle_locations = np.array([])
@@ -90,7 +95,7 @@ class MazeBase(gym.Env):
                 self.goal = goal[self.map_index]
             else:
                 self.goal = goal
-            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, **self.reward_kwargs)
+            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, self.action_map, **self.reward_kwargs)
         else:
             self.randomize_goal = True
             self.goal = [0, 0]

@@ -11,11 +11,13 @@ class RewardGenerator(ABC):
     :param goal: (list) A point coordinate in form [x, y] ([column, row]) defining the goal.
     :param goal_range: (int) Range around the goal position which should be treated as 'goal reached'.
     :param n_particles: (int) Total number of robots.
+    :param action_map: (dict) Map containing allowed actions.
     """
-    def __init__(self, maze, goal, goal_range, n_particles):
+    def __init__(self, maze, goal, goal_range, n_particles, action_map):
         self.goal_range = goal_range
         self.n_particles = n_particles
         self.initial_robot_locations = None
+        self.action_map = action_map
 
         self._calculate_cost_map(maze, goal)
 
@@ -41,7 +43,8 @@ class RewardGenerator(ABC):
 
         while queue:
             x, y = queue.popleft()
-            for x2, y2 in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            for action in self.action_map.values():
+                x2, y2 = x + action[1], y + action[0]
                 if 0 <= x2 < width and 0 <= y2 < height and maze[y2, x2] != 1 and seen[y2, x2] != 1:
                     queue.append([x2, y2])
                     seen[y2, x2] = 1
@@ -54,8 +57,8 @@ class GoalRewardGenerator(RewardGenerator):
     Current rewards include measurements about the average and maximum distance to the goal position.
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, n_subgoals=30, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4):
-        super().__init__(maze, goal, goal_range, n_particles)
+    def __init__(self, maze, goal, goal_range, n_particles, action_map, n_subgoals=30, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4):
+        super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.final_reward = final_reward
         self.min_reward = min_reward
         self.max_reward = max_reward
@@ -112,8 +115,8 @@ class ContinuousRewardGenerator(RewardGenerator):
     :param positive_only: (bool) Weather or not to suppress negative rewards from moving particles further away from the goal position.
         Note that positive rewards will not be granted more than once in this setting.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, gathering_reward=0.0, positive_only=False):
-        super().__init__(maze, goal, goal_range, n_particles)
+    def __init__(self, maze, goal, goal_range, n_particles, action_map, gathering_reward=0.0, positive_only=False):
+        super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.initialCost = 0
         self.lastCost = 0
         self.uniqueParticles = n_particles
