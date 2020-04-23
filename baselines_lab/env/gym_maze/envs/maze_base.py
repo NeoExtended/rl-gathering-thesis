@@ -180,9 +180,7 @@ class MazeBase(gym.Env):
             cv2.circle(observation, tuple(self.goal), self.goal_range, (GOAL_MARKER))
             observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
-        return observation[:, np.newaxis]
-        #return (observation[:, np.newaxis]).astype(np.uint8)
-        #return np.expand_dims(observation, axis=2).astype(np.uint8)  # Convert to single channel image and uint8 to save memory
+        return observation[:, :, np.newaxis] # Convert to single channel image
 
     def _update_locations(self, new_locations):
         """
