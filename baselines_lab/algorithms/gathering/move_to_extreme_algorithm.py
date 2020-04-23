@@ -1,15 +1,21 @@
 from algorithms.gathering.iterative_merging import \
     IterativeMostDistancedPairMergingAlgorithm
+from algorithms.gathering.local_optimization.minimize_sum_to_closest_extreme import MinimizeSumToClosestExtremeAlgorithm
 from algorithms.gathering.pair_merging.merge_via_extreme import MergeViaExtremeAlgorithm
 from algorithms.particle_moving_algorithm import ParticleMovingAlgorithm
 from algorithms.utils.extremes import Objective
 
 from baselines_lab.algorithms.gym_maze_wrapper import GymMazeWrapper
 
+def OriginalMoveToMinSumExtremumAlgorithm(env: GymMazeWrapper):
+    alg = IterativeMostDistancedPairMergingAlgorithm(env)
+    alg.set_merging_algorithm(MergeViaExtremeAlgorithm(env))
+    alg.add_local_optimization(MinimizeSumToClosestExtremeAlgorithm(env))
+    return alg
 
 def OriginalMoveToExtremeAlgorithm(env: GymMazeWrapper):
     alg = IterativeMostDistancedPairMergingAlgorithm(env)
-    alg.set_merging_algorithm(MergeViaExtremeAlgorithm(env, simulate=True))
+    alg.set_merging_algorithm(MergeViaExtremeAlgorithm(env))
     return alg
 
 

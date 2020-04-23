@@ -3,6 +3,10 @@ from algorithms.utils.extremes import EXTREME_COMPERATORS, Objective
 
 
 class MinimizeSumToClosestExtremeAlgorithm(ParticleMovingAlgorithm):
+    def __init__(self, env, simulate=False):
+        super().__init__(env, simulate)
+        self._extreme_targets = self._find_extremes()
+
     def _find_extreme(self, cmp):
         ex = None
         for i in range(self._env.matrix.shape[0]):
@@ -27,7 +31,7 @@ class MinimizeSumToClosestExtremeAlgorithm(ParticleMovingAlgorithm):
 
     def _local_opt_step(self, objective):
         current_obj_value = objective(self.get_particles())
-        options = [(self._env.simulate_particle_move(self.get_particles(), op), op) for op in
+        options = [(self._env.simulate_action(op), op) for op in
                    self.get_environment().get_operations()]
         next = min(options, key=lambda x: objective(x[0]))
         next_obj_val = objective(next[0])

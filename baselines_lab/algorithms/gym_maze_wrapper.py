@@ -6,9 +6,13 @@ from baselines_lab.env.gym_maze.envs.maze_base import MazeBase
 
 
 class GymMazeWrapper:
-    def __init__(self, env: MazeBase, allow_diagonal: bool=False):
+    """
+    This class works as an adapter to make the gym environment MazeBase compatible for the gathering algorithms.
+    """
+    def __init__(self, env: MazeBase, allow_diagonal: bool = False, render: bool = False):
         self.env = env
         self.env.reset()
+        self.render = render
 
         if allow_diagonal:
             self._allowed_operations = [(1,0), (-1,0), (0, 1), (0, -1), (-1,-1), (1,1),(-1,1), (1,-1)]
@@ -40,7 +44,8 @@ class GymMazeWrapper:
         return np.sum(self.env.freespace)
 
     def step(self, action):
-        self.env.render(mode="human")
+        if self.render:
+            self.env.render(mode="human")
         action_number = self.env.rev_action_map[action]
         return self.env.step(action_number)
 
@@ -51,9 +56,11 @@ class GymMazeWrapper:
     def matrix(self):
         return self.env.freespace
 
-    def simulate_action(self, action):
+    def simulate_action(self, action, particle_locations=None):
         dy, dx = action
-        particle_locations = np.copy(self.env.particle_locations)
+
+        if not particle_locations:
+            particle_locations = self.env.particle_locations
 
         new_locations = particle_locations + [dy, dx]
         valid_locations = (self.env.freespace.ravel()[(new_locations[:, 1] + new_locations[:, 0] * self.env.freespace.shape[1])]).reshape(-1, 1)  # Border does not need to be checked as long as all maps have borders.
@@ -61,6 +68,10 @@ class GymMazeWrapper:
 
     def simulate_particle_move(self, particle, direction):
         new_location = particle + np.array(direction)
+
         if self.env.freespace[tuple(new_location)]:
             return tuple(new_location)
         return particle
+
+    def get_goal(self):
+        return self.env.goal
