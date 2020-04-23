@@ -78,9 +78,9 @@ class MazeBase(gym.Env):
 
         # Load map if necessary
         if isinstance(map_file, str) or self.map_index != self.last_map_index:
-            self.freespace = np.loadtxt(map).astype(int)  # 1: Passable terrain, 0: Wall
+            self.freespace = np.loadtxt(map).astype(np.uint8)  # 1: Passable terrain, 0: Wall
             self.maze = np.ones(self.freespace.shape,
-                                dtype=int) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
+                                dtype=np.uint8) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
             self.height, self.width = self.maze.shape
             self.cost = None
 
@@ -174,16 +174,15 @@ class MazeBase(gym.Env):
         return [seed]
 
     def _generate_observation(self):
-        self.state_img = np.zeros(self.maze.shape)
-
-        # self.state_img[self.robot_locations[:, 0], self.robot_locations[:, 1]] = ROBOT_MARKER
-        self.state_img[tuple(self.particle_locations.T)] = PARTICLE_MARKER
-        observation = self.state_img + self.maze * 255
+        observation = self.maze * 255
+        observation[self.particle_locations[:, 0], self.particle_locations[:, 1]] = PARTICLE_MARKER
         if self.randomize_goal:
             cv2.circle(observation, tuple(self.goal), self.goal_range, (GOAL_MARKER))
             observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
-        return np.expand_dims(observation, axis=2).astype(np.uint8)  # Convert to single channel image and uint8 to save memory
+        return observation[:, np.newaxis]
+        #return (observation[:, np.newaxis]).astype(np.uint8)
+        #return np.expand_dims(observation, axis=2).astype(np.uint8)  # Convert to single channel image and uint8 to save memory
 
     def _update_locations(self, new_locations):
         """
