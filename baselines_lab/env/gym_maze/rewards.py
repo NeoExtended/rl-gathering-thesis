@@ -69,7 +69,7 @@ class GoalRewardGenerator(RewardGenerator):
         else:
             self.n_subgoals = n_subgoals
 
-        self.reward_scale = np.rint(np.linspace(min_reward, max_reward, n_subgoals))
+        self.reward_scale = np.rint(np.linspace(min_reward, max_reward, self.n_subgoals))
         self.max_cost_reward_goals = None
         self.avg_cost_reward_goals = None
 
