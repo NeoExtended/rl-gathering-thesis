@@ -57,13 +57,17 @@ class GoalRewardGenerator(RewardGenerator):
     Current rewards include measurements about the average and maximum distance to the goal position.
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, action_map, n_subgoals=30, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4):
+    def __init__(self, maze, goal, goal_range, n_particles, action_map, n_subgoals=None, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4, relative=False):
         super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.final_reward = final_reward
         self.min_reward = min_reward
         self.max_reward = max_reward
-        self.n_subgoals = n_subgoals
         self.min_performance = min_performance
+        self.relative = relative
+        if not n_subgoals:
+            self.n_subgoals = np.max(self.cost) / 2
+        else:
+            self.n_subgoals = n_subgoals
 
         self.reward_scale = np.rint(np.linspace(min_reward, max_reward, n_subgoals))
         self.max_cost_reward_goals = None
@@ -74,12 +78,20 @@ class GoalRewardGenerator(RewardGenerator):
 
     def reset(self, locations):
         super().reset(locations)
-        cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
-        total_cost = np.sum(cost)
-        max_cost = np.max(cost)
+
+        if self.relative:
+            # Dynamic goals which change with respect to the current particle distribution.
+            cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
+            total_cost = np.sum(cost)
+            max_cost = np.max(cost)
+        else:
+            # Static goals which do not change with respect to the current particle distribution.
+            max_cost = np.max(self.cost)
+            total_cost = np.average(self.cost) * self.n_particles
 
         self.max_cost_reward_goals = np.flip(np.rint(np.linspace(2 * self.goal_range, self.min_performance * max_cost, self.n_subgoals)))
         self.avg_cost_reward_goals = np.flip(np.rint(np.linspace(2 * self.goal_range * self.n_particles, self.min_performance * total_cost, self.n_subgoals)))
+
         self.next_max_cost_goal = 0
         self.next_avg_cost_goal = 0
 
