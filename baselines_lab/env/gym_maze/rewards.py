@@ -65,7 +65,7 @@ class GoalRewardGenerator(RewardGenerator):
         self.min_performance = min_performance
         self.relative = relative
         if not n_subgoals:
-            self.n_subgoals = np.max(self.cost) / 2
+            self.n_subgoals = int(np.max(self.cost) / 2)
         else:
             self.n_subgoals = n_subgoals
 
