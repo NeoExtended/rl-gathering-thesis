@@ -6,7 +6,7 @@ from algorithms.particle_moving_algorithm import ParticleMovingAlgorithm
 
 def IterativeMostDistancedPairMergingAlgorithm(env):
     alg = IterativePairMergingAlgorithm(env)
-    alg.set_pair_selector(MostDistancedPairFinderAlgorithm())
+    alg.set_pair_selector(MostDistancedPairFinderAlgorithm(env))
     return alg
 
 
@@ -18,6 +18,7 @@ class IterativePairMergingAlgorithm(ParticleMovingAlgorithm):
 
     def set_merging_algorithm(self, algorithm: PairMergingAlgorithm):
         self._merging_algorithm = algorithm
+        self._merging_algorithm.simulate = True
         return self
 
     def set_pair_selector(self, algorithm):
@@ -33,11 +34,6 @@ class IterativePairMergingAlgorithm(ParticleMovingAlgorithm):
         return self
 
     def run(self):
-        self._merging_algorithm.set_environment(self.get_environment())
-        self._pair_selector.set_environment(self.get_environment())
-        for alg in self._local_optimization_algorithms:
-            alg.set_environment(self.get_environment())
-
         while True:
             for alg in self._local_optimization_algorithms:
                 self._run_and_imitate_alg(alg)

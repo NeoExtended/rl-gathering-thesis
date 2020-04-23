@@ -27,7 +27,7 @@ class MinimizeSumToClosestExtremeAlgorithm(ParticleMovingAlgorithm):
 
     def _local_opt_step(self, objective):
         current_obj_value = objective(self.get_particles())
-        options = [(self._particle_mover.move(self.get_particles(), op), op) for op in
+        options = [(self._env.simulate_particle_move(self.get_particles(), op), op) for op in
                    self.get_environment().get_operations()]
         next = min(options, key=lambda x: objective(x[0]))
         next_obj_val = objective(next[0])

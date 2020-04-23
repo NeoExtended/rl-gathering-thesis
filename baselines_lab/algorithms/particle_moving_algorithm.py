@@ -2,10 +2,11 @@ from baselines_lab.algorithms.gym_maze_wrapper import GymMazeWrapper
 
 
 class ParticleMovingAlgorithm:
-    def __init__(self, env: GymMazeWrapper):
+    def __init__(self, env: GymMazeWrapper, simulate=False):
         self._env = env
         self._movements = []
         self._movement_callback = []
+        self.simulate = simulate
 
     def add_movement_callback(self, callback):
         self._movement_callback.append(callback)
@@ -22,6 +23,10 @@ class ParticleMovingAlgorithm:
     def get_particles(self):
         return self._env.get_particle_locations()
 
+    def reset_and_run(self):
+        self._movements = []
+        self.run()
+
     def run(self):
         raise NotImplementedError()
 
@@ -29,7 +34,7 @@ class ParticleMovingAlgorithm:
         def copy_moves(other_alg):
             self._move(other_alg.get_movements()[-1])
         alg.add_movement_callback(copy_moves)
-        alg.load_and_run(self.get_particles())
+        alg.reset_and_run()
         alg.remove_movement_callback(copy_moves)
 
     def _move(self, dir):
@@ -37,7 +42,8 @@ class ParticleMovingAlgorithm:
             for d in dir:
                 self._move(d)
         else:
-            self._env.step(dir)
+            if not self.simulate:
+                self._env.step(dir)
             self._movements.append(dir)
             for cb in self._movement_callback:
                 cb(self)

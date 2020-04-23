@@ -9,7 +9,7 @@ from baselines_lab.algorithms.gym_maze_wrapper import GymMazeWrapper
 
 def OriginalMoveToExtremeAlgorithm(env: GymMazeWrapper):
     alg = IterativeMostDistancedPairMergingAlgorithm(env)
-    alg.set_merging_algorithm(MergeViaExtremeAlgorithm(env))
+    alg.set_merging_algorithm(MergeViaExtremeAlgorithm(env, simulate=True))
     return alg
 
 

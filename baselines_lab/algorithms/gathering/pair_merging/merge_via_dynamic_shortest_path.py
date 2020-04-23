@@ -13,7 +13,7 @@ class MergeViaDynamicShortestPathAlgorithm(PairMergingAlgorithm):
         while pos != self.get_second_particle():
             dir = dm.get_direction(pos)
             path.append(dir)
-            pos = self._particle_mover.add(pos, dir)
+            pos = self._env.add(pos, dir)
         return path
 
     def move(self):
@@ -25,9 +25,9 @@ class MergeViaDynamicShortestPathAlgorithm(PairMergingAlgorithm):
         if not self._path:
             return None
         dir = self._path.popleft()
-        if self._env.is_valid_position(self._particle_mover.add(self._b, dir)):
+        if self._env.is_valid_position(self._env.add(self._b, dir)):
             last_op = self._path.pop() if self._path else None
-            if not last_op or self._particle_mover.add(dir, last_op) != (0, 0):
+            if not last_op or self._env.add(dir, last_op) != (0, 0):
                 if last_op:
                     self._path.append(last_op)
                 self._path.append(dir)

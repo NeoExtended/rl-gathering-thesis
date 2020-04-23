@@ -5,13 +5,13 @@ from algorithms.gathering.pair_merging.merge_via_dynamic_shortest_path import \
 from algorithms.gathering.pair_merging.merge_via_static_shortest_path import \
     MergeViaStaticShortestPathAlgorithm
 
-def DynamicShortestPathFollowingAlgorithm():
-    alg = IterativeMostDistancedPairMergingAlgorithm()
-    alg.set_merging_algorithm(MergeViaDynamicShortestPathAlgorithm())
+def DynamicShortestPathFollowingAlgorithm(env):
+    alg = IterativeMostDistancedPairMergingAlgorithm(env)
+    alg.set_merging_algorithm(MergeViaDynamicShortestPathAlgorithm(env))
     return alg
 
-def StaticShortestPathFollowingAlgorithm():
-    alg = IterativeMostDistancedPairMergingAlgorithm()
-    alg.set_merging_algorithm(MergeViaStaticShortestPathAlgorithm())
+def StaticShortestPathFollowingAlgorithm(env):
+    alg = IterativeMostDistancedPairMergingAlgorithm(env)
+    alg.set_merging_algorithm(MergeViaStaticShortestPathAlgorithm(env))
     return alg
 

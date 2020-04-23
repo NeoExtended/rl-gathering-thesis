@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 
 from baselines_lab.env.gym_maze.envs.maze_base import MazeBase
@@ -20,7 +22,7 @@ class GymMazeWrapper:
             return False
         return m[coord] == 1
 
-    def get_neighbored_coords(self, coord):
+    def get_neighbored_coords(self, coord: Tuple[int, int]):
         nbrs = []
         for op in self.get_operations():
             n = (coord[0] + op[0], coord[1] + op[1])
@@ -38,8 +40,12 @@ class GymMazeWrapper:
         return np.sum(self.env.freespace)
 
     def step(self, action):
+        self.env.render(mode="human")
         action_number = self.env.rev_action_map[action]
         return self.env.step(action_number)
+
+    def add(self, coord, dir):
+        return (coord[0]+dir[0], coord[1]+dir[1])
 
     @property
     def matrix(self):
@@ -49,6 +55,12 @@ class GymMazeWrapper:
         dy, dx = action
         particle_locations = np.copy(self.env.particle_locations)
 
-        new_locations = particle_locations + [dx, dy]
+        new_locations = particle_locations + [dy, dx]
         valid_locations = (self.env.freespace.ravel()[(new_locations[:, 1] + new_locations[:, 0] * self.env.freespace.shape[1])]).reshape(-1, 1)  # Border does not need to be checked as long as all maps have borders.
         return np.where(valid_locations, new_locations, particle_locations)
+
+    def simulate_particle_move(self, particle, direction):
+        new_location = particle + np.array(direction)
+        if self.env.freespace[tuple(new_location)]:
+            return tuple(new_location)
+        return particle
