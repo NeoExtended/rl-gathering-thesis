@@ -3,7 +3,6 @@ import logging
 import os
 from datetime import datetime
 
-import gym
 import tensorflow as tf
 from stable_baselines.common.vec_env import VecNormalize
 
@@ -64,7 +63,7 @@ class CheckpointManager:
 
             self.evaluator = Evaluator(config,
                                        n_eval_episodes=n_eval_episodes,
-                                       deterministic=True,
+                                       deterministic=False,
                                        eval_method=eval_method)
 
     def close(self):
