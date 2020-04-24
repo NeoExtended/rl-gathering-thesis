@@ -70,7 +70,7 @@ def generate_pretrain_data(args):
     alg = ALGORITHMS[args.algorithm](env_copy)
     target_alg = TargetPointMoverAlgorithm(env_copy, tuple(env_copy.get_goal()))
 
-    env = ReplayWrapper(env, env_copy, [pre_alg], alg, target_alg)
+    env = ReplayWrapper(env, env_copy, [pre_alg], alg, target_alg, downscale=True, frame_stack=True)
     generate_expert_traj(env.next, args.generate_pretrain_data, env=env, n_episodes=2)
 
 
