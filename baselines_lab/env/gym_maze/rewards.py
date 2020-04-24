@@ -75,6 +75,7 @@ class GoalRewardGenerator(RewardGenerator):
 
         self.next_max_cost_goal = 0
         self.next_avg_cost_goal = 0
+        self.time_penalty = 0
 
     def reset(self, locations):
         super().reset(locations)
@@ -94,6 +95,7 @@ class GoalRewardGenerator(RewardGenerator):
 
         self.next_max_cost_goal = 0
         self.next_avg_cost_goal = 0
+        self.time_penalty = (2*np.sum(self.reward_scale)) / (max_cost * np.log(total_cost))
 
     def step(self, action, locations):
         step_cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
@@ -101,7 +103,7 @@ class GoalRewardGenerator(RewardGenerator):
         max_cost_agent = np.max(step_cost)
 
         done = False
-        reward = -0.1
+        reward = -self.time_penalty
 
         if max_cost_agent <= self.goal_range:
             done = True
