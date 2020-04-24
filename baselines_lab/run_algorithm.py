@@ -3,9 +3,11 @@ import logging
 import sys
 
 import gym
+from stable_baselines.gail import generate_expert_traj
 
 from algorithms.gathering.move_together_algorithm import DynamicShortestPathFollowingAlgorithm, StaticShortestPathFollowingAlgorithm
 from algorithms.preprocessing.to_the_corners import MoveToRandomCornerAlgorithm
+from algorithms.replay_wrapper import ReplayWrapper
 from algorithms.target.target_point_mover import TargetPointMoverAlgorithm
 from baselines_lab.algorithms.gathering.move_to_extreme_algorithm import OriginalMoveToExtremeAlgorithm, OriginalMoveToMinSumExtremumAlgorithm
 from baselines_lab.algorithms.gym_maze_wrapper import GymMazeWrapper
@@ -26,16 +28,11 @@ def parse_args(args):
     parser.add_argument("--n-particles", default=256, help="Number of particles.")
     parser.add_argument("--preprocessing", action="store_true", help="Weather or not to use preprocessing to merge particles in corners.")
     parser.add_argument("--render", action="store_true", help="Weather or not to render the environment.")
+    parser.add_argument("--generate-pretrain-data", type=str, default=None, help="Indicates that an archive for pretraining should be generated with a given name.")
     return parser.parse_args(args=args)
 
 
-def main(args=None):
-    # parse arguments
-    if args is None:
-        args = sys.argv[1:]
-    args = parse_args(args)
-
-    logging.getLogger().setLevel(logging.INFO)
+def run_alg(args):
     logging.info("Creating environment {}.".format(args.env))
     env = gym.make(args.env, n_particles=args.n_particles)
     env.seed(args.seed)
@@ -60,6 +57,35 @@ def main(args=None):
     total_moves += target_alg.get_number_of_movements()
 
     logging.info("Finished execution. Total number of moves: {}".format(total_moves))
+
+
+def generate_pretrain_data(args):
+    env = gym.make(args.env, n_particles=args.n_particles)
+    env_copy = gym.make(args.env, n_particles=args.n_particles)
+    env.seed(args.seed)
+    env.reset()
+    env_copy.seed(args.seed)
+    env_copy = GymMazeWrapper(env_copy, render=args.render)
+    pre_alg = MoveToRandomCornerAlgorithm(env_copy)
+    alg = ALGORITHMS[args.algorithm](env_copy)
+    target_alg = TargetPointMoverAlgorithm(env_copy, tuple(env_copy.get_goal()))
+
+    env = ReplayWrapper(env, env_copy, [pre_alg], alg, target_alg)
+    generate_expert_traj(env.next, args.generate_pretrain_data, env=env, n_episodes=2)
+
+
+def main(args=None):
+    # parse arguments
+    if args is None:
+        args = sys.argv[1:]
+    args = parse_args(args)
+
+    logging.getLogger().setLevel(logging.INFO)
+
+    if args.generate_pretrain_data:
+        generate_pretrain_data(args)
+    else:
+        run_alg(args)
 
 
 if __name__ == "__main__":

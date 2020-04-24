@@ -26,6 +26,7 @@ class IterativePairMergingAlgorithm(ParticleMovingAlgorithm):
         return self
 
     def add_local_optimization(self, algorithm):
+        algorithm.simulate = True
         self._local_optimization_algorithms.append(algorithm)
         return self
 

@@ -1,16 +1,17 @@
 from typing import Tuple
 
+import gym
 import numpy as np
 
 from baselines_lab.env.gym_maze.envs.maze_base import MazeBase
 
 
-class GymMazeWrapper:
+class GymMazeWrapper(gym.Wrapper):
     """
     This class works as an adapter to make the gym environment MazeBase compatible for the gathering algorithms.
     """
     def __init__(self, env: MazeBase, allow_diagonal: bool = False, render: bool = False):
-        self.env = env
+        super(GymMazeWrapper, self).__init__(env)
         self.env.reset()
         self.render = render
 
@@ -46,8 +47,10 @@ class GymMazeWrapper:
     def step(self, action):
         if self.render:
             self.env.render(mode="human")
-        action_number = self.env.rev_action_map[action]
-        return self.env.step(action_number)
+        return self.env.step(self.action_to_number(action))
+
+    def action_to_number(self, action):
+        return self.env.rev_action_map[action]
 
     def add(self, coord, dir):
         return (coord[0]+dir[0], coord[1]+dir[1])
