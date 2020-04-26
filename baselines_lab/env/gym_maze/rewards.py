@@ -88,7 +88,8 @@ class GoalRewardGenerator(RewardGenerator):
         else:
             # Static goals which do not change with respect to the current particle distribution.
             max_cost = np.max(self.cost)
-            total_cost = np.average(self.cost) * self.n_particles
+            #total_cost = np.average(self.cost) * self.n_particles
+            total_cost = np.ma.masked_equal(self.cost, 0).mean() * self.n_particles
 
         self.max_cost_reward_goals = np.flip(np.rint(np.linspace(2 * self.goal_range, self.min_performance * max_cost, self.n_subgoals)))
         self.avg_cost_reward_goals = np.flip(np.rint(np.linspace(2 * self.goal_range * self.n_particles, self.min_performance * total_cost, self.n_subgoals)))
