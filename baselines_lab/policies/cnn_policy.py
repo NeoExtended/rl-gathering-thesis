@@ -5,26 +5,18 @@ from stable_baselines.common.policies import ActorCriticPolicy
 from utils.tf_utils import build_cnn
 
 
-class RndPolicy(ActorCriticPolicy):
+class SimpleMazeCnnPolicy(ActorCriticPolicy):
     """
-    Policy which resembles the actor CNN policy from the RND paper.
+    Simple CNN policy with Leaky RELU activations.
     """
     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **kwargs):
-        super(RndPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=True)
+        super(SimpleMazeCnnPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=True)
 
         with tf.variable_scope("model", reuse=reuse):
-            activ = tf.nn.relu
-
-            #extracted_features1 = nature_cnn(self.processed_obs, **kwargs)
-            #extracted_features1 = tf.layers.flatten(extracted_features1)
+            activ = tf.nn.leaky_relu
             extracted_features = build_cnn(self.processed_obs, **kwargs)
+            pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512))
 
-            shared_layer = activ(tf_layers.linear(extracted_features, "fc_shared_1", 256))
-            shared_layer = activ(tf_layers.linear(shared_layer, "fc_shared_2", 448))
-
-            pi_latent = activ(tf_layers.linear(shared_layer, "fc_pi_1", 448))
-
-            vf_latent = activ(tf_layers.linear(shared_layer, "fc_vf_1", 448))
             value_fn = tf.layers.dense(vf_latent, 1, name='vf')
 
             self._proba_distribution, self._policy, self.q_value = \
