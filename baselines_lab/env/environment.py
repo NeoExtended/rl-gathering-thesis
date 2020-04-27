@@ -122,7 +122,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
             if 'trained_agent' in curiosity:
                 path = curiosity.pop('trained_agent')
                 env = CuriosityWrapper.load(path, env, **curiosity)
-                if len(env.int_ret) != n_envs:
+                if len(env.int_rwd_rms.mean) != n_envs:
                     logging.warning("Skipping loading of curiosity wrapper due to a mismatch in numbers of environments ({} vs {})".format(len(env.int_ret), n_envs))
                     env = env.venv
             else:
