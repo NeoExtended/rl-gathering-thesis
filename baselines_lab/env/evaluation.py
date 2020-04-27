@@ -53,7 +53,7 @@ class Evaluator:
         elif eval_method == "fast":
             assert env, "You must provide an environment with an EvaluationWrapper if the eval_method is fast!"
             self.test_env = None
-            self.eval_wrapper = unwrap_env(self.test_env, VecEvaluationWrapper, EvaluationWrapper)
+            self.eval_wrapper = unwrap_env(env, VecEvaluationWrapper, EvaluationWrapper)
         else:
             raise AttributeError("Unknown eval method '{}'".format(eval_method))
 

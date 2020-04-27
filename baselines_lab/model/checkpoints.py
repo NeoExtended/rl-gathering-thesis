@@ -62,6 +62,7 @@ class CheckpointManager:
                 self.wrappers.append(('curiosity', 'zip', util.unwrap_vec_env(env, CuriosityWrapper)))
 
             self.evaluator = Evaluator(config,
+                                       env=env,
                                        n_eval_episodes=n_eval_episodes,
                                        deterministic=False,
                                        eval_method=eval_method)

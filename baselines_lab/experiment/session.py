@@ -146,9 +146,12 @@ class TrainSession(Session):
         self.saver = None
 
     def _setup_session(self):
+        eval_method = self.config['meta'].get('eval_method', 'normal')
+
         self.env = create_environment(config=self.config,
                                       seed=self.config['meta']['seed'],
-                                      log_dir=util.get_log_directory())
+                                      log_dir=util.get_log_directory(),
+                                      evaluation='fast' in eval_method)
 
         self.agent = create_model(self.config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
@@ -160,6 +163,7 @@ class TrainSession(Session):
         self.saver = CheckpointManager(
             model_dir=os.path.join(util.get_log_directory(), "checkpoints"),
             save_interval=save_interval,
+            eval_method=eval_method,
             n_keep=n_keep,
             keep_best=keep_best,
             n_eval_episodes=n_eval_episodes,
