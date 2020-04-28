@@ -58,7 +58,7 @@ class GoalRewardGenerator(RewardGenerator):
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
     def __init__(self, maze, goal, goal_range, n_particles, action_map, n_subgoals=None, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4,
-                 relative=False, time_penalty=True, dynamic_episode_length=-1):
+                 relative=False, time_penalty=True, dynamic_episode_length=True):
         super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.final_reward = final_reward
         self.min_reward = min_reward
@@ -80,6 +80,8 @@ class GoalRewardGenerator(RewardGenerator):
         self.time_penalty = 0
 
         self.dynamic_ep_length = dynamic_episode_length
+        self.dynamic_moves = None
+        self.move_tier = 0
         self.moves_left = 0
 
     def reset(self, locations):
@@ -106,9 +108,11 @@ class GoalRewardGenerator(RewardGenerator):
             self.time_penalty = (2*np.sum(self.reward_scale)) / (max_cost * np.log(total_cost))
 
         if self.dynamic_ep_length > 0:
+            self.move_tier = 0
             dynamics_bonus = int(max_cost * np.log(total_cost) / self.n_subgoals)
-            self.dynamic_ep_length = dynamics_bonus
-            self.moves_left = self.dynamic_ep_length
+            self.dynamic_moves = np.flip(np.rint(np.linspace(1, dynamics_bonus*2-1, self.n_subgoals*2+1)))
+            self.moves_left = self.dynamic_moves[self.move_tier]
+            self.move_tier += 1
 
     def step(self, action, locations):
         step_cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
@@ -117,6 +121,7 @@ class GoalRewardGenerator(RewardGenerator):
 
         done = False
         reward = -self.time_penalty
+        goals_reached = 0
 
         if max_cost_agent <= self.goal_range:
             done = True
@@ -126,10 +131,12 @@ class GoalRewardGenerator(RewardGenerator):
         if self.next_max_cost_goal < self.n_subgoals and max_cost_agent <= self.max_cost_reward_goals[self.next_max_cost_goal]:
             reward += self.reward_scale[self.next_max_cost_goal]
             self.next_max_cost_goal += 1
+            goals_reached += 1
 
         if self.next_avg_cost_goal < self.n_subgoals and cost_to_go <= self.avg_cost_reward_goals[self.next_avg_cost_goal]:
             reward += self.reward_scale[self.next_avg_cost_goal]
             self.next_avg_cost_goal += 1
+            goals_reached += 1
 
         if self.dynamic_ep_length > 0:
             if self.moves_left <= 0:
@@ -137,8 +144,9 @@ class GoalRewardGenerator(RewardGenerator):
             else:
                 self.moves_left -= 1
 
-            if reward > 0:
-                self.moves_left += self.dynamic_ep_length
+            for goal in range(goals_reached):
+                self.moves_left += self.dynamic_moves[self.move_tier]
+                self.move_tier += 1
 
         return done, reward
 
