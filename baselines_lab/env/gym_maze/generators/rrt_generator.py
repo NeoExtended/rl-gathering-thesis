@@ -144,7 +144,6 @@ class BufferedRRTGenerator(RRTGenerator):
 
     def generate(self) -> np.ndarray:
         if self.np_random.rand() < self.generation_chance:
-            print("Generating new map.")
             self._generate()
         return self.buffer[self.np_random.randint(len(self.buffer))]
 
