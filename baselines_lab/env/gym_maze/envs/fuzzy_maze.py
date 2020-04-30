@@ -1,8 +1,9 @@
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Type
 
 import numpy as np
 
 from baselines_lab.env.gym_maze.envs.maze_base import MazeBase
+from baselines_lab.env.gym_maze.generators import InstanceGenerator
 
 
 class FuzzyMaze(MazeBase):
@@ -14,11 +15,11 @@ class FuzzyMaze(MazeBase):
     :param random_move_distance: (int) Distance (per dimension) every particle may randomly move.
     :param fuzzy_action_probability: (float) Probability for each particle to be not affected by an action.
     """
-    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
+    def __init__(self, instance: Union[str, Type[InstanceGenerator]], goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
                  reward_generator: str, reward_kwargs=None, n_particles:int = 256,
                  random_move_chance: float = 0.1, random_move_distance: int = 1, fuzzy_action_probability: float = 0.1):
 
-        super().__init__(map_file, goal, goal_range, reward_generator, reward_kwargs, n_particles)
+        super().__init__(instance, goal, goal_range, reward_generator, reward_kwargs, n_particles)
         self.random_move_chance = random_move_chance
         self.random_move_distance = random_move_distance
         self.fuzzy_action_probability = fuzzy_action_probability

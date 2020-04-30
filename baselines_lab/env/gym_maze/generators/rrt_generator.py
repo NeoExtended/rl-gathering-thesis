@@ -1,40 +1,12 @@
 import math
-from abc import ABC, abstractmethod
 from collections import deque
 from typing import List
 
 import cv2
 import numpy as np
-from gym.utils import seeding
 from scipy.spatial.distance import cdist
 
-
-class InstanceGenerator(ABC):
-    """
-    Base class for random instance generators.
-    :param width: (int) Width of the instance.
-    :param height: (int) Height of the instance.
-    """
-    def __init__(self, width: int, height: int, seed:int = None) -> None:
-        self.width = width
-        self.height = height
-        self.np_random = None
-        self._last = None
-        self.seed(seed)
-
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
-    def save(self, path) -> None:
-        np.savetxt(path, self._last)
-
-    def last(self) -> np.ndarray:
-        return self._last
-
-    @abstractmethod
-    def generate(self) -> np.ndarray:
-        pass
+from baselines_lab.env.gym_maze.generators.generator import InstanceGenerator
 
 
 class Node(np.ndarray):
@@ -68,7 +40,7 @@ class RRTGenerator(InstanceGenerator):
     :param border: (bool) Weather or not to set all border pixels to blocked.
     """
 
-    def __init__(self, width: int, height: int, n_nodes: int = 1000, max_length: float = 10.0, n_loops: int = 10,
+    def __init__(self, width: int = 100, height: int = 100, n_nodes: int = 400, max_length: float = 5.0, n_loops: int = 10,
                  thickness: float = 1.0, border: bool = True) -> None:
         super(RRTGenerator, self).__init__(width, height)
         self.n_nodes = n_nodes
@@ -157,3 +129,26 @@ class RRTGenerator(InstanceGenerator):
             return np.pad(maze, pad_width=1, mode='constant', constant_values=0)
         else:
             return maze
+
+
+class BufferedRRTGenerator(RRTGenerator):
+    def __init__(self, width: int = 100, height: int = 100, n_nodes: int = 400, max_length: float = 5.0, n_loops: int = 10,
+                 thickness: float = 1.0, border: bool = True, buffer_size: int = 100, generation_chance: float = 0.05, pre_generate: int = 8):
+        super(BufferedRRTGenerator, self).__init__(width, height, n_nodes, max_length, n_loops, thickness, border)
+
+        self.buffer = deque(maxlen=buffer_size)
+        self.generation_chance = generation_chance
+
+        for i in range(pre_generate):
+            self._generate()
+
+    def generate(self) -> np.ndarray:
+        if self.np_random.rand() < self.generation_chance:
+            print("Generating new map.")
+            self._generate()
+        return self.buffer[self.np_random.randint(len(self.buffer))]
+
+    def _generate(self):
+        last = self._last
+        self.buffer.append(super().generate())
+        self._last = last

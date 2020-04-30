@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List
+from typing import Tuple, Union, Type
 
 import cv2
 import gym
@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from gym.utils import seeding
 
+from baselines_lab.env.gym_maze.generators import InstanceGenerator, InstanceReader
 from baselines_lab.env.gym_maze.rewards import GENERATORS
 
 PARTICLE_MARKER = 150
@@ -17,10 +18,9 @@ PARTICLE_COLOR = (150, 150, 180)
 class MazeBase(gym.Env):
     """
     Base class for a maze-like environment for particle navigation tasks.
-    :param map_file: (str or list) *.csv file containing the map data. May be a list for random randomized maps.
-    :param goal: (Union[Tuple[int, int], List[Tuple[int, int]]]) A point coordinate in form [x, y] ([column, row]).
-        In case of multiple maps, multiple maps, multiple goal positions can be given.
-        Can be set to None for a random goal position.
+    :param instance: (str or list) *.csv file containing the map data. May be a list for random randomized maps.
+    :param goal: (Tuple[int, int]) A point coordinate in form [x, y] ([column, row]).
+        In case of random or multiple maps needs to be None for a random goal position.
     :param goal_range: (int) Circle radius around the goal position that should be counted as goal reached.
     :param reward_generator: (str) The type of RewardGenerator to use for reward generation. (e.g. "goal" or "continuous")
         based on the current state.
@@ -30,13 +30,15 @@ class MazeBase(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, map_file: str, goal: Union[Tuple[int, int], List[Tuple[int, int]]], goal_range: int,
-                 reward_generator: str, reward_kwargs=None, n_particles:int = 256, allow_diagonal: bool = True) -> None:
+    def __init__(self, instance: Union[str, Type[InstanceGenerator]], goal: Tuple[int, int], goal_range: int, reward_generator: str,
+                 reward_kwargs: dict = None, n_particles:int = 256, allow_diagonal: bool = True, instance_kwargs:dict = None) -> None:
 
         self.np_random = None
         self.seed()
         self.reward_kwargs = {} if reward_kwargs is None else reward_kwargs
+        self.instance_kwargs = {} if instance_kwargs is None else instance_kwargs
         self.goal_range = goal_range
+        self.locations = None
 
         if allow_diagonal:
             # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
@@ -60,41 +62,32 @@ class MazeBase(gym.Env):
         self.reward_generator_class = GENERATORS[reward_generator]
         self.reward_generator = None
 
-        self.map_file = map_file
+        if isinstance(instance, str):
+            self.map_generator = InstanceReader(instance)
+        else:
+            self.map_generator = instance(**self.instance_kwargs)
+
         self.map_index = -1
         self.goal_proposition = goal
-        self._load_map(map_file, goal)
+        self._load_map(goal)
 
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(*self.maze.shape, 1), dtype=np.uint8)
 
         self.particle_locations = np.array([])
         self.reset()
 
-    def _load_map(self, map_file, goal):
-        if isinstance(map_file, list):
-            self.randomize_map = True
-            self.last_map_index = self.map_index
-            self.map_index = self.np_random.randint(len(map_file))
-            map = map_file[self.map_index]
-        else:
-            self.randomize_map = False
-            self.map_index = None
-            map = map_file
-
+    def _load_map(self, goal):
         # Load map if necessary
-        if isinstance(map_file, str) or self.map_index != self.last_map_index:
-            self.freespace = np.loadtxt(map).astype(np.uint8)  # 1: Passable terrain, 0: Wall
-            self.maze = np.ones(self.freespace.shape,
-                                dtype=np.uint8) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
-            self.height, self.width = self.maze.shape
-            self.cost = None
+        self.freespace = self.map_generator.generate()  # 1: Passable terrain, 0: Wall
+        self.maze = np.ones(self.freespace.shape,
+                            dtype=np.uint8) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
+        self.height, self.width = self.maze.shape
+        self.cost = None
+        self.locations = np.transpose(np.nonzero(self.freespace))
 
         if goal:
             self.randomize_goal = False
-            if isinstance(map_file, list):
-                self.goal = goal[self.map_index]
-            else:
-                self.goal = goal
+            self.goal = goal
             self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, self.action_map, **self.reward_kwargs)
         else:
             self.randomize_goal = True
@@ -102,19 +95,17 @@ class MazeBase(gym.Env):
             # Random goals require a dynamic cost map which will be calculated on each reset.
 
     def reset(self):
-        if self.randomize_map:
-            self._load_map(self.map_file, self.goal_proposition)
-
-        locations = np.transpose(np.nonzero(self.freespace))
+        if self.map_generator.has_next():
+            self._load_map(self.goal_proposition)
 
         # Randomize number of particles if necessary
-        self._randomize_n_particles(locations)
+        self._randomize_n_particles(self.locations)
 
         # Randomize goal position if necessary
-        self._randomize_goal_position(locations)
+        self._randomize_goal_position(self.locations)
 
         # Reset particle positions
-        self._randomize_particle_locations(locations)
+        self._randomize_particle_locations(self.locations)
         return self._generate_observation()
 
     def _randomize_particle_locations(self, locations):
@@ -134,7 +125,7 @@ class MazeBase(gym.Env):
         if self.randomize_goal:
             new_goal = locations[self.np_random.randint(0, len(locations))]
             self.goal = [new_goal[1], new_goal[0]]
-            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, **self.reward_kwargs)
+            self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, self.action_map, **self.reward_kwargs)
 
     def _randomize_n_particles(self, locations, fan_out=5):
         """

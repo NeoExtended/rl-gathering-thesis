@@ -88,14 +88,14 @@ def _clean_train_config(args, config):
 
 def _clean_enjoy_config(args, config):
     # Do not change running averages in enjoy mode
-    if 'normalize' in config['env']:
+    if 'normalize' in config['env'] and config['env']['normalize']:
         if isinstance(config['env']['normalize'], bool):
             config['env'].pop('normalize')
             config['env']['normalize'] = {'training': False}
         else:
             config['env']['normalize']['training'] = False
     # Do not train curiosity networks in enjoy mode
-    if 'curiosity' in config['env']:
+    if 'curiosity' in config['env'] and config['env']['curiosity']:
         if isinstance(config['env']['curiosity'], bool):
             config['env'].pop('curiosity')
             config['env']['curiosity'] = {'training': False}
@@ -120,8 +120,8 @@ def _clean_enjoy_config(args, config):
 
 def set_checkpoints(config, path, type, trial=-1):
     from baselines_lab.model.checkpoints import CheckpointManager
-    normalization = 'normalize' in config['env']
-    curiosity = 'curiosity' in config['env']
+    normalization = 'normalize' in config['env'] and config['env']['normalize']
+    curiosity = 'curiosity' in config['env'] and config['env']['curiosity']
 
     checkpoint = CheckpointManager.get_checkpoint(path, type=type, trial=trial)
     config['algorithm']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "model")
