@@ -5,6 +5,7 @@ from typing import List
 
 import cv2
 import numpy as np
+from gym.utils import seeding
 from scipy.spatial.distance import cdist
 
 
@@ -14,9 +15,22 @@ class InstanceGenerator(ABC):
     :param width: (int) Width of the instance.
     :param height: (int) Height of the instance.
     """
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, seed:int = None) -> None:
         self.width = width
         self.height = height
+        self.np_random = None
+        self._last = None
+        self.seed(seed)
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+
+    def save(self, path) -> None:
+        np.savetxt(path, self._last)
+
+    def last(self) -> np.ndarray:
+        return self._last
 
     @abstractmethod
     def generate(self) -> np.ndarray:
@@ -45,12 +59,12 @@ class RRTGenerator(InstanceGenerator):
     This generator uses Rapidly-exploring random trees(RRT) to create random instances with blood vessel like shape.
     https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree
 
-    :param width: (int) Instance width
-    :param height: (int) Instance height
-    :param n_nodes: (int) Number of nodes for the RTT (higher values will result in more vessels)
-    :param max_length: (float) Maximum length for a new edge (controls how straight the vessels will be)
-    :param n_loops: (int) Number of loops created at the end of the vessels
-    :param thickness: (float) Factor for overall vessel thickness
+    :param width: (int) Instance width.
+    :param height: (int) Instance height.
+    :param n_nodes: (int) Number of nodes for the RTT (higher values will result in more vessels).
+    :param max_length: (float) Maximum length for a new edge (controls how straight the vessels will be).
+    :param n_loops: (int) Number of loops created at the end of the vessels.
+    :param thickness: (float) Factor for overall vessel thickness.
     :param border: (bool) Weather or not to set all border pixels to blocked.
     """
 
@@ -72,15 +86,16 @@ class RRTGenerator(InstanceGenerator):
         self._calculate_flow(nodes)
         self._create_loops(nodes)
         maze = self._draw_graph(nodes)
-        return self._create_border(maze)
+        self._last = self._create_border(maze)
+        return self._last
 
     def _generate_tree(self) -> List[Node]:
         nodes = []
-        nodes.append(np.array([np.random.randint(self.height), np.random.randint(self.width)]).view(Node))
+        nodes.append(np.array([self.np_random.randint(self.height), self.np_random.randint(self.width)]).view(Node))
         # nodes.append(np.array([imgy/2, imgx/2], dtype=int).view(Node))
 
         for i in range(self.n_nodes):
-            rand = [np.random.randint(self.height), np.random.randint(self.width)]
+            rand = [self.np_random.randint(self.height), self.np_random.randint(self.width)]
             dist = cdist(np.atleast_2d(rand), np.atleast_2d(nodes))
             min_dist = np.min(dist)
             min_node_index = np.argmin(dist)
@@ -119,7 +134,7 @@ class RRTGenerator(InstanceGenerator):
                 end_nodes.append(node)
 
         for i in range(self.n_loops):
-            rand = [np.random.randint(self.height), np.random.randint(self.width)]
+            rand = [self.np_random.randint(self.height), self.np_random.randint(self.width)]
             dist = cdist(np.atleast_2d(rand), np.atleast_2d(end_nodes))
             first_min = end_nodes[np.argmin(dist)]
             second_min = end_nodes[np.argpartition(dist, 2)[0][2]]

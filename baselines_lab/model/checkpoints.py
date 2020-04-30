@@ -55,8 +55,9 @@ class CheckpointManager:
             if normalization:
                 self.wrappers.append(('normalization', 'pkl', util.unwrap_vec_env(env, VecNormalize)))
                 # Remove unnecessary keys
-                normalization.pop('precompute', None)
-                normalization.pop('samples', None)
+                if isinstance(normalization, dict):
+                    normalization.pop('precompute', None)
+                    normalization.pop('samples', None)
 
             if curiosity:
                 self.wrappers.append(('curiosity', 'zip', util.unwrap_vec_env(env, CuriosityWrapper)))

@@ -107,7 +107,7 @@ class GoalRewardGenerator(RewardGenerator):
         if self.use_time_penalty:
             self.time_penalty = (2*np.sum(self.reward_scale)) / (max_cost * np.log(total_cost))
 
-        if self.dynamic_ep_length > 0:
+        if self.dynamic_ep_length:
             self.move_tier = 0
             dynamics_bonus = int(max_cost * np.log(total_cost) / self.n_subgoals)
             self.dynamic_moves = np.flip(np.rint(np.linspace(1, dynamics_bonus*2-1, self.n_subgoals*2+1)))
@@ -138,7 +138,7 @@ class GoalRewardGenerator(RewardGenerator):
             self.next_avg_cost_goal += 1
             goals_reached += 1
 
-        if self.dynamic_ep_length > 0:
+        if self.dynamic_ep_length:
             if self.moves_left <= 0:
                 done = True
             else:
