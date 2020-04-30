@@ -159,26 +159,68 @@ class ContinuousRewardGenerator(RewardGenerator):
     :param positive_only: (bool) Weather or not to suppress negative rewards from moving particles further away from the goal position.
         Note that positive rewards will not be granted more than once in this setting.
     """
-    def __init__(self, maze, goal, goal_range, n_particles, action_map, gathering_reward=0.0, positive_only=False):
+    def __init__(self, maze, goal, goal_range, n_particles, action_map, gathering_reward=0.0, positive_only=False, relative=False,
+                 time_penalty=True, dynamic_episode_length=False, normalize=True):
         super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.initialCost = 0
         self.lastCost = 0
         self.uniqueParticles = n_particles
         self.gathering_reward_scale = gathering_reward
+        self.use_time_penalty = time_penalty
         self.time_penalty = 0.0
         self.positive_only = positive_only
+        self.relative = relative
+        self.normalize = normalize
+        self.normalization = 1.0
+
+        self.dynamic_ep_length = dynamic_episode_length
+        self.dynamic_moves = None
+        self.moves_left = 0
+        self.n_subgoals = int(np.max(self.cost) / 2)
+        self.next_dynamic_goal = 0
+        self.dynamic_goals = None
 
     def reset(self, locations):
         super().reset(locations)
-        self.initialCost = np.sum(self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])])
+        if self.relative:
+            self.initialCost = np.sum(self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])])
+        else:
+            self.initialCost = np.ma.masked_equal(self.cost, 0).mean() * self.n_particles
+
         self.lastCost = self.initialCost
+        self.uniqueParticles = len(locations)
+
+        if self.normalize:
+            self.normalization = self.initialCost
+        else:
+            self.normalization = self.n_particles
 
         max_cost = np.max(self.cost)
-        self.time_penalty = 1 / (max_cost * np.log(self.initialCost))
+
+        if self.use_time_penalty:
+            self.time_penalty = 1 / (max_cost * np.log(self.initialCost))
+
+        if self.dynamic_ep_length:
+            dynamics_bonus = int(max_cost * np.log(self.initialCost) / self.n_subgoals)
+            self.dynamic_moves = np.flip(np.rint(np.linspace(1, dynamics_bonus*2-1, self.n_subgoals*2+1)))
+            self.moves_left = self.dynamic_moves[0]
+            self.next_dynamic_goal = 0
+            self.dynamic_goals = np.flip(np.rint(np.linspace(2 * self.goal_range, 0.95 * max_cost, self.n_subgoals)))
 
     def step(self, action, locations):
         done = False
         step_cost = self.cost.ravel()[(locations[:, 1] + locations[:, 0] * self.cost.shape[1])]
+
+        if self.dynamic_ep_length:
+            max_cost_agent = np.max(step_cost)
+            if self.next_dynamic_goal < self.n_subgoals and max_cost_agent <= self.dynamic_goals[self.next_dynamic_goal]:
+                self.next_dynamic_goal += 1
+                self.moves_left += self.dynamic_moves[self.next_dynamic_goal]
+
+            if self.moves_left <= 0:
+                done = True
+            else:
+                self.moves_left -= 1
 
         gathering_reward = self._calculate_gathering_reward(locations)
         goal_reward = self._calculate_goal_reward(step_cost)
@@ -186,6 +228,7 @@ class ContinuousRewardGenerator(RewardGenerator):
 
         if np.max(step_cost) <= self.goal_range:
             done = True
+            reward += (self.moves_left / self.normalization)
 
         return done, reward
 
@@ -195,10 +238,10 @@ class ContinuousRewardGenerator(RewardGenerator):
 
         if self.positive_only:
             if self.lastCost - cost_to_go > 0:
-                goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
+                goal_reward = ((self.lastCost - cost_to_go) / self.normalization)
                 self.lastCost = cost_to_go
         else:
-            goal_reward = ((self.lastCost - cost_to_go) / self.initialCost)
+            goal_reward = ((self.lastCost - cost_to_go) / self.normalization)
             self.lastCost = cost_to_go
 
         return goal_reward
