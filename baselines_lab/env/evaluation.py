@@ -36,9 +36,9 @@ class Evaluator:
             test_config = deepcopy(config)
             test_env_config = test_config['env']
             if eval_method == "slow":
-                test_env_config['num_envs'] = 1
+                test_env_config['n_envs'] = 1
 
-            if not test_env_config.get('n_envs', None):
+            if not test_env_config.get('n_envs', None) and not eval_method == "slow":
                 test_env_config['n_envs'] = 8
 
             if not seed:
@@ -46,6 +46,12 @@ class Evaluator:
             if test_env_config['n_envs'] > 32:
                 test_env_config['n_envs'] = 32
             test_env_config['curiosity'] = False # TODO: Sync train and test curiosity wrappers and reenable
+
+            # Disable dynamic episode length on evaluation to get comparable test results independent of rewards.
+            if test_env_config.get("reward_kwargs", None):
+                if test_env_config["reward_kwargs"].get("dynamic_episode_length", False):
+                    test_env_config["reward_kwargs"]["dynamic_episode_length"] = False
+
             self.test_env = create_environment(test_config,
                                                seed,
                                                evaluation=True)
