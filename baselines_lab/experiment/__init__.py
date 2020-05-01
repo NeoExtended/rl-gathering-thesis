@@ -1,4 +1,3 @@
-from baselines_lab.experiment.logger import TensorboardLogger
 from baselines_lab.experiment.optimization import HyperparameterOptimizer
 from baselines_lab.experiment.runner import Runner
 from baselines_lab.experiment.scheduler import Scheduler

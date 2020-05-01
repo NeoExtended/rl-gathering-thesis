@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 import tensorflow as tf
+from stable_baselines.common.callbacks import BaseCallback
 from stable_baselines.common.vec_env import VecNormalize
 
 from baselines_lab.env.evaluation import Evaluator
@@ -11,7 +12,7 @@ from baselines_lab.env.wrappers import CuriosityWrapper
 from utils import util
 
 
-class CheckpointManager:
+class CheckpointManager(BaseCallback):
     """
     Class to manage model checkpoints.
     :param model_dir: (str) Target directory for all the checkpoints.
@@ -27,7 +28,8 @@ class CheckpointManager:
     :param tb_log: Set to true if the evaluation results should be logged. (Only works with keep_best=True)
     """
     def __init__(self, model_dir, save_interval=250000, n_keep=5, keep_best=True, n_eval_episodes=32, eval_method="normal",
-                 config=None, env=None, tb_log=False):
+                 config=None, env=None, tb_log=False, verbose=0):
+        super(CheckpointManager, self).__init__(verbose)
         self.model_dir = model_dir
         self.save_interval = save_interval
         self.n_keep = n_keep
@@ -41,7 +43,6 @@ class CheckpointManager:
         self.best = None
         self.best_score = float('-inf')
         self.last_save = 0
-        self.update_counter = 0
         self.env = None
         self.wrappers = []
         self.tb_log = tb_log
@@ -70,22 +71,19 @@ class CheckpointManager:
 
     def close(self):
         self.evaluator.close()
-
-    def step(self, locals_, globals_):
-        """
-        Step function that can be used as a callback in stable-baselines models. Saves models if necessary.
-        :param locals_: (dict) The callers local variables at call time.
-        :param globals_: (dict) The callers global variables at call time
-        """
-        model = locals_['self']
-        self.update_counter = model.num_timesteps
-
-        if not self.writer:
-            self.writer = locals_['writer']
-
-        if self.update_counter >= self.last_save + self.save_interval:
-            self.last_save = self.update_counter
-            self.save(model)
+    
+    def _on_training_start(self) -> None:
+        self.writer = self.locals['writer']
+    
+    def _on_step(self) -> bool:
+        if self.num_timesteps >= self.last_save + self.save_interval:
+            self.last_save = self.num_timesteps
+            self.save(self.model)
+        return True
+    
+    def _on_training_end(self) -> None:
+        self.last_save = self.num_timesteps
+        self.save(self.model)
 
     def save(self, model):
         """
@@ -99,8 +97,8 @@ class CheckpointManager:
             self._log(reward, steps)
 
     def _save_model(self, model):
-        logging.info("Saving last model at timestep {}".format(str(self.update_counter)))
-        checkpoint = self._checkpoint(self.model_dir, "", self.update_counter, util.get_timestamp())
+        logging.info("Saving last model at timestep {}".format(str(self.num_timesteps)))
+        checkpoint = self._checkpoint(self.model_dir, "", self.num_timesteps, util.get_timestamp())
         self._create_checkpoint(checkpoint, model)
         self.last_models.append(checkpoint)
 
@@ -132,7 +130,7 @@ class CheckpointManager:
             if self.best:
                 self._remove_checkpoint(self.best)
 
-            self.best = self._checkpoint(self.model_dir, "best", self.update_counter, util.get_timestamp())
+            self.best = self._checkpoint(self.model_dir, "best", self.num_timesteps, util.get_timestamp())
             self._create_checkpoint(self.best, model)
 
         return reward, steps
@@ -146,14 +144,14 @@ class CheckpointManager:
                 tag='episode_length/eval_ep_length_mean',
                 simple_value=steps)
         ])
-        self.writer.add_summary(length_summary, self.update_counter)
+        self.writer.add_summary(length_summary, self.num_timesteps)
 
         reward_summary = tf.Summary(value=[
             tf.Summary.Value(
                 tag='reward/eval_ep_reward_mean',
                 simple_value=reward)
         ])
-        self.writer.add_summary(reward_summary, self.update_counter)
+        self.writer.add_summary(reward_summary, self.num_timesteps)
 
     def _remove_checkpoint(self, checkpoint):
         model_path = self._make_path(checkpoint, "model", extension="zip")

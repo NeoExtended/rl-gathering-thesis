@@ -6,14 +6,67 @@ import numpy as np
 import optuna
 from optuna.pruners import SuccessiveHalvingPruner, MedianPruner, NopPruner
 from optuna.samplers import RandomSampler, TPESampler
+from stable_baselines.common.callbacks import BaseCallback
 from stable_baselines.common.vec_env import VecEnv
 
 from baselines_lab.env import create_environment
 from baselines_lab.env.evaluation import Evaluator
-from baselines_lab.experiment.logger import TensorboardLogger
 from baselines_lab.experiment.samplers import Sampler
 from baselines_lab.model import create_model
+from baselines_lab.model.callbacks import TensorboardLogger
 from baselines_lab.utils import send_email
+
+
+class EvaluationCallback(BaseCallback):
+    """
+    Callback for model evaluation and early stopping.
+    """
+    def __init__(self, evaluator, evaluation_interval, trial, verbose=0):
+        super(EvaluationCallback, self).__init__(verbose)
+        self.evaluator = evaluator
+        self.evaluation_interval = evaluation_interval
+        self.trial = trial
+
+        self.pruned = False
+        self.last_mean_test_reward = -np.inf
+        self.last_time_evaluated = 0
+        self.eval_idx = 0
+        self.best_test_mean_reward = -np.inf
+
+    def _on_step(self) -> bool:
+        if (self.num_timesteps - self.last_time_evaluated) < self.evaluation_interval:
+            return True
+
+        self.last_time_evaluated = self.num_timesteps
+        logging.debug("Evaluating model at {} timesteps".format(self.num_timesteps))
+
+        mean_reward, mean_steps = self.evaluator.evaluate(self.model)
+        logging.info("Evaluated model at {} timesteps. Reached a mean reward of {}".format(self.num_timesteps, mean_reward))
+        self.last_mean_test_reward = mean_reward
+        self.eval_idx += 1
+
+        if mean_reward > self.best_test_mean_reward:
+            self.best_test_mean_reward = mean_reward
+
+        # report best or report current ?
+        # report num_timesteps or elasped time ?
+        self.trial.report(-1 * mean_reward, self.num_timesteps)
+        # Prune trial if need
+        if self.trial.should_prune(self.num_timesteps):
+            logging.debug("Pruning - aborting training...")
+            self.pruned = True
+            return False
+
+        return True
+
+    def is_pruned(self) -> bool:
+        return self.pruned
+
+    def best_mean_reward(self) -> float:
+        return self.best_test_mean_reward
+
+    def cost(self) -> float:
+        return -1 * self.best_test_mean_reward
 
 
 class HyperparameterOptimizer:
@@ -45,7 +98,6 @@ class HyperparameterOptimizer:
         self.evaluator = None
         self.log_dir = log_dir
         self.logger = TensorboardLogger()
-        self.callbacks = [self._evaluation_callback, self.logger.step]
         self.integrated_evaluation = True if self.eval_method == "fast" else False
         self.verbose_mail = mail
         self.current_best = -np.inf
@@ -112,43 +164,6 @@ class HyperparameterOptimizer:
             raise ValueError('Unknown sampler: {}'.format(self.sampler_method))
         return sampler
 
-    def _evaluation_callback(self, locals_, globals_):
-        self_ = locals_['self']
-        trial = self_.trial
-
-        # Initialize variables
-        if not hasattr(self_, 'is_pruned'):
-            self_.is_pruned = False
-            self_.last_mean_test_reward = -np.inf
-            self_.last_time_evaluated = 0
-            self_.eval_idx = 0
-            self_.best_test_mean_reward = -np.inf
-
-        if (self_.num_timesteps - self_.last_time_evaluated) < self.evaluation_interval:
-            return True
-
-        self_.last_time_evaluated = self_.num_timesteps
-        logging.debug("Evaluating model at {} timesteps".format(self_.num_timesteps))
-
-        mean_reward, mean_steps = self.evaluator.evaluate(self_)
-        logging.info("Evaluated model at {} timesteps. Reached a mean reward of {}".format(self_.num_timesteps, mean_reward))
-        self_.last_mean_test_reward = mean_reward
-        self_.eval_idx += 1
-
-        if mean_reward > self_.best_test_mean_reward:
-            self_.best_test_mean_reward = mean_reward
-
-        # report best or report current ?
-        # report num_timesteps or elasped time ?
-        trial.report(-1 * self_.best_test_mean_reward, self_.num_timesteps)
-        # Prune trial if need
-        if trial.should_prune(self_.num_timesteps):
-            logging.debug("Pruning - aborting training...")
-            self_.is_pruned = True
-            return False
-
-        return True
-
     def _get_train_env(self, config):
         if self.train_env:
             # Create new environments if normalization layer is learned.
@@ -191,40 +206,27 @@ class HyperparameterOptimizer:
             model = create_model(trial_config['algorithm'], train_env, trial_config['meta']['seed'])
 
             self.logger.reset()
-            model.trial = trial
+            evaluation_callback = EvaluationCallback(self.evaluator, self.evaluation_interval, trial)
             try:
                 logging.debug("Training model...")
-                model.learn(trial_config['search']['n_timesteps'], callback=self.callback_step)
+                model.learn(trial_config['search']['n_timesteps'],
+                            callback=[evaluation_callback, self.logger])
             except:
                 # Random hyperparams may be invalid
                 logging.debug("Something went wrong - stopping trial.")
                 raise
-            is_pruned = False
-            cost = np.inf
-            best_mean_reward = -np.inf
-            if hasattr(model, 'is_pruned'):
-                is_pruned = model.is_pruned
-                cost = -1 * model.best_test_mean_reward # Report best or last? Currently: Best
-                best_mean_reward = model.best_test_mean_reward
             del model
 
-            if best_mean_reward > self.current_best:
-                self.current_best = best_mean_reward
+            if evaluation_callback.best_mean_reward() > self.current_best:
+                self.current_best = evaluation_callback.best_mean_reward()
                 if self.verbose_mail:
                     send_email(self.verbose_mail,
-                               "Hyperparametersearch new best mean reward {:.4f}".format(best_mean_reward),
-                               "Found new parameters with mean of {} and parameters {} {}".format(best_mean_reward, alg_sample, env_sample))
+                               "Hyperparametersearch new best mean reward {:.4f}".format(self.current_best),
+                               "Found new parameters with mean of {} and parameters {} {}".format(self.current_best, alg_sample, env_sample))
 
-            if is_pruned:
+            if evaluation_callback.is_pruned():
                 logging.info("Pruned trial.")
                 raise optuna.exceptions.TrialPruned()
 
-            return cost
+            return evaluation_callback.cost()
         return objective
-
-    def callback_step(self, locals_, globals_):
-        ret_val = True
-        for cb in self.callbacks:
-            if not cb(locals_, globals_):
-                ret_val = False
-        return ret_val

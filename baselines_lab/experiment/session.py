@@ -10,10 +10,10 @@ from stable_baselines.gail import ExpertDataset
 
 from baselines_lab.env import create_environment
 from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, VecGifRecorder
-from baselines_lab.experiment import TensorboardLogger, Runner, HyperparameterOptimizer
+from baselines_lab.experiment import Runner, HyperparameterOptimizer
 from baselines_lab.experiment.samplers import Sampler
 from baselines_lab.model import create_model
-from baselines_lab.model.checkpoints import CheckpointManager
+from baselines_lab.model.callbacks import CheckpointManager, TensorboardLogger
 from baselines_lab.utils import util, config_util
 from baselines_lab.utils.plotter import Plotter
 
@@ -33,7 +33,6 @@ class Session(ABC):
         util.set_random_seed(self.config)
         self.log = None
         self.lab_mode = args.lab_mode
-        self.callbacks = []
 
     @abstractmethod
     def run(self):
@@ -41,17 +40,6 @@ class Session(ABC):
         Starts the experiment.
         """
         pass
-
-    def add_callback(self, callback):
-        self.callbacks.append(callback)
-
-    def step(self, locals_, globals_):
-        ret_val = True
-        for cb in self.callbacks:
-            ret = cb.step(locals_, globals_)
-            if isinstance(ret, bool) and not ret:
-                ret_val = False
-        return ret_val
 
     @staticmethod
     def create_session(config, args):
@@ -170,8 +158,6 @@ class TrainSession(Session):
             config=self.config,
             env=self.env,
             tb_log=bool(self.log))
-        self.add_callback(self.saver)
-        self.add_callback(TensorboardLogger())
 
     def run(self):
         n_trials = self.config['meta'].get('n_trials', 1)
@@ -197,7 +183,7 @@ class TrainSession(Session):
         self._pretrain()
 
         logging.info("Starting training.")
-        self.agent.learn(self.config['meta']['n_timesteps'], callback=self.step)
+        self.agent.learn(self.config['meta']['n_timesteps'], callback=[self.saver, TensorboardLogger()])
 
         # Save model at the end of the learning process and do some cleanup.
         self.saver.save(self.agent)

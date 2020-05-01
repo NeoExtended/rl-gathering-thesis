@@ -1,7 +1,6 @@
 import copy
 import importlib
 import logging
-import os
 
 import gym
 from stable_baselines.bench import Monitor
@@ -33,7 +32,7 @@ def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
                 env = wrapper[0](env=env, **wrapper[1])
 
         if log_dir:
-            env = Monitor(env, os.path.join(log_dir, str(rank)), allow_early_resets=True)
+            env = Monitor(env, filename=None, allow_early_resets=True)  # filename=os.path.join(log_dir, str(rank))
         return env
 
     return _init
