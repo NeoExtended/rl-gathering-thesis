@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+# TODO: Refactor rewards.
 
 class RewardGenerator(ABC):
     """
@@ -58,7 +59,7 @@ class GoalRewardGenerator(RewardGenerator):
     Also induces a secondary goal of minimizing episode length by adding a constant negative reward.
     """
     def __init__(self, maze, goal, goal_range, n_particles, action_map, n_subgoals=None, final_reward=100, min_performance=0.95, min_reward=2, max_reward=4,
-                 relative=False, time_penalty=True, dynamic_episode_length=True):
+                 relative=False, time_penalty=True, dynamic_episode_length=True, max_cost_reward=True, avg_cost_reward=True):
         super().__init__(maze, goal, goal_range, n_particles, action_map)
         self.final_reward = final_reward
         self.min_reward = min_reward
@@ -83,6 +84,9 @@ class GoalRewardGenerator(RewardGenerator):
         self.dynamic_moves = None
         self.move_tier = 0
         self.moves_left = 0
+
+        self.avg_cost_reward = avg_cost_reward
+        self.max_cost_reward = max_cost_reward
 
     def reset(self, locations):
         super().reset(locations)
@@ -128,12 +132,12 @@ class GoalRewardGenerator(RewardGenerator):
             reward += (self.final_reward + self.moves_left)
             return done, reward
 
-        if self.next_max_cost_goal < self.n_subgoals and max_cost_agent <= self.max_cost_reward_goals[self.next_max_cost_goal]:
+        if self.max_cost_reward and self.next_max_cost_goal < self.n_subgoals and max_cost_agent <= self.max_cost_reward_goals[self.next_max_cost_goal]:
             reward += self.reward_scale[self.next_max_cost_goal]
             self.next_max_cost_goal += 1
             goals_reached += 1
 
-        if self.next_avg_cost_goal < self.n_subgoals and cost_to_go <= self.avg_cost_reward_goals[self.next_avg_cost_goal]:
+        if self.avg_cost_reward and self.next_avg_cost_goal < self.n_subgoals and cost_to_go <= self.avg_cost_reward_goals[self.next_avg_cost_goal]:
             reward += self.reward_scale[self.next_avg_cost_goal]
             self.next_avg_cost_goal += 1
             goals_reached += 1
