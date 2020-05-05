@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from gym.utils import seeding
 
-from baselines_lab.env.gym_maze.generators import InstanceGenerator, InstanceReader
+from baselines_lab.env.gym_maze.maze_generators import InstanceGenerator, InstanceReader
 from baselines_lab.env.gym_maze.rewards import GENERATORS
 
 PARTICLE_MARKER = 150

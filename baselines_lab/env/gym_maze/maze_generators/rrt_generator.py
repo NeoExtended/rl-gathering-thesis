@@ -4,9 +4,8 @@ from typing import List
 
 import cv2
 import numpy as np
-from scipy.spatial.distance import cdist
-
 from baselines_lab.env.gym_maze.generators.generator import InstanceGenerator
+from scipy.spatial.distance import cdist
 
 
 class Node(np.ndarray):
