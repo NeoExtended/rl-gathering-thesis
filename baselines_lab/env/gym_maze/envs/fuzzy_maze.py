@@ -3,7 +3,7 @@ from typing import Tuple, Union, List, Type
 import numpy as np
 
 from baselines_lab.env.gym_maze.envs.maze_base import MazeBase
-from baselines_lab.env.gym_maze.generators import InstanceGenerator
+from baselines_lab.env.gym_maze.maze_generators import InstanceGenerator
 
 
 class FuzzyMaze(MazeBase):
