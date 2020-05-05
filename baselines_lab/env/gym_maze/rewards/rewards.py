@@ -15,7 +15,7 @@ def ContinuousRewardGenerator(maze, goal, goal_range, n_particles, action_map, r
                                           normalize=normalize)
 
     if gathering_reward > 0.0:
-        generator.add_sub_generator(GatheringReward(scale=gathering_reward))
+        generator.add_sub_generator(GatheringReward(scale=gathering_reward, normalize=normalize))
 
     if time_penalty:
         generator.add_sub_generator(TimePenaltyReward())
@@ -53,9 +53,9 @@ def GoalRewardGenerator(maze, goal, goal_range, n_particles, action_map, relativ
     return generator
 
 
-def GatheringRewardGenerator(maze, goal, goal_range, n_particles, action_map, relative=False, time_penalty=True):
+def GatheringRewardGenerator(maze, goal, goal_range, n_particles, action_map, relative=False, time_penalty=True, normalize=True):
     information = StepInformationProvider(maze, goal, goal_range, n_particles, action_map, relative)
-    generator = GatheringReward(information)
+    generator = GatheringReward(information, normalize=normalize)
 
     if time_penalty:
         generator.add_sub_generator(TimePenaltyReward())

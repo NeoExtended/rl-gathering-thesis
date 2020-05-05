@@ -25,18 +25,24 @@ class TimePenaltyReward(RewardGenerator):
 
 
 class GatheringReward(RewardGenerator):
-    def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0):
+    def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0, normalize: bool = True):
         super().__init__(information_provider, scale)
+
+        self.normalize = normalize
+        self.normalization = 1.0
 
         self.unique_particles = None
 
     def _reset(self, locations):
         self.unique_particles = self.calculator.n_particles
+        if self.normalize:
+            self.normalization = self.calculator.n_particles
 
     def _step(self, action, locations) -> Tuple[bool, float]:
         done, reward = super()._step(action, locations)
         particle_count = len(self.calculator.unique_particles)
-        reward += ((self.unique_particles - particle_count) / self.calculator.n_particles)
+        reward += ((self.unique_particles - particle_count) / self.normalization)
+        self.unique_particles = particle_count
         return done, reward * self.scale
 
 
