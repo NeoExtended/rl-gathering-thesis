@@ -1,6 +1,6 @@
 from gym.envs.registration import register
 
-from baselines_lab.env.gym_maze.generators import BufferedRRTGenerator
+from baselines_lab.env.gym_maze.maze_generators import BufferedRRTGenerator
 
 register(id="Maze0122Discrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
