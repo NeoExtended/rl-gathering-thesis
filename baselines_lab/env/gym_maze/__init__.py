@@ -99,3 +99,11 @@ register(id="RandomMazeDiscrete-v0",
                  'goal': None,
                  'goal_range': 10,
                  'reward_generator': "goal"})
+
+register(id="PhysicalMaze0318Continuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:PhysicalMaze",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/map0318.csv',
+                 'goal': [82, 80],
+                 'goal_range': 10,
+                 'reward_generator': "continuous"})

@@ -186,3 +186,4 @@ class MazeBase(gym.Env):
         # validate_locations = (np.array([self.freespace[tuple(new_loc.T)]]) & (0 <= new_loc[:, 0]) & (new_loc[:, 0] < self.height) & (0 <= new_loc[:, 1]) & (new_loc[:, 1] < self.width)).transpose()
         valid_locations = (self.freespace.ravel()[(new_locations[:, 1] + new_locations[:, 0] * self.freespace.shape[1])]).reshape(-1, 1) # Border does not need to be checked as long as all maps have borders.
         self.particle_locations = np.where(valid_locations, new_locations, self.particle_locations)
+        return valid_locations

@@ -66,7 +66,7 @@ def clean_config(config, args):
 def _clean_search_config(config):
     resume = config['search'].get("resume", False)
     if resume and isinstance(resume, bool):
-        from baselines_lab.model.checkpoints import CheckpointManager
+        from baselines_lab.model.callbacks import CheckpointManager
         path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
         config['search']['resume'] = path
     return config
@@ -76,7 +76,7 @@ def _clean_train_config(args, config):
     # Allow fast loading of recently trained agents via "last" and "best" checkpoints
     if config['algorithm'].get('trained_agent', None):
         if config['algorithm']['trained_agent'] in ['best', 'last']:
-            from baselines_lab.model.checkpoints import CheckpointManager
+            from baselines_lab.model.callbacks import CheckpointManager
             path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
             set_checkpoints(config, path, config['algorithm']['trained_agent'], args.trial)
     if config['algorithm']['name'] in ["dqn", "ddpg"]:
@@ -106,7 +106,7 @@ def _clean_enjoy_config(args, config):
         config['meta']['session_dir'] = args.checkpoint_path
         set_checkpoints(config, args.checkpoint_path, args.type, args.trial)
     else:
-        from baselines_lab.model.checkpoints import CheckpointManager
+        from baselines_lab.model.callbacks import CheckpointManager
         path = CheckpointManager.get_latest_run(config['meta']['log_dir'])
         config['meta']['session_dir'] = path
         set_checkpoints(config, path, args.type, args.trial)
@@ -119,7 +119,7 @@ def _clean_enjoy_config(args, config):
 
 
 def set_checkpoints(config, path, type, trial=-1):
-    from baselines_lab.model.checkpoints import CheckpointManager
+    from baselines_lab.model.callbacks import CheckpointManager
     normalization = 'normalize' in config['env'] and config['env']['normalize']
     curiosity = 'curiosity' in config['env'] and config['env']['curiosity']
 
