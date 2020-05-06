@@ -2,6 +2,7 @@ import time
 from collections import deque
 
 import tensorflow as tf
+import yaml
 from stable_baselines.common.callbacks import BaseCallback
 from stable_baselines.common.vec_env.base_vec_env import VecEnv
 
@@ -15,8 +16,9 @@ class TensorboardLogger(BaseCallback):
     :param smoothing: (int) Number of episodes over which the running average for episode length and return
         will be calculated.
     :param min_log_delay: (int) Minimum number of timesteps between log entries.
+    :param config: (dict) Lab config. Will be logged into tensorboard log at step 0 if set.
     """
-    def __init__(self, smoothing=100, min_log_delay=500, verbose=0):
+    def __init__(self, smoothing=100, min_log_delay=500, verbose=0, config=None):
         super(TensorboardLogger, self).__init__(verbose)
         self.ep_len_buffer = deque(maxlen=smoothing)
         self.reward_buffer = deque(maxlen=smoothing)
@@ -29,10 +31,12 @@ class TensorboardLogger(BaseCallback):
         self.min_log_delay = min_log_delay
         self.curiosity_wrapper = None
         self.writer = None
+        self.config = config
 
     def _on_training_start(self) -> None:
         self.writer = self.locals['writer']
         self._initialize()
+        self._write_config()
 
     def _on_step(self) -> bool:
         if self.num_timesteps - self.last_timesteps > self.min_log_delay:
@@ -114,6 +118,15 @@ class TensorboardLogger(BaseCallback):
             self.intrinsic_rew_buffer.extend(int_rews[known:])
             self.extrinsic_rew_buffer.extend(ext_rews[known:])
             self.n_episodes[i] = len(ep_reward)
+
+    def _write_config(self):
+        value = yaml.dump(self.config, indent=2).replace("  ", "  * ").replace("\n", "  \n")
+        text_tensor = tf.make_tensor_proto(value, dtype=tf.string)
+        meta = tf.SummaryMetadata()
+        meta.plugin_data.plugin_name = "text"
+        summary = tf.Summary()
+        summary.value.add(tag="config", metadata=meta, tensor=text_tensor)
+        self.writer.add_summary(summary)
 
     def _write_summary(self):
         if len(self.ep_len_buffer) > 0:

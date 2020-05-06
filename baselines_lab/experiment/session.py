@@ -183,7 +183,7 @@ class TrainSession(Session):
         self._pretrain()
 
         logging.info("Starting training.")
-        self.agent.learn(self.config['meta']['n_timesteps'], callback=[self.saver, TensorboardLogger()])
+        self.agent.learn(self.config['meta']['n_timesteps'], callback=[self.saver, TensorboardLogger(config=self.config)])
 
         # Save model at the end of the learning process and do some cleanup.
         self.saver.save(self.agent)
