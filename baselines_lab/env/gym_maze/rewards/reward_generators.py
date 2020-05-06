@@ -68,10 +68,12 @@ class ContinuousTotalCostReward(RewardGenerator):
         done, reward = super()._step(action, locations)
         current_cost = self.calculator.total_cost
         if self.positive_only:
-            reward += max(0, (self.last_cost - current_cost) / self.normalization)
+            if self.last_cost - current_cost > 0:
+                reward += (self.last_cost - current_cost) / self.normalization
+                self.last_cost = current_cost
         else:
             reward += (self.last_cost - current_cost) / self.normalization
-        self.last_cost = current_cost
+            self.last_cost = current_cost
 
         return done, reward * self.scale
 

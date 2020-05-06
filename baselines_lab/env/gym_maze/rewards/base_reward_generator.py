@@ -62,7 +62,6 @@ class StepInformationProvider(ABC):
     def _step_reset(self):
         self._max_cost = None
         self._particle_cost = None
-        self._total_start_cost = None
         self._total_cost = None
         self._unique_particles = None
 
