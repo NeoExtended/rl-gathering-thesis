@@ -46,7 +46,7 @@ class GatheringReward(RewardGenerator):
         return done, reward * self.scale
 
 
-class ContinuousTotalCostReward(RewardGenerator):
+class ContinuousRewardGenerator(RewardGenerator):
     def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0,
                  normalize: bool = True, positive_only: bool = False):
         super().__init__(information_provider, scale)
@@ -56,17 +56,9 @@ class ContinuousTotalCostReward(RewardGenerator):
         self.positive_only = positive_only
         self.last_cost = 0
 
-    def _reset(self, locations):
-        if self.normalize:
-            self.normalization = self.calculator.total_start_cost
-        else:
-            self.normalization = self.calculator.n_particles
-
-        self.last_cost = self.calculator.total_start_cost
-
     def _step(self, action, locations) -> Tuple[bool, float]:
         done, reward = super()._step(action, locations)
-        current_cost = self.calculator.total_cost
+        current_cost = self._current_cost()
         if self.positive_only:
             if self.last_cost - current_cost > 0:
                 reward += (self.last_cost - current_cost) / self.normalization
@@ -76,6 +68,33 @@ class ContinuousTotalCostReward(RewardGenerator):
             self.last_cost = current_cost
 
         return done, reward * self.scale
+
+    def _current_cost(self) -> float:
+        pass
+
+
+class ContinuousTotalCostReward(ContinuousRewardGenerator):
+    def _reset(self, locations):
+        if self.normalize:
+            self.normalization = self.calculator.total_start_cost
+        else:
+            self.normalization = self.calculator.n_particles
+
+        self.last_cost = self.calculator.total_start_cost
+
+    def _current_cost(self) -> float:
+        return self.calculator.total_cost
+
+
+class ContinuousMaxCostReward(ContinuousRewardGenerator):
+    def _reset(self, locations):
+        if self.normalize:
+            self.normalization = self.calculator.max_start_cost
+
+        self.last_cost = self.calculator.max_start_cost
+
+    def _current_cost(self) -> float:
+        return self.calculator.max_cost
 
 
 class DiscreteRewardGenerator(RewardGenerator):
