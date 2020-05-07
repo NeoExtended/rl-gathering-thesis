@@ -2,7 +2,6 @@ from typing import Tuple, Union, Type
 
 import cv2
 import gym
-import matplotlib.pyplot as plt
 import numpy as np
 from gym.utils import seeding
 
@@ -158,10 +157,9 @@ class MazeBase(gym.Env):
         rgb_image = np.clip(rgb_image, 0, 255)
 
         if mode == 'human':  # Display image
-            plt.gcf().clear()  # Clear current figure
-            plt.imshow(rgb_image.astype(np.uint8), vmin=0, vmax=255)
-            plt.show(False)
-            plt.pause(0.0001)
+            rgb_image = cv2.cvtColor(rgb_image.astype(np.uint8), cv2.COLOR_RGB2BGR)
+            cv2.imshow("image", rgb_image)
+            cv2.waitKey(25)
         # rgb_image = cv2.resize(rgb_image.astype(np.uint8), (100, 100), interpolation=cv2.INTER_AREA)
         return rgb_image.astype(np.uint8)
 

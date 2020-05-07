@@ -41,7 +41,7 @@ class PhysicalMaze(MazeBase):
         self.exact_locations = np.where(valid_locations, new_loc, self.exact_locations)
         self.particle_speed = self.particle_speed / 1.1  # drag
         self.particle_speed = np.where(valid_locations, self.particle_speed, self.particle_speed / 2)  # collision
-        self.particle_speed = np.where(self.particle_speed > 0.01, self.particle_speed, 0)  # stop really slow particles.
+        self.particle_speed = np.where(np.abs(self.particle_speed) > 0.01, self.particle_speed, 0)  # stop really slow particles.
 
         done, reward = self.reward_generator.step(action, self.particle_locations)
         return (self._generate_observation(), reward, done, info)
