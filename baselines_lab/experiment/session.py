@@ -56,6 +56,7 @@ class Session(ABC):
         log_dir = self.config['meta'].get('log_dir', None)
         self.log = util.create_log_directory(log_dir)
         if self.log:
+            self.config['meta']['timestamp'] = util.get_timestamp()
             config_util.save_config(self.config, os.path.join(self.log, "config.yml"))
 
     def _plot(self, log_dir):

@@ -8,6 +8,7 @@ import logging
 import os
 
 import yaml
+from gym.utils import seeding
 
 from baselines_lab.utils import util
 
@@ -175,7 +176,7 @@ def extend_meta_data(config):
     """
     extended_info = {
         "timestamp": util.get_timestamp(),
-        "random_seed": None,
+        "seed": config['meta'].get("seed", seeding.create_seed(max_bytes=4)),
     }
     config['meta'].update(extended_info)
     return config
