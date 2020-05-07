@@ -22,6 +22,7 @@ class TensorboardLogger(BaseCallback):
         super(TensorboardLogger, self).__init__(verbose)
         self.ep_len_buffer = deque(maxlen=smoothing)
         self.reward_buffer = deque(maxlen=smoothing)
+        self.fps_buffer = deque(maxlen=smoothing)
         self.extrinsic_rew_buffer = deque(maxlen=smoothing)
         self.intrinsic_rew_buffer = deque(maxlen=smoothing)
         self.n_episodes = None
@@ -164,11 +165,12 @@ class TensorboardLogger(BaseCallback):
         fps = int(steps / (t_now - self.t_start))
         self.t_start = t_now
         self.last_timesteps = self.num_timesteps
+        self.fps_buffer.append(fps)
 
         fps_summary = tf.Summary(value=[
             tf.Summary.Value(
                 tag='steps_per_second',
-                simple_value=fps
+                simple_value=safe_mean(self.fps_buffer)
             )
         ])
         self.writer.add_summary(fps_summary, self.num_timesteps)
