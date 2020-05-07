@@ -23,7 +23,7 @@ class InstanceGenerator(ABC):
         return [seed]
 
     def save(self, path) -> None:
-        np.savetxt(path, self._last)
+        np.savetxt(path, self._last, fmt="%d")
 
     def last(self) -> np.ndarray:
         return self._last

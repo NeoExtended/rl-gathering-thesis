@@ -50,15 +50,15 @@ class RRTGenerator(InstanceGenerator):
         self.border = border
 
         if self.border:
-            self.width -= 1
-            self.height -= 1
+            self.width -= 2
+            self.height -= 2
 
     def generate(self) -> np.ndarray:
         nodes = self._generate_tree()
         self._calculate_flow(nodes)
         self._create_loops(nodes)
         maze = self._draw_graph(nodes)
-        self._last = self._create_border(maze)
+        self._last = self._create_border(maze).astype(np.uint8)
         return self._last
 
     def _generate_tree(self) -> List[Node]:
