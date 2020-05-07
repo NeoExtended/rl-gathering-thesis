@@ -107,3 +107,11 @@ register(id="PhysicalMaze0318Continuous-v0",
                  'goal': [82, 80],
                  'goal_range': 10,
                  'reward_generator': "continuous"})
+
+register(id="VesselMaze01Continuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/small_vessel.csv',
+                 'goal': [95, 60],
+                 'goal_range': 10,
+                 'reward_generator': "continuous"})
