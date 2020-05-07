@@ -1,7 +1,7 @@
 """
 Defines helper functions for reading and writing the lab config file
 """
-
+import collections
 import glob
 import json
 import logging
@@ -41,9 +41,39 @@ def get_config(config_file, args):
     :return: (dict) The parsed config file as dictionary.
     """
     config = read_config(config_file)
+    config = resolve_imports(config)
     config = extend_meta_data(config)
     config = clean_config(config, args)
     return config
+
+
+def resolve_imports(config):
+    """
+    Resolves all imports, updating the values in the current config. Existing keys will not be overwritten!
+    :param config: (dict) Lab config
+    :return: (dict) Lab config with resolved import statements.
+    """
+    complete_config = {}
+    for c in config.get('import', []):
+        complete_config = update_dict(complete_config, read_config(c))
+
+    config = update_dict(complete_config, config)
+    return config
+
+
+def update_dict(d, u):
+    """
+    Updates dict d to match the parameters of dict u without overwriting lower level keys completely
+    :param d: (dict)
+    :param u: (dict)
+    :return: (dict) The updated dict.
+    """
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update_dict(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 
 def clean_config(config, args):
@@ -127,7 +157,7 @@ def set_checkpoints(config, path, type, trial=-1):
     checkpoint = CheckpointManager.get_checkpoint(path, type=type, trial=trial)
     config['algorithm']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "model")
     if normalization:
-        config['env']['normalize']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "normalization")
+        config['env']['normalize']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "normalization", extension="pkl")
 
     if curiosity:
         config['env']['curiosity']['trained_agent'] = CheckpointManager.get_file_path(checkpoint, "curiosity")
