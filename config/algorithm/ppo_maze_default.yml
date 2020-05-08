@@ -1,0 +1,14 @@
+algorithm:
+  name: "ppo2"
+  verbose: 10
+  policy:
+    name: SimpleMazeCnnPolicy
+  tensorboard_log: true
+  learning_rate: 0.0001
+  nminibatches: 8
+  n_steps: 256
+  gamma: 0.99
+  ent_coef: 0.001
+  cliprange: 0.1
+  lam: 0.95
+  noptepochs: 16

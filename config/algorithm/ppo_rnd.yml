@@ -1,0 +1,14 @@
+algorithm:
+  name: "ppo2"
+  verbose: 10
+  tensorboard_log: true
+  policy:
+    name: RndPolicy
+  n_steps: 128
+  nminibatches: 4
+  noptepochs: 4
+  learning_rate: 0.0001
+  lam: 0.95
+  ent_coef: 0.001
+  gamma: 0.99
+  cliprange: 0.1

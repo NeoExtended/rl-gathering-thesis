@@ -1,0 +1,7 @@
+meta:
+  seed: 82
+  n_timesteps: 3000000
+  log_dir: "./logs/Maze0318"
+  save_interval: 250000
+  plot: true
+  n_trials: 3

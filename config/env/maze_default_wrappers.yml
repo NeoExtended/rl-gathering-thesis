@@ -1,0 +1,12 @@
+env:
+  name: "Maze0318Continuous-v0"
+  wrappers:
+    - env.wrappers.WarpGrayscaleFrame:
+        width: 84
+        height: 84
+    - stable_baselines.common.atari_wrappers.MaxAndSkipEnv:
+        skip: 4
+  n_envs: 64
+  frame_stack:
+    n_stack: 4
+  n_particles: 256
