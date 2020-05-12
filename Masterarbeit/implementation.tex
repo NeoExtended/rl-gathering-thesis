@@ -1,0 +1,55 @@
+\chapter{Implementation} \label{chp:Implementation}
+In this chapter we will take a look at different parts of the implementation. We will begin by discussing some general implementation notes in Chapter \ref{sec:ImplementationNotes} and the continue to present our experimentation environment called \textit{baselines lab} in Section \ref{sec:BaselinesLab}. We then talk about the particle simulation environment, including different scenarios from the original implementation of Huang et al. in Section \ref{sec:MazeEnvironment}.
+
+\section{General Implementation Notes} \label{sec:ImplementationNotes}
+Before talking about the actual implementation we want to talk a little bit about our general design choices. As a programming language we chose to use Python 3 \cite{van2011python, pythonWebsite}. Python is an interpreted high-level programming language with itself is written in C. Even though it is interpreted and thus may be slower than languages like C or C++, the easy integration of high-performance libraries which also scale into distributed systems make applications developed in python very fast. In the past years almost every ML library is developed for python making Python an ideal choice for data-science and machine learning projects.
+
+The popularity of machine learning has lead to the developed of a number of libraries which support the creation and training of artificial neural networks. Modern libraries also especially leverage the computing power of the GPU to accelerate the computation of large matrix operations. Many of the libraries support more or less the same functionality, but may have a very different style of how certain things can be achieved. Currently the two most popular libraries for machine learning are PyTorch \cite{paszke2019pytorch} and Tensorflow \cite{abadi2016tensorflow}, we decided to use the latter. This decision was made in conjunction with our second big backend library which extends Tensorflow for reinforcement learning: Stable-Baselines \cite{stable-baselines}. Stable baselines offers high-quality implementations of many RL algorithms which are partially forked from the OpenAI Baselines project \cite{baselines}. While Google offers their own reinforcement library under the name TF-Agents \cite{TFAgents} we found that it currently is in a too early development state and thus not stable enough for the course of this thesis.
+
+Since Python offers the easy integration of additional libraries we also make use of a number of additional libraries, most notably:
+\begin{itemize}
+    \item OpenAI Gym \cite{openAIgym} for a standardized environment creation as well as the integration of the Atari environments for testing purposes.
+    \item OpenCV \cite{opencv_library} for image preprocessing.
+    \item Numpy \cite{oliphant2006guide} for fast matrix computations.
+    \item Optuna \cite{akiba2019optuna} for automated hyperparameter search.
+\end{itemize}
+
+\section{Baselines Lab} \label{sec:BaselinesLab}
+To test out various combinations of reinforcement learning algorithms, their settings with different environments and environment settings we need a flexible and easy configurable program which also gives us the possibility to monitor the performance and create evaluations of trained models. While there already exist some projects which offer some of these features we did not find a project which was fully suited for our needs. The stable-baselines co-project baselines zoo \cite{rl-zoo} had to few options for the configuration of algorithms and while other libraries like slm-lab \cite{kenggraesser2017slmlab} did fit our need for configurability, they did not offer enough reinforcement learning algorithms. Therefore we decided to build our own lab environment on top of stable-baselines which we call \textit{Baselines Lab}.
+
+\subsection{Basic Functions} \label{sec:blFunctions}
+train, enjoy and search mode
+session/trial -> Automated plots
+automated saving/loading, logging -> tensorboard
+Easy lab configuration via config files
+
+\subsection{Random Network Distillation Module} \label{sec:blRND}
+Unique RND implementation -> Staged as extension for SB3
+
+\subsection{Automated Hyperparametersearch} \label{sec:blSearch}
+Optuna and its basic functions, how to configure hyperparametersearch.
+
+\subsection{Additional Functions} \label{sec:blAdvanced}
+Automated video creation (enjoy, obs).
+Learning rate schedules.
+Email notification
+
+
+\section{The Particle Maze Environment} \label{sec:MazeEnvironment}
+
+\subsection{Basic Implementation} \label{sec:MazeImplementation}
+Reimplementation of Huangs environment. Observations, etc
+
+\subsection{Reward Shaping} \label{sec:MazeReward}
+Rewards
+
+\subsection{Extended Models} \label{sec:ExtendedMaze}
+fuzzy, physical 
+
+\subsection{Random Instance Generation} \label{sec:RandomInstanceGeneration}
+random map generation
+
+\section{Integration of Algorithmic Approaches} \label{sec:AlgorithmIntegration}
+integration
+
+
