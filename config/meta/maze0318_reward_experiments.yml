@@ -1,7 +1,7 @@
 meta:
   seed: 82
-  n_timesteps: 3000000
-  log_dir: "./logs/Reward_Experiments_5"
+  n_timesteps: 10000000
+  log_dir: "./logs/Reward_Experiments_7"
   save_interval: 250000
   plot: true
   n_trials: 3
