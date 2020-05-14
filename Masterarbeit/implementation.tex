@@ -85,8 +85,8 @@ Since Python offers the easy integration of additional libraries we also make us
 \section{Baselines Lab} \label{sec:BaselinesLab}
 To test out various combinations of reinforcement learning algorithms, their settings with different environments and environment settings we need a flexible and easy configurable program which also gives us the possibility to monitor the performance and create evaluations of trained models. While there already exist some projects which offer some of these features we did not find a project which was fully suited for our needs. The stable-baselines co-project baselines zoo \cite{rl-zoo} had to few options for the configuration of algorithms and while other libraries like slm-lab \cite{kenggraesser2017slmlab} did fit our need for configurability, they did not offer enough reinforcement learning algorithms. Therefore we decided to build our own lab environment on top of stable-baselines which we call \textit{Baselines Lab}.
 
-\subsection{Basic Functions} \label{sec:blFunctions}
-In this section, we want to go over the basic functions of Baselines Lab. We will start with an overview of the main functions and then give a little more detail on some of the most important features. 
+\subsection{Basic Features} \label{sec:blFunctions}
+In this section, we want to go over the basic features of Baselines Lab. We will start with an overview of the main functionality and then give a little more detail on some of the most important features. 
 
 When starting the lab, we have to choose between one of the three different lab modes:
 
@@ -100,7 +100,8 @@ When starting a session, we also need to specify a \textit{lab configuration fil
 
 \begin{figure}[h]
     \lstinputlisting[language=yaml]{figures/implementation/simple_config.yml}
-    \caption{Basic lab configuration file in YAML.}
+    \caption[Basic lab configuration file]{Basic lab configuration file in YAML.}
+    \label{fig:BasicLabConfig}
 \end{figure}
 
 
@@ -151,19 +152,65 @@ Stable Baselines already integrates Tensorboard for extended logging and visuali
 
 Tensorboard logs are created automatically at the given log directory location if the \texttt{tensorboard\_log} parameter of the algorithm is set to true.
 
+\paragraph{Extension of Stable Baselines Functions.}
+Additional to the extended monitoring, we also extended some other functions of Stable Baselines:
+
+\begin{itemize}
+    \item \textit{Learning Rate Schedules.} Stable Baselines includes an inconsistent system of learning rate schedules which are only available for a number of algorithms. In Baselines Lab we included linear and piecewise learning rate schedules for the PPO, SAC and TD3 implementations. For information on how these schedules can be used we included an example in Appendix TODO.
+    \item \textit{Flexible Neural Network Creation.} Stable Baselines only allows to flexibly create dense neural networks. We extended the network base classes to also include a fully configurable network class which can be defined via config files. For an example see Appendix TODO.
+\end{itemize}
+
 
 \subsection{Random Network Distillation Module} \label{sec:blRND}
-Unique RND implementation -> Staged as extension for SB3
+Since the Stable Baselines implementations do not offer any form of curiosity reward we needed to implement our own version. Huang et al. have shown, that the RND curiosity produces superior results in comparison with the original idea of an ICM module, so we decided to implement the RND reward only. 
+
+\begin{figure}[ht]
+    \begin{center}
+    %\resizebox{0.95\columnwidth}{!}{%
+    \begin{tabular}{c}
+    \includegraphics[clip, height=5cm]{figures/implementation/rnd_pong_episode_reward.pdf} \\
+    \includegraphics[clip, height=5cm]{figures/implementation/rnd_pong_episode_intrinsic_reward.pdf} \\
+    \includegraphics[clip, height=5cm]{figures/implementation/rnd_pong_episode_length.pdf} \\
+    
+    \end{tabular}
+    %}%
+    \end{center}
+    %\vspace*{-12pt}
+    \caption[RND on Pong]{Learning curves for the verification experiment of the curiosity reward wrapper on the Atari game Pong.}
+    \label{fig:RNDPong}
+    %\vspace*{-12pt}
+  \end{figure}
+
+
+Instead of implementing the curiosity reward as an extension of PPO (like in the original implementation) we decided to implement RND as a wrapper for the environment. This wrapper contains an internal replay buffer from which we randomly draw samples to train the predictor network. As default, we train the predictor network with the same frequency as the actor network. The replay buffer contains samples from the past four training periods. As an example, if we train 256 steps on 16 environments between each training period of the actor, the replay buffer will have a size of $256 \times 16 \times 4$ samples. We also perform four optimization epochs per training step. The networks used for the target and predictor network have the same structure as in the original implementation. 
+
+The implementation of the RND module as a wrapper allows us to use the curiosity reward signal independent of the RL algorithm. We verified our implementation by training an PPO agent to play the Atari game "Pong" using curiosity reward only and no end-of-episode signal. Figure \ref{fig:RNDPong} shows the learning curves for intrinsic and extrinsic reward, as well as the episode length. We can see, that the agent does not optimize for extrinsic reward - this is expected, since we removed that reward signal - and instead continuously improves the intrinsic reward by increasing the episode length. The agent therefore learns to play with its enemy in Pong instead of against him. This behavior was also observed by Burda et al.\cite{burda2018exploration}.
+
+The development of the curiosity wrapper was done in conjunction with the development team of Stable Baselines, and the implementation has been staged for a future release of Stable Baselines 3 \cite{stable-baselines-intrinsic}.
 
 \subsection{Automated Hyperparametersearch} \label{sec:blSearch}
-Optuna and its basic functions, how to configure hyperparametersearch.
+The choice of optimal hyperparameters is very important in any machine learning setting. As we saw in Chapter \ref{chp: RLOverview}, most RL algorithms introduce multiple new parameters, with some of them having great influence on the training performance. These parameter must be tune additional to the already existing hyperparameters like the learning rate or other optimizer specific values, an observation preprocessing pipeline and eventual environment parameters (e.g. for reward generation). Tuning all these parameters together is especially hard when because every training run may take hours before we can determine if the current configuration is better or worse than any other configuration. To support our decisions when tuning these parameters, we therefore need the possibility of an automated hyperparametersearch. 
 
-\subsection{Additional Functions} \label{sec:blAdvanced}
-Automated Plots
-Automated video creation (enjoy, obs).
-Learning rate schedules.
-Email notification
+\begin{figure}[ht]
+    \lstinputlisting[language=yaml]{figures/implementation/simple_search_config.yml}
+    \caption{Basic search lab configuration file.}
+    \label{fig:BasicSearchConfig}
+\end{figure}
 
+To efficiently search for hyperparameters in an ML context, a number of algorithms have been developed in the past. Modern optimizer frameworks often allow to choose between a number of different of these algorithms. For Baselines Lab we choose to integrate Optuna \cite{akiba2019optuna} as it combines a number of up-to-date algorithms with great configurability. In Optuna there are mainly two classes of important algorithms: Samplers and Pruners. Samplers are used to choose from a set of hyperparameters and pruners are used to decide which trial should be canceled early (pruned). While both classes can be used with simple algorithms (e.g. a random value sampler with a median pruner), in Optuna we also can choose from more advanced algorithms. For example sampling can be done using the tree-structured parzen estimator algorithm \cite{bergstra2011algorithms} or pruning can be done via successive halving \cite{karnin2013almost} which both showed to improve performance.
+
+In Baselines Lab it is easy to configure which sampler or pruner to use and which parameters should be tuned. In Figure \ref{fig:BasicSearchConfig} we included an example lab configuration to demonstrate how hyperparametersearch works. The shown section for the \textit{search} keyword can be appended to the lab configuration from Figure \ref{fig:BasicLabConfig} and is only used if the file is started with the \texttt{search} lab mode. We can see that we can define how many trials should be run via the \texttt{n\_trials} keyword and that we can define a sampler and a pruner method. Each pruner can receive its individual parameters by specifying them under the \texttt{pruner} keyword. For example the \textit{halving} pruner get configured such that each trial will run for at least 4000 timesteps before it can be pruned.
+
+Depending on the chosen RL algorithm, Baselines Lab comes with a predefined set of parameter ranges which will automatically be sampled. Any parameter defined in the normal algorithm or env section will not be sampled during the parametersearch. If we want to explicitly give a range for parameters, we can redefine them under search/algorithm or search/env with a sample method and the according choices. More details can be found in the Optuna documentation \cite{optuna-docs} and in Appendix TODO.
+
+\subsection{Additional Features} \label{sec:blAdvanced}
+Baselines Lab offers a bunch of additional functions which are designed to help monitoring the training process, find problems with the learning algorithm and help with result presentation:
+
+\begin{itemize}
+    \item \textit{Plots.} Baselines Lab can automatically create plots of the tensorboard training data. To create the plots either specify \texttt{plot: true} under the \texttt{meta} keyword or use the \texttt{-{}-plot} command line argument in enjoy mode. The default plots contain train and evaluation data for reward and episode length, but it is possible to plot additional data by specifying their tensorboard tags. For more information see Appendix TODO.
+    \item \textit{Video Creation.} Baselines Lab can automatically create videos of  the environment. The environment can either be rendered like it is displayed in enjoy mode (rendered for human eyes) or the environment can render the observations which are created for the agent. Both options are only available in enjoy mode and can be enabled with the command line arguments \texttt{-{}-video} or \texttt{-{}-obs-video} respectively.
+    \item \textit{Email Notification.} Baselines Lab can automatically send email notifications to send updates about the training progress. This feature is only available on Linux and requires \textit{mailx} to be installed. To send email notifications we have to specify a mail address via the \texttt{-{}-mail} command line argument. 
+\end{itemize}
 
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
 
