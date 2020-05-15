@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Type
+from typing import Tuple, Union, Type, Dict, Optional, List
 
 import cv2
 import gym
@@ -7,6 +7,8 @@ from gym.utils import seeding
 
 from baselines_lab.env.gym_maze.maze_generators import InstanceGenerator, InstanceReader
 from baselines_lab.env.gym_maze.rewards import GENERATORS
+from baselines_lab.env.gym_maze.envs.step_modifier import StepModifier, SimpleMovementModifier, FuzzyMovementModifier, \
+    RandomMovementModifier, PhysicalMovementModifier
 
 PARTICLE_MARKER = 150
 GOAL_MARKER = 200
@@ -30,14 +32,14 @@ class MazeBase(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
 
     def __init__(self, instance: Union[str, Type[InstanceGenerator]], goal: Tuple[int, int], goal_range: int, reward_generator: str,
-                 reward_kwargs: dict = None, n_particles:int = 256, allow_diagonal: bool = True, instance_kwargs:dict = None) -> None:
+                 reward_kwargs: dict = None, n_particles:int = 256, allow_diagonal: bool = True, instance_kwargs: Optional[Dict] = None,
+                 step_type: str = "simple", step_kwargs: Optional[Dict] = None) -> None:
 
         self.np_random = None
-        self.seed()
         self.reward_kwargs = {} if reward_kwargs is None else reward_kwargs
         self.instance_kwargs = {} if instance_kwargs is None else instance_kwargs
         self.goal_range = goal_range
-        self.locations = None
+        self.locations = None  # Nonzero freespace - not particle locations!
 
         if allow_diagonal:
             # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
@@ -50,6 +52,9 @@ class MazeBase(gym.Env):
         self.rev_action_map = {v: k for k, v in self.action_map.items()}
         self.actions = list(self.action_map.keys())
         self.action_space = gym.spaces.Discrete(len(self.action_map))
+        self.step_modifiers = []  # type: List[StepModifier]
+        self._create_modifiers(step_type, {} if step_kwargs is None else step_kwargs)
+        self.seed()
 
         if n_particles < 0:
             self.randomize_n_particles = True
@@ -74,6 +79,15 @@ class MazeBase(gym.Env):
 
         self.particle_locations = np.array([])
         self.reset()
+
+    def _create_modifiers(self, step_type, step_kwargs):
+        if step_type == "simple":
+            self.step_modifiers.append(SimpleMovementModifier(self.action_map, **step_kwargs))
+        elif step_type == "fuzzy":
+            self.step_modifiers.append(RandomMovementModifier(self.action_map, **step_kwargs))
+            self.step_modifiers.append(FuzzyMovementModifier(self.action_map, **step_kwargs))
+        elif step_type == "physical":
+            self.step_modifiers.append(PhysicalMovementModifier(self.action_map, **step_kwargs))
 
     def _load_map(self, goal):
         # Load map if necessary
@@ -105,6 +119,11 @@ class MazeBase(gym.Env):
 
         # Reset particle positions
         self._randomize_particle_locations(self.locations)
+
+        # Reset modifiers
+        for modifier in self.step_modifiers:
+            modifier.reset(self.particle_locations, self.maze, self.freespace)
+
         return self._generate_observation()
 
     def _randomize_particle_locations(self, locations):
@@ -138,10 +157,16 @@ class MazeBase(gym.Env):
 
     def step(self, action):
         info = {}
-        dy, dx = self.action_map[action]
+        location_update = np.copy(self.particle_locations)
 
-        new_loc = self.particle_locations + [dy, dx]
-        self._update_locations(new_loc)
+        for modifier in self.step_modifiers:
+            location_update += modifier.step(action, self.particle_locations)
+
+        valid_locations = self._update_locations(location_update)
+
+        # Inform modifiers about update
+        for modifier in self.step_modifiers:
+            modifier.step_done(valid_locations)
 
         done, reward = self.reward_generator.step(action, self.particle_locations)
         return (self._generate_observation(), reward, done, info)
@@ -165,6 +190,9 @@ class MazeBase(gym.Env):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        for modifier in self.step_modifiers:
+            modifier.seed(self.np_random)
+
         return [seed]
 
     def _generate_observation(self):
@@ -174,7 +202,7 @@ class MazeBase(gym.Env):
             cv2.circle(observation, tuple(self.goal), self.goal_range, (GOAL_MARKER))
             observation[self.goal[1] - 1:self.goal[1] + 1, self.goal[0] - 1:self.goal[0] + 1] = GOAL_MARKER
 
-        return observation[:, :, np.newaxis] # Convert to single channel image
+        return observation[:, :, np.newaxis]  # Convert to single channel image
 
     def _update_locations(self, new_locations):
         """

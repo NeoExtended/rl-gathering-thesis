@@ -31,4 +31,4 @@ for i in range(1000):
         action = 0
 
     obs, rewards, dones, info = env.step([action])
-    print(rewards)
+    #print(rewards)

@@ -61,12 +61,13 @@ register(id="Maze0318Continuous-v3",
                  'reward_generator': "continuous"})
 
 register(id="Maze0318Continuous-v4",
-         entry_point="baselines_lab.env.gym_maze.envs:FuzzyMaze",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
          kwargs={'instance': '../mapdata/map0318.csv',
                  'goal': [82, 80],
                  'goal_range': 10,
-                 'reward_generator': "continuous"})
+                 'reward_generator': "continuous",
+                 'step_type': "fuzzy"})
 
 register(id="Maze0518Discrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
@@ -101,12 +102,13 @@ register(id="RandomMazeDiscrete-v0",
                  'reward_generator': "goal"})
 
 register(id="PhysicalMaze0318Continuous-v0",
-         entry_point="baselines_lab.env.gym_maze.envs:PhysicalMaze",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
          kwargs={'instance': '../mapdata/map0318.csv',
                  'goal': [82, 80],
                  'goal_range': 10,
-                 'reward_generator': "continuous"})
+                 'reward_generator': "continuous",
+                 'step_type': "physical"})
 
 register(id="VesselMaze01Continuous-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
