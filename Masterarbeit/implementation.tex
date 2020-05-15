@@ -213,9 +213,22 @@ Baselines Lab offers a bunch of additional functions which are designed to help 
 \end{itemize}
 
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
+Since most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for our environment. At the same time we are interested in a modular design, since we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. In the following sections we then explain in detail how these components work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or unprecise observations in Section \ref{sec:ExtendedMaze}. Finally we will talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
 
 \subsection{Basic Implementation} \label{sec:MazeImplementation}
-Reimplementation of Huangs environment. Observations, etc
+We designed the implementation for the maze environment around two key ideas: The environment should run as fast as possible, because the agent will need to play hundreds or thousands of episodes until it successfully learned something. Designing the environment as lightweight as possible will therefore save a lot of time during training. The second aspect was flexibility. The environment should be configurable with our lab configuration file system in any aspect. This means having flexible rewards and mazes, as well as a modular system for particle behavior. Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the architecture of the environments main component \textit{MazeBase}.
+
+\begin{figure}[ht]
+    
+    \begin{center}
+        \includegraphics[clip, trim=10px 10px 10px 10px, width=0.9\columnwidth]{figures/implementation/maze_base_design.pdf}
+    \end{center}
+    
+    %\vspace*{-6pt}
+    \caption[Implementation Design for the Maze Environment]{Implementation Design for the Maze Environment.}
+    \label{fig:MazeBaseDesign}
+    %\vspace*{-12pt}
+  \end{figure}
 
 \subsection{Reward Shaping} \label{sec:MazeReward}
 Rewards
