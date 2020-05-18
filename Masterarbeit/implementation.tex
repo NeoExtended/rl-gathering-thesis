@@ -216,7 +216,15 @@ Baselines Lab offers a bunch of additional functions which are designed to help 
 Since most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for our environment. At the same time we are interested in a modular design, since we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. In the following sections we then explain in detail how these components work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or unprecise observations in Section \ref{sec:ExtendedMaze}. Finally we will talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
 
 \subsection{Basic Implementation} \label{sec:MazeImplementation}
-We designed the implementation for the maze environment around two key ideas: The environment should run as fast as possible, because the agent will need to play hundreds or thousands of episodes until it successfully learned something. Designing the environment as lightweight as possible will therefore save a lot of time during training. The second aspect was flexibility. The environment should be configurable with our lab configuration file system in any aspect. This means having flexible rewards and mazes, as well as a modular system for particle behavior. Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the architecture of the environments main component \textit{MazeBase}.
+We designed the implementation for the maze environment around two key ideas: First, the environment should run as fast as possible, because the agent will need to play hundreds or thousands of episodes. Designing the environment as lightweight as possible will therefore save a lot of time during training. Second, we need an environment which is configurable with our lab configuration file system in its main aspects. This means having the possibility to dynamically load instances, define rewards and even particle behavior. For the implementation we therefore decided to build the maze environment as a modular system, which allows easy configuration and extension of the existing architecture. 
+
+Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the architecture of the environments with its main component \textit{MazeBase}. The modules which can be integrated into the MazeBase class all inherit from three interfaces and therefore can be divided into three groups:
+
+\begin{enumerate}
+    \item \textit{Instance Generators.} Instance generators load or create instances. Depending on the generator, an instance can be just created once and then returned for every future episode (e.g. if we want to load a specific instance) or the instance can be randomly generated. We will talk more about random instance creating in Section \ref{sec:RandomInstanceGeneration}.
+    \item \textit{Reward Generator.} Reward generators create rewards after each step and define when the episode is over. We will talk in detail about reward shaping in Section \ref{sec:MazeReward}.
+    \item \textit{Step Modifiers.} Step modifiers define the behavior of the particles. This behavior might be very simple like in the original maze implementation of Huang et al. where each particle moves exactly one step into the direction given by the action, but can be more complex. We will talk about advanced particle behavior in Section \ref{sec:ExtendedMaze}. 
+\end{enumerate}
 
 \begin{figure}[ht]
     
@@ -229,6 +237,8 @@ We designed the implementation for the maze environment around two key ideas: Th
     \label{fig:MazeBaseDesign}
     %\vspace*{-12pt}
   \end{figure}
+
+All components of the maze environment are generally designed with performance in mind. When implementing particle motions and reward generations, we minimized the use of python loop statements and instead solved most of the computations by utilizing NumPy \ref{oliphant2006guide} functions.
 
 \subsection{Reward Shaping} \label{sec:MazeReward}
 Rewards
