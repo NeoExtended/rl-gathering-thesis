@@ -241,7 +241,29 @@ Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the architecture 
 All components of the maze environment are generally designed with performance in mind. When implementing particle motions and reward generations, we minimized the use of python loop statements and instead solved most of the computations by utilizing NumPy \cite{oliphant2006guide} functions.
 
 \subsection{Reward Shaping} \label{sec:MazeReward}
-Rewards are a fundamental component of reinforcement learning. 
+Rewards are a fundamental component of reinforcement learning. For RL algorithms a problems difficulty largely depends on how much information can be obtained through the reward signal. Often times problems become especially complicated when dealing with very sparse rewards (e.g. just a single reward at the end of an episode). When designing a reward signal for a problem, it is therefore desirable to include as much information as possible into the reward signal to obtain faster and better learning results (except for cases where we are interested in an artificially hard problem like in RL algorithm research). Providing much information with the reward signal can include a risk though: The reward must be unbiased and should not limit the solution space the algorithm can come up with. If we reward specific strategies, the RL algorithm will just replicate that strategy and not learn anything new. 
+
+Since the goal of the maze environment is to gather all particles close to the goal position, our reward should measure exactly this: Distance to the goal. In case of reinforcement learning, we want to allow slight inaccuracy and define a small area around the exact goal position in which we accept the solution. When dealing with an arbitrary number of particles $n$ we can define the goal in terms of the particle with the largest distance $d_{max}$ to the goal position. The episode is over if this distance gets smaller than the defined goal range and we can reward the agent if it is able to reduce this distance. This measure is useful, but does not always represent the overall improvement. Imagine a situation, where we were able to bring all particles except for a single particle close to the goal. This would definetly be an improvement of the situation and should be rewarded. Therefore, we additionally can reward the reduction of the sum of distances.
+
+As we mentioned in Section \ref{sec:TDDRL}, Huang et al. used both, the maximum and the average distance to the goal position for their reward signal. Instead of giving a continuous reward signal, they defined 4-8 subgoals for both these values and only rewarded the agent if it was able to reduce the distance for the average or maximum particle below one of the subgoal thresholds. In order to investigate the impact of reward sparseness in this setting, we implemented two new rewards:
+
+\paragraph{Discrete Reward.}
+We implemented a reward which works similar to the original reward, but with more subgoals. Instead of rewarding the agent at 4-8 subgoals (which in the original implementation were all close to the actual goal) we dynamically compute a number of subgoals depending on the size of the maze. The subgoals are equally distributed over the possible values for the maximum or average particle distance. We estimate the number of subgoals by dividing the maximum distance any particle can be away from the goal position by 2. This results in a lot more subgoals than the original implementation provided, but will still not result in a continuous reward signal. Subgoals which are easier to reach (the first subgoals) return a smaller reward than later ones.  
+
+\paragraph{Continuous Reward.}
+To provide the maximum amount of information to the agent, we also implemented continuous reward. Continuous reward should provide a reward after each step. The continuous reward signal is therefore computed as
+
+\[\frac{cost at last step - cost at current step}{normalization}\]
+
+The cost is either the distance of the maximum particle or the total sum of all distances to the goal position. When combining the maximum and the total cost, we have the problem, that  
+
+
+\paragraph{Time Penalty.}
+
+\paragraph{Gathering Reward.}
+
+
+
 
 \subsection{Extended Models} \label{sec:ExtendedMaze}
 fuzzy, physical 
