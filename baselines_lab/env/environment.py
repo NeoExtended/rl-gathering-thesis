@@ -7,7 +7,7 @@ from stable_baselines.bench import Monitor
 from stable_baselines.common.atari_wrappers import FrameStack, ScaledFloatFrame
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
-from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, CuriosityWrapper, VecGifRecorder, VecScaledFloatFrame
+from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, CuriosityWrapper, VecGifRecorder, VecScaledFloatFrame, VecStepSave
 
 
 def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
@@ -67,6 +67,7 @@ def create_environment(config, seed, log_dir=None, video_path=None, evaluation=F
     :return: (gym.Env) New gym environment created according to the given configuration.
     """
     alg_config = copy.deepcopy(config['algorithm'])
+    record_images = config['meta'].get('record_images', False)
     config = copy.deepcopy(config['env'])
     curiosity = config.pop('curiosity', False)
     if isinstance(curiosity, dict):
@@ -96,10 +97,10 @@ def create_environment(config, seed, log_dir=None, video_path=None, evaluation=F
         else:
             raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
-    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity)
+    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, record_images)
 
 
-def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, buffer_step_data):
     if n_envs == 1:
         env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
     else:
@@ -149,6 +150,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
 
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
+
+    if buffer_step_data:
+        env = VecStepSave(env)
 
     return env
 

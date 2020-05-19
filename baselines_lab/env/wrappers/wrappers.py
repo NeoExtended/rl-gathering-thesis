@@ -87,3 +87,24 @@ class VecScaledFloatFrame(VecEnvWrapper):
 
     def _scale_obs(self, obs):
         return np.array(obs).astype(self.dtype) / 255.0
+
+
+class VecStepSave(VecEnvWrapper):
+    def __init__(self, env):
+        super(VecStepSave, self).__init__(env)
+        self.last_obs = None
+        self.last_rews = None
+        self.last_infos = None
+        self.last_dones = None
+
+    def reset(self):
+        obs = self.venv.reset()
+        return obs
+
+    def step_wait(self):
+        obs, rews, dones, infos = self.venv.step_wait()
+        self.last_obs = obs
+        self.last_rews = rews
+        self.last_dones = dones
+        self.last_infos = infos
+        return obs, rews, dones, infos

@@ -14,6 +14,7 @@ from baselines_lab.experiment import Runner, HyperparameterOptimizer
 from baselines_lab.experiment.samplers import Sampler
 from baselines_lab.model import create_model
 from baselines_lab.model.callbacks import CheckpointManager, TensorboardLogger
+from baselines_lab.model.callbacks.obs_logger import ObservationLogger
 from baselines_lab.utils import util, config_util
 from baselines_lab.utils.plotter import Plotter
 
@@ -182,9 +183,12 @@ class TrainSession(Session):
 
     def _run_experiment(self):
         self._pretrain()
+        callbacks = [self.saver, TensorboardLogger(config=self.config)]
+        if self.config['meta'].get('record_images', False):
+            callbacks.append(ObservationLogger())
 
         logging.info("Starting training.")
-        self.agent.learn(self.config['meta']['n_timesteps'], callback=[self.saver, TensorboardLogger(config=self.config)])
+        self.agent.learn(self.config['meta']['n_timesteps'], callback=callbacks)
 
         # Save model at the end of the learning process and do some cleanup.
         self.saver.save(self.agent)
