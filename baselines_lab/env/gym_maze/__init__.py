@@ -18,6 +18,22 @@ register(id="Maze0122Continuous-v0",
                  'goal_range': 15,
                  'reward_generator': "continuous"})
 
+register(id="Maze0122SmallContinuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/map0122_small.csv',
+                 'goal': [48, 102],
+                 'goal_range': 15,
+                 'reward_generator': "continuous"})
+
+register(id="Maze0122TinyContinuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/map0122_small.csv',
+                 'goal': [28, 59],
+                 'goal_range': 15,
+                 'reward_generator': "continuous"})
+
 register(id="Maze0318Discrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,

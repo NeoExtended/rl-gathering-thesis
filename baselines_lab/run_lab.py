@@ -68,6 +68,7 @@ def parse_args(args):
 
 
 def main(args=None):
+    # TODO: Maze runtime analysis - plot values for max/avg/gathering cost over time
     # TODO: Multi-Level obs videos: Provide obs videos after each? wrapper.
 
     # parse arguments
