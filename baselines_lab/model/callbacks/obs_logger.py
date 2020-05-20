@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 
 class ObservationLogger(BaseCallback):
-    def __init__(self, render_all: bool = False, random_render: bool = True, random_render_interval: int = 10000, verbose: int = 0):
+    def __init__(self, render_all: bool = False, random_render: bool = True, random_render_interval: int = 25000, verbose: int = 0):
         super().__init__(verbose)
         self.step_save = None  # type: Optional[VecStepSave]
         self.writer = None
