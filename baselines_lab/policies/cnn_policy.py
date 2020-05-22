@@ -9,8 +9,8 @@ class SimpleMazeCnnPolicy(ActorCriticPolicy):
     """
     Simple CNN policy with Leaky RELU activations.
     """
-    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **kwargs):
-        super(SimpleMazeCnnPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=True)
+    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, scale=True, **kwargs):
+        super(SimpleMazeCnnPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=scale)
 
         with tf.variable_scope("model", reuse=reuse):
             activ = tf.nn.leaky_relu
