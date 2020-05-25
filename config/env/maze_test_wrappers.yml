@@ -1,0 +1,10 @@
+env:
+  name: "Maze0318Continuous-v0"
+  wrappers:
+    - env.wrappers.WarpGrayscaleFrame:
+        width: 84
+        height: 84
+  n_envs: 16
+  frame_stack:
+    n_stack: 4
+  n_particles: 256
