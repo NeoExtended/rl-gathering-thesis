@@ -21,19 +21,27 @@ class GatheringEpisodeEnd(EpisodeEndRewardGenerator):
 
 
 class DynamicEpisodeEnd(EpisodeEndRewardGenerator):
-    def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0, end_reward: float = 0.0):
+    def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0, end_reward: float = 0.0, normalize=False, continuous=False):
         super().__init__(information_provider, scale, end_reward)
-
+        self.continuous = continuous
         self.tier = 0
         self.dynamic_moves = None
         self.moves_left = 0
+        self.normalize = normalize
+        self.normalization = 1.0
 
     def _reset(self, locations):
-        n_subgoals = int(self.calculator.max_start_cost / 2)
-        avg_moves_additional_moves = int(self.calculator.max_start_cost * np.log(self.calculator.total_start_cost) / n_subgoals)
+        if self.continuous:
+            n_subgoals = self.calculator.episode_length_estimate
+        else:
+            n_subgoals = int(self.calculator.max_start_cost / 2)
+        avg_moves_additional_moves = int(self.calculator.episode_length_estimate * 2.0 / n_subgoals)
         self.dynamic_moves = np.flip(np.rint(np.linspace(1, avg_moves_additional_moves*2-1, n_subgoals*2+1)))
         self.moves_left = self.dynamic_moves[0]
         self.tier = 1
+
+        if self.normalize:
+            self.normalization = np.sum(self.dynamic_moves)
 
     def _step(self, action, locations) -> Tuple[bool, float]:
         if self.calculator.step_reward > 0:
@@ -47,7 +55,12 @@ class DynamicEpisodeEnd(EpisodeEndRewardGenerator):
         return False, 0.0
 
     def _on_done(self) -> float:
-        return float(self.moves_left) * self.scale
+        reward = float(self.moves_left)
+
+        if self.calculator.max_cost > self.calculator.goal_range:
+            reward -= self.dynamic_moves[self.tier+1:].sum()
+
+        return reward / self.normalization * self.scale
 
 
 class GoalReachedEpisodeEnd(EpisodeEndRewardGenerator):

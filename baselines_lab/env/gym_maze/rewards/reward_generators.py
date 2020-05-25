@@ -21,7 +21,7 @@ class TimePenaltyReward(RewardGenerator):
         return done, reward * self.scale
 
     def _calculate_time_penalty(self):
-        self.time_penalty = 1 / (self.calculator.max_start_cost * np.log(self.calculator.total_start_cost))
+        self.time_penalty = 1 / self.calculator.episode_length_estimate
 
 
 class GatheringReward(RewardGenerator):
@@ -100,7 +100,8 @@ class ContinuousMaxCostReward(ContinuousRewardGenerator):
 class DiscreteRewardGenerator(RewardGenerator):
     def __init__(self, information_provider: StepInformationProvider = None, scale: float = 1.0,
                  normalize: bool = False, n_subgoals: int = None, min_reward: int = 2, max_reward: int = 4):
-        self.n_subgoals = n_subgoals
+        self.subgoal_proposal = n_subgoals
+        self.n_subgoals = None
         self.reward_scale = None
         self.min_reward = min_reward
         self.max_reward = max_reward
@@ -112,16 +113,15 @@ class DiscreteRewardGenerator(RewardGenerator):
         self.reward_goals = None
         self.next_goal = 0
 
-    def set_information_provider(self, calculator: StepInformationProvider):
-        super(DiscreteRewardGenerator, self).set_information_provider(calculator)
-
-        if self.n_subgoals is None:
-            self.n_subgoals = int(np.max(self.calculator.costmap) / 2)
-
-        self.reward_scale = np.rint(np.linspace(self.min_reward, self.max_reward, self.n_subgoals))
-
     def _reset(self, locations):
         self.next_goal = 0
+
+        if self.subgoal_proposal is None:
+            self.n_subgoals = int(self.calculator.max_start_cost / 2)
+        else:
+            self.n_subgoals = self.subgoal_proposal
+
+        self.reward_scale = np.rint(np.linspace(self.min_reward, self.max_reward, self.n_subgoals))
 
     def _step(self, action, locations) -> Tuple[bool, float]:
         done, reward = super(DiscreteRewardGenerator, self)._step(action, locations)

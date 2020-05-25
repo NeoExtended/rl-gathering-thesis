@@ -38,11 +38,15 @@ class StepInformationProvider(ABC):
         self._unique_particles = None
         self._done = False
         self._step_reward = 0.0
+        self._mean_cost = None
+        self._ep_len_estimate = None
 
     def reset(self, locations):
         self.initial_robot_locations = np.copy(locations)
         self.last_locations = locations
         self._done = False
+        self._mean_cost = None
+        self._ep_len_estimate = None
 
         if self.relative:
             self._total_start_cost = None
@@ -106,12 +110,24 @@ class StepInformationProvider(ABC):
         return self._particle_cost
 
     @property
+    def episode_length_estimate(self) -> int:
+        if self._ep_len_estimate is None:
+            self._ep_len_estimate = int(round(self.max_start_cost * self.mean_cost))
+        return self._ep_len_estimate
+
+    @property
+    def mean_cost(self) -> int:
+        if self._mean_cost is None:
+            self._mean_cost = np.ma.masked_equal(self.costmap, 0).mean()
+        return self._mean_cost
+
+    @property
     def total_start_cost(self) -> float:
         if self._total_start_cost is None:
             if self.relative:
                 self._total_start_cost = np.sum(self.particle_cost)
             else:
-                self._total_start_cost = np.ma.masked_equal(self.costmap, 0).mean() * self.n_particles
+                self._total_start_cost = self.mean_cost * self.n_particles
         return self._total_start_cost
 
     @property

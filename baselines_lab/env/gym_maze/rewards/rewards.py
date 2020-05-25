@@ -29,7 +29,7 @@ def ContinuousRewardGenerator(maze, goal, goal_range, n_particles, action_map, r
             generator.add_sub_generator(TimePenaltyReward(scale=np.ma.masked_equal(information.costmap, 0).mean()))
 
     if dynamic_episode_length:
-        generator.add_sub_generator(DynamicEpisodeEnd())
+        generator.add_sub_generator(DynamicEpisodeEnd(normalize=normalize, continuous=True))
 
     generator.add_sub_generator(GoalReachedEpisodeEnd())
 
