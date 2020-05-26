@@ -54,7 +54,8 @@ def GoalRewardGenerator(maze, goal, goal_range, n_particles, action_map, relativ
         generator.add_sub_generator(GatheringReward(scale=gathering_reward, normalize=False))
 
     if time_penalty:
-        generator.add_sub_generator(TimePenaltyReward(scale=2*np.sum(generator.reward_scale)))
+        subgoals = n_subgoals if n_subgoals is not None else int(information.max_start_cost / 2)
+        generator.add_sub_generator(TimePenaltyReward(scale=subgoals*(max_reward + min_reward)))
 
     if dynamic_episode_length:
         generator.add_sub_generator(DynamicEpisodeEnd())
