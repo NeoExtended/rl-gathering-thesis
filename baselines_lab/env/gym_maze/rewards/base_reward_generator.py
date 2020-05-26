@@ -40,15 +40,15 @@ class StepInformationProvider(ABC):
         self._step_reward = 0.0
         self._mean_cost = None
         self._ep_len_estimate = None
+        self._convex_corners = None
 
     def reset(self, locations):
         self.initial_robot_locations = np.copy(locations)
         self.last_locations = locations
         self._done = False
-        self._mean_cost = None
-        self._ep_len_estimate = None
 
         if self.relative:
+            self._ep_len_estimate = None
             self._total_start_cost = None
             self._max_start_cost = None
 
@@ -69,14 +69,14 @@ class StepInformationProvider(ABC):
         self._total_cost = None
         self._unique_particles = None
 
-    def _calculate_cost_map(self, maze, goal):
+    def _calculate_cost_map(self, maze, goal) -> np.ndarray:
         """
         Calculates the cost map based on a given goal position via bfs
         """
         queue = collections.deque([goal])  # [x, y] pairs in point notation order!
         seen = np.zeros(maze.shape, dtype=int)
         seen[goal[1], goal[0]] = 1
-        self._cost = np.zeros(maze.shape, dtype=int)
+        cost = np.zeros(maze.shape, dtype=int)
         height, width = maze.shape
 
         while queue:
@@ -86,12 +86,45 @@ class StepInformationProvider(ABC):
                 if 0 <= x2 < width and 0 <= y2 < height and maze[y2, x2] != 1 and seen[y2, x2] != 1:
                     queue.append([x2, y2])
                     seen[y2, x2] = 1
-                    self._cost[y2, x2] = self._cost[y, x] + 1
+                    cost[y2, x2] = cost[y, x] + 1
+        return cost
+
+    def _count_convex_corners(self) -> Tuple[int, int, int, int]:
+        """
+        Calculates the number of convex corners
+        :return: (Tuple[int, int, int, int]) Tuple containing the number of convex corners for nw, ne, sw and se convex corners.
+        """
+        nw = ne = sw = se = 0
+        for ix, iy in np.ndindex(self.maze.shape):
+            if self.maze[ix, iy] == 0:
+                if self.maze[ix+1, iy] == 1 and self.maze[ix, iy+1] == 1:
+                    sw += 1
+                elif self.maze[ix+1, iy] == 1 and self.maze[ix, iy-1] == 1:
+                    se += 1
+                elif self.maze[ix-1, iy] == 1 and self.maze[ix, iy+1] == 1:
+                    nw += 1
+                elif self.maze[ix-1, iy] == 1 and self.maze[ix, iy-1] == 1:
+                    ne += 1
+        return (nw, ne, sw, se)
+
+    def _count_freespace(self):
+        free = 0
+        idxes = np.argwhere(self.maze == 0)
+        for iy, ix in idxes:
+            if (self.maze[iy-1:iy+1, ix-1:ix+1] == 0).all():
+                free += 1
+        return free
+
+    @property
+    def convex_corners(self) -> Tuple[int, int, int, int]:
+        if self._convex_corners is None:
+            self._convex_corners = self._count_convex_corners()
+        return self._convex_corners
 
     @property
     def costmap(self) -> np.ndarray:
         if self._cost is None:
-            self._calculate_cost_map(self.maze, self.goal)
+            self._cost = self._calculate_cost_map(self.maze, self.goal)
         return self._cost
 
     @property
@@ -112,7 +145,14 @@ class StepInformationProvider(ABC):
     @property
     def episode_length_estimate(self) -> int:
         if self._ep_len_estimate is None:
-            self._ep_len_estimate = int(round(self.max_start_cost * self.mean_cost))
+            points = np.argwhere(self.maze == 0)
+            extremes = np.argmax(points, axis=0)
+            if np.sum(points[extremes[0]]) > np.sum(points[extremes[1]]):
+                extreme = points[extremes[0]]
+            else:
+                extreme = points[extremes[1]]
+            costmap = self._calculate_cost_map(self.maze, (extreme[1], extreme[0]))
+            self._ep_len_estimate = int(0.75 * np.max(costmap) * np.log(self.mean_cost * np.min(self.convex_corners)))
         return self._ep_len_estimate
 
     @property

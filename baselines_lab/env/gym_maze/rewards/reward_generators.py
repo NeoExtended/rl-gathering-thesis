@@ -113,8 +113,8 @@ class DiscreteRewardGenerator(RewardGenerator):
         self.reward_goals = None
         self.next_goal = 0
 
-    def _reset(self, locations):
-        self.next_goal = 0
+    def set_information_provider(self, calculator: StepInformationProvider):
+        super().set_information_provider(calculator)
 
         if self.subgoal_proposal is None:
             self.n_subgoals = int(self.calculator.max_start_cost / 2)
@@ -122,6 +122,9 @@ class DiscreteRewardGenerator(RewardGenerator):
             self.n_subgoals = self.subgoal_proposal
 
         self.reward_scale = np.rint(np.linspace(self.min_reward, self.max_reward, self.n_subgoals))
+
+    def _reset(self, locations):
+        self.next_goal = 0
 
     def _step(self, action, locations) -> Tuple[bool, float]:
         done, reward = super(DiscreteRewardGenerator, self)._step(action, locations)

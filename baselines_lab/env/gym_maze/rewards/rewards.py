@@ -41,6 +41,7 @@ def GoalRewardGenerator(maze, goal, goal_range, n_particles, action_map, relativ
                         max_cost_reward=True, total_cost_reward=True, gathering_reward=0.0):
     assert max_cost_reward or total_cost_reward, "One of the main reward components must be enabled!"
     information = StepInformationProvider(maze, goal, goal_range, n_particles, action_map, relative)
+    test = information.convex_corners
 
     if max_cost_reward and total_cost_reward:
         generator = DiscreteTotalCostReward(information, n_subgoals=n_subgoals, min_reward=min_reward, max_reward=max_reward)
@@ -54,8 +55,7 @@ def GoalRewardGenerator(maze, goal, goal_range, n_particles, action_map, relativ
         generator.add_sub_generator(GatheringReward(scale=gathering_reward, normalize=False))
 
     if time_penalty:
-        subgoals = n_subgoals if n_subgoals is not None else int(information.max_start_cost / 2)
-        generator.add_sub_generator(TimePenaltyReward(scale=subgoals*(max_reward + min_reward)))
+        generator.add_sub_generator(TimePenaltyReward(scale=2*np.sum(generator.reward_scale)))
 
     if dynamic_episode_length:
         generator.add_sub_generator(DynamicEpisodeEnd())
