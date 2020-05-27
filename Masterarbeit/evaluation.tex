@@ -1,0 +1,41 @@
+\chapter{Evaluation} \label{chp:Evaluation}
+In this chapter we want to present and discuss our evaluation results. Using Baselines Lab, we perform tests in a variety of different scenarios. After explaining our general test procedure in Section \ref{sec:TestProcedure}, we will begin, by evaluating the basic components for solving maze environments. In Section \ref{sec:EvalReward} we will take a look at reward generation and continue with a deeper look into observation generation and preprocessing in Section \ref{sec:EvalObs}. Section \ref{sec:EvalRLAlgorithms} will shine some light on the question which learning algorithm performs best when dealing with our particle navigation task and we will wrap up the evaluation of the basic parameters in Section \ref{sec:EvalParameters} where we take a look at the influence of various RL hyperparameters.
+
+The initial tests will allow us to generate a baseline for the performance of our model, which then will be used throughout the rest of the evaluation to compare the influence of other factors. We begin, by testing how much inaccuracy in both actions and observations will influence the agent in Section \ref{sec:EvalError} and continue with the extension of the particle model with physical particles in Section \ref{sec:EvalPhysical}. We will then take a look at randomized instances in Section \ref{sec:EvalRandomness} and finish with a comparison with algorithmic approaches in Section \ref{sec:EvalAlgorithms}.
+
+
+\section{Test Procedure} \label{sec:TestProcedure}
+In this section we want to talk about different aspects of our test procedure.
+
+\paragraph{Environment.}
+All experiments were done on a Linux workstation running Ubuntu 18.04 LTS. The workstation has an Intel 6700K CPU, a single Nvidia GeForce GTX 1080 Ti GPU and 64GB of main memory. We installed Python 3.7.3 using the Anaconda \cite{anaconda} software distribution. We also used Tensorflow 1.14 in conjunction with the CUDA Toolkit version 10.1.243 and CUDNN version 7.6.5. Baselines Lab was developed on top of Stable-Baselines 2.10 and NumPy 1.17. For a complete list of installed packages see Appendix TODO.
+
+\paragraph{Procedure.}
+Our experiments involved several sources of randomness. To ensure consistent executions, we fixed the random seed for all involved components to the same value for all experiments. Unfortunately Tensorflow 1.14 does not guarantee consistent results during GPU computations. We therefore repeated experiments three times and averaged the results for comparison. The learning curves provided in this chapter are also smoothed by a running average, using window containing the last 100 steps.
+
+\paragraph{Initial Hyperparameters.}
+For our initial experiments we wanted to use general purpose hyperparameters for the PPO algorithm. We therefore used parameters similar to the parameters used in the RND paper \cite{burda2018exploration} which showed to produce good results across all Atari environments.
+
+
+\section{Reward Generation} \label{sec:EvalReward}
+Reward Generation
+\section{Observations} \label{sec:EvalObs}
+Observations
+\section{RL Algorithms} \label{sec:EvalRLAlgorithms}
+RL Algorithms
+\section{Hyperparameters} \label{sec:EvalParameters}
+Hyperparameters
+\section{Extended Environment Models} \label{sec:EvalExtendedModels}
+Extended Environment Models
+\subsection{Dealing with Error} \label{sec:EvalError}
+Dealing with Error
+\subsection{Physical Particles} \label{sec:EvalPhysical}
+Physical Particles
+\section{Randomized Instances} \label{sec:EvalRandomness}
+Randomized Instances
+\subsection{Random Goal Positions} \label{sec:EvalRandomGoals}
+Random Goal Positions
+\subsection{Random Mazes} \label{sec:EvalRandomMaze}
+Random Mazes
+\section{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
+Comparison to Algorithmic Approaches
