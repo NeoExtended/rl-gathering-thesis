@@ -12,8 +12,9 @@ from baselines_lab.env.gym_maze.envs.step_modifier import StepModifier, SimpleMo
 
 PARTICLE_MARKER = 150
 GOAL_MARKER = 200
-BACKGROUND_COLOR = (120, 220, 240)
-PARTICLE_COLOR = (150, 150, 180)
+BACKGROUND_COLOR = (15, 30, 65)
+MAZE_COLOR = (90, 150, 190)
+PARTICLE_COLOR = (250, 250, 100)
 
 
 class MazeBase(gym.Env):
@@ -173,10 +174,9 @@ class MazeBase(gym.Env):
 
     def render(self, mode='human'):
         rgb_image = np.full((*self.maze.shape, 3), BACKGROUND_COLOR, dtype=int)
-        maze_rgb = np.stack((self.freespace * 255,) * 3, axis=-1)  # White maze
-        rgb_image = rgb_image + maze_rgb
-        for y, x in self.particle_locations:
-            rgb_image[y - 1:y + 1, x - 1:x + 1] = PARTICLE_COLOR
+        maze_rgb = np.full((*self.maze.shape, 3), MAZE_COLOR, dtype=int)
+        rgb_image = np.where(np.stack((self.freespace,)*3, axis=-1), maze_rgb, rgb_image)
+        #rgb_image[self.particle_locations[:, 0], self.particle_locations[:, 1]] = PARTICLE_COLOR
 
         cv2.circle(rgb_image, tuple(self.goal), self.goal_range, (255, 0, 0), thickness=1)
         rgb_image = np.clip(rgb_image, 0, 255)
