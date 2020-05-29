@@ -98,17 +98,37 @@ We begin our experiments by analyzing which reward works best to guide particles
 Table TODO lists the tested reward combinations 
 
 
+% \begin{table}
+%     \begin{center}
+%         \begin{tabular}{|c|c|c|c|c|c|n{3}{2}|n{3}{2}|}
+%             \hline
+%             \multicolumn{6}{|c|}{Reward Component} & \multicolumn{2}{c|}{Episode Length} \\
+%             \hline
+%             TP & DEL & Curiosity & Gathering & Rew Norm & Obs Norm & \multicolumn{1}{|c|}{Best} & \multicolumn{1}{c|}{Average} \\
+%             \hline
+%             \hline
+%             x & & & & & & 135 & \\
+%             x & & & & x & & \boldmath 83.78 & \\
+%             & & & & & & & \\
+%             & & & & & & & \\
+%             & & & & & & & \\
+
+%             \hline
+%         \end{tabular}
+%     \end{center}
+% \end{table}
+
 \begin{table}
     \begin{center}
-        \begin{tabular}{|c|c|c|c|c|c|n{3}{2}|n{3}{2}|}
+        \begin{tabular}{|c|c|c|c|c|c|L|L|}
             \hline
             \multicolumn{6}{|c|}{Reward Component} & \multicolumn{2}{c|}{Episode Length} \\
             \hline
-            TP & DEL & Curiosity & Gathering & Rew Norm & Obs Norm & \multicolumn{1}{|c|}{Best} & \multicolumn{1}{c|}{Average} \\
+            Obs Norm & Rew Norm & TP & DEL & Curiosity & Gathering & \multicolumn{1}{|c|}{Best} & \multicolumn{1}{c|}{Average} \\
             \hline
             \hline
-            x & & & & & & 135 & \\
-            x & & & & x & & \bfseries 83.78 & \\
+            & & x & & & & 135.00 & \\
+            & & x & & x & & \multicolumn{1}{B{.}{.}{2, 2}|}{83.78} & \\
             & & & & & & & \\
             & & & & & & & \\
             & & & & & & & \\

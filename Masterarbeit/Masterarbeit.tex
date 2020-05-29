@@ -23,9 +23,15 @@
 \usepackage[ruled, linesnumbered, algosection]{algorithm2e}
 \usepackage{listings}
 \usepackage{subcaption}
-\usepackage{numprint}
-\npdecimalsign{.}
-\nprounddigits{2}
+%\usepackage{numprint}
+%\npdecimalsign{.}
+%\nprounddigits{2}
+\usepackage{dcolumn}
+\newcolumntype{L}{D{.}{.}{2,2}}
+\makeatletter
+\newcolumntype{B}[3]{>{\boldmath\DC@{#1}{#2}{#3}}c<{\DC@end}}
+\makeatother
+
 
 % Options for algorithm2e
 \DontPrintSemicolon
