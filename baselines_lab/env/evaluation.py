@@ -89,7 +89,7 @@ class Evaluator:
             norm.ret_rms = model_norm.ret_rms
             norm.training = False
 
-        from experiment import Runner
+        from baselines_lab.experiment import Runner
         runner = Runner(self.test_env, model, render=self.render, deterministic=self.deterministic, close_env=False)
         runner.run(self.n_eval_episodes)
         return self.eval_wrapper.aggregator.mean_reward, self.eval_wrapper.aggregator.mean_steps

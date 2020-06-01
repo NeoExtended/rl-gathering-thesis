@@ -97,7 +97,7 @@ class HyperparameterOptimizer:
         self.train_env = None
         self.evaluator = None
         self.log_dir = log_dir
-        self.logger = TensorboardLogger()
+        self.logger = TensorboardLogger(config=self.config)  # TODO: Set config
         self.integrated_evaluation = True if self.eval_method == "fast" else False
         self.verbose_mail = mail
         self.current_best = -np.inf
@@ -204,8 +204,9 @@ class HyperparameterOptimizer:
 
             train_env = self._get_train_env(trial_config)
             model = create_model(trial_config['algorithm'], train_env, trial_config['meta']['seed'])
-
+            self.logger.config = trial_config
             self.logger.reset()
+
             evaluation_callback = EvaluationCallback(self.evaluator, self.evaluation_interval, trial)
             try:
                 logging.debug("Training model...")
