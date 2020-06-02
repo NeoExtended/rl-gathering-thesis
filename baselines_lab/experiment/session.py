@@ -16,7 +16,7 @@ from baselines_lab.model import create_model
 from baselines_lab.model.callbacks import CheckpointManager, TensorboardLogger
 from baselines_lab.model.callbacks.obs_logger import ObservationLogger
 from baselines_lab.utils import util, config_util
-from baselines_lab.utils.plotter import Plotter
+from baselines_lab.utils.tensorboard.plotter import Plotter
 
 PLOT_TAGS = ["curiosity/ep_ext_reward_mean", "curiosity/ep_int_reward_mean", "episode_length/ep_length_mean", "episode_length/eval_ep_length_mean", "episode_reward", "reward/ep_reward_mean", "reward/eval_ep_reward_mean"]
 PLOT_NAMES = ["normalized extrinsic reward", "intrinsic reward", "episode length", "eval episode length", "total episode reward", "episode reward", "eval episode reward"]
