@@ -1,0 +1,218 @@
+\chapter{Baselines Lab Details} \label{apx:BaselinesLab}
+Appendix \ref{apx:BaselinesLab} gives some detailed information on baselines lab. We start with detailed information on used python libraries in Section \ref{sec:BLLibraries}, continue with details on how the lab can be configured with config files in Section \ref{sec:BLConfigFiles} and finish with a description of the various command line arguments in Section \ref{sec:BLCommandLine}.
+
+\section{Python Libraries} \label{sec:BLLibraries}
+Baselines Lab uses the Python distribution Anaconda \cite{anaconda}. The lab depends on a number of Python packages. While some of these packages will be installed automatically, some of them must be installed manually. Individual packages might not be available through the Anaconda distribution itself and must be installed using the python package manager PIP. Table \ref{tab:PackageRequirements} lists all packages which are required to run baselines lab.
+
+\begin{table}[ht]
+    \begin{center}
+        \begin{threeparttable}
+            \begin{tabular}{|p{4cm}|R{1.5cm}|}
+                \hline
+                \multicolumn{1}{|c|}{Package} & \multicolumn{1}{c|}{Version} \\
+                \hline
+                gym & 0.15.4 \\
+                imageio & 2.6.1 \\
+                matplotlib & 3.1.2 \\
+                numpy & 1.17.4 \\
+                opencv-python & 4.1.2.30 \\
+                optuna & 1.0.0 \\
+                pandas & 0.25.3 \\
+                Pillow & 7.0.0 \\
+                PyYAML & 5.2 \\
+                stable-baselines & 2.10.0 \\
+                tensorflow \tnote{1} & 1.14.0 \\
+                mpi4py & 3.0.3 \\
+                \hline
+            \end{tabular}
+            \begin{tablenotes} \footnotesize
+                \item[1] Uses the GPU version of Tensorflow.
+            \end{tablenotes}
+        \end{threeparttable}
+    \end{center}
+    \caption[Python Package Requirements]{Python Package Requirements} \label{tab:PackageRequirements}
+\end{table}
+
+
+When installing Python packages, many dependencies will be installed automatically. To ensure test reproducibility, we also included a complete list of all packages installed in our virtual test environment in Table \ref{tab:AdditionalPackages}.
+
+\begin{table}[ht]
+    \begin{center}
+        \footnotesize
+        \begin{tabular}{c c}
+            \begin{tabular}{|p{4cm}|R{1.75cm}|}
+                \hline
+                \multicolumn{1}{|c|}{Package} & \multicolumn{1}{c|}{Version} \\
+                \hline
+                absl-py & 0.8.1 \\
+                alembic & 1.3.3 \\ 
+                astor & 0.8.0 \\
+                atari-py & 0.2.6 \\
+                certifi & 2020.4.5.1 \\
+                cliff & 2.18.0 \\
+                cloudpickle & 1.2.2 \\
+                cmd2 & 0.8.9 \\
+                colorlog & 4.1.0 \\
+                cycler & 0.10.0 \\
+                future & 0.18.2 \\
+                gast & 0.3.2 \\
+                google-pasta & 0.1.8 \\
+                grpcio & 1.16.1 \\
+%                gym & 0.15.4 \\
+                h5py & 2.9.0 \\
+%                imageio & 2.6.1 \\
+                joblib & 0.14.1 \\
+                Keras-Applications & 1.0.8 \\
+                Keras-Preprocessing & 1.1.0 \\
+                kiwisolver & 1.1.0 \\
+                Mako & 1.1.1 \\
+                Markdown & 3.1.1 \\
+                MarkupSafe & 1.1.1 \\
+%                matplotlib & 3.1.2 \\
+                mkl-fft & 1.0.15 \\
+                mkl-random & 1.1.0 \\
+
+                \hline
+            \end{tabular} &
+            \begin{tabular}{|p{4cm}|R{1.75cm}|}
+                \hline
+                \multicolumn{1}{|c|}{Package} & \multicolumn{1}{c|}{Version} \\
+                \hline
+
+                mkl-service & 2.3.0 \\
+                mpi4py & 3.0.3 \\
+%                numpy & 1.17.4 \\
+                olefile & 0.46 \\
+%                opencv-python & 4.1.2.30 \\
+%                optuna & 1.0.0 \\
+%                pandas & 0.25.3 \\
+                pbr & 5.4.4 \\
+%                Pillow & 7.0.0 \\
+                prettytable & 0.7.2 \\
+                protobuf & 3.11.2 \\
+                pyglet & 1.3.2 \\
+                pyparsing & 2.4.5 \\
+                pyperclip & 1.7.0 \\
+                python-dateutil & 2.8.1 \\
+                python-editor & 1.0.4 \\
+                pytz & 2019.3 \\
+%                PyYAML & 5.2 \\
+                scipy & 1.3.2 \\
+                six & 1.13.0 \\
+                SQLAlchemy & 1.3.13 \\
+%                stable-baselines & 2.10.0 \\
+                stevedore & 1.31.0 \\
+                tensorboard & 1.14.0 \\ 
+%                tensorflow \tnote{1} & 1.14.0 \\
+                tensorflow-estimator & 1.14.0 \\
+                termcolor & 1.1.0 \\
+                tqdm & 4.42.1 \\
+                typing & 3.7.4.1 \\
+                wcwidth & 0.1.8 \\
+                Werkzeug & 0.16.0 \\
+                wrapt & 1.11.2 \\
+                \hline
+            \end{tabular} \\
+        \end{tabular}  
+    \end{center}
+    \caption[Additional Python Packages]{List of all additional Python packages in the virtual Python environment used for all experiments.} \label{tab:AdditionalPackages}
+\end{table}
+
+\section{Config Files} \label{sec:BLConfigFiles}
+We already talked about lab configuration files in Section \ref{sec:blFunctions}. In this section we want to list all Baselines Lab specific keywords for lab configuration files and give a few more general examples. 
+
+
+\paragraph{Algorithm.} We begin with \textit{algorithm} specific keywords which define and parameterize the RL algorithm used during training. The \texttt{algorithm} keyword is therefore mandatory for each configuration file. We listed Baselines Lab specific parameters in Table \ref{tab:AlgorithmKeywords}. Additionally, all parameters available for the individual RL algorithm implementations can be specified as children of the algorithm keyword and will be directly forwarded. A list of these parameters can be found in the Stable Baselines documentation \cite{stable-baselines-docs}. 
+
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}%  1 is the default, change whatever you need
+        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+            \hline
+            \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            name & Specifies the type of RL algorithm to use during training. Each learning algorithm which is available in Stable Baselines can be used in Baselines Lab and chosen by specifying its lowercase abbreviation (e.g. a2c for actor-critic). Note that there exist two implementations for the PPO algorithm which can be chosen via "ppo1" or "ppo2". \\
+            tensorboard\_log & Specifies weather or not logging should be enabled. \\
+            policy & Defines the policy. The policy keyword itself is the parent of a \texttt{name} keyword which specifies a registered policy class. All additional keywords will get passed to the policy class. \\
+            trained\_agent & Specifies if training should begin based on a pretrained model. The trained agent can either be \textit{best} or \textit{last} to automatically load a model from the last run saved in the specified log directory, or a complete path to a specific directory containing a model checkpoints directory. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Configuration File Algorithm Keyword]{Description of the Baselines Lab specific keywords for the algorithm section.} \label{tab:AlgorithmKeywords}
+\end{table}
+
+Baselines Lab also defines a new network type for fully configurable CNN and MLP networks. TODO.
+
+\paragraph{Environment.} The environment can be configured using the \texttt{env} keyword. Since every training or enjoy session needs an environment, the env keyword is also mandatory for each lab configuration file. The env keyword also specifies how observations are processed before they are passed to the RL algorithm and may pass values to the environment itself. Table \ref{tab:EnvironmentKeywords} gives a complete overview over all available keywords. All keywords which do not match any lab specific keyword will be directly passed to the environment.
+
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}%  1 is the default, change whatever you need
+        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+            \hline
+            \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            name & Specifies the name of the environment. The name must be registered in the OpenAI gym registry. \\
+            n\_envs & Specifies the number of parallel environments to use. May be one for a single environment only. \\
+            multiprocessing & If the given number of environments is greater than one, a subprocess will be created for each individual environment to make use of multicore processors. This can be disabled by setting multiprocessing to false. \\
+            normalize & Specifies if a normalization wrapper should be used. The normalization wrapper may be parameterized by specifying additional subkeys which are documented in \cite{stable-baselines-docs}. \\
+            frame\_stack & Specifies if a frame stacking wrapper should be used. On default four frames are used, but the number can be changed by specifying an \texttt{n\_stack} subkey. \\
+            scale & Specifies if a scaling wrapper should be used. The scaling wrapper transforms image observations in the form of $x \mapsto x/255$. \\
+            curiosity & Specifies if a RND curiosity wrapper should be used. The curiosity wrapper will be added after the normalization wrapper. The wrapper specific parameters can be configured to automatically match the algorithm parameters by setting the subkey \texttt{auto\_params} to true. Additional wrapper specific parameters can be found in Appendix TODO. \\
+            wrappers & Specifies a list of environment wrappers which should be used. The wrappers are given by complete class names similar to a python import statement. Arguments for each wrapper can be passed, by creating child keywords. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Configuration File Env Keyword]{Description of the Baselines Lab specific keywords for the environment section.} \label{tab:EnvironmentKeywords}
+\end{table}
+
+\paragraph{Meta.} Meta.
+
+\paragraph{Search.} Search.
+
+
+\section{Command Line Arguments} \label{sec:BLCommandLine}
+Baselines Lab offers a number of command line arguments which control the general lab behavior. We already featured the most important arguments which specify the lab mode in Section \ref{sec:blFunctions}. All lab modes additionally require the definition of a lab config file. Independent of the lab mode there are three optional arguments which can be specified:
+
+\begin{itemize}
+    \item \texttt{-{}-verbose VERBOSE} Specifies the verbosity level. The level is given as an integer value which directly corresponds to the Python logging level (e.g. 10 for \texttt{DEBUG}).
+    \item \texttt{-{}-mail MAIL} Provides an option to specify a mail address which will receive a notification if training is done, or failed. This option requires the linux program \textit{mailx} to be installed.
+    \item \texttt{-{}-ignore-errors} Is a flag, which is only available if the lab is started with a batch of configuration files. If ignore-errors is set, execution will continue, even if one configuration file produces an error. 
+\end{itemize}
+
+Depending on the lab mode, there are mode specific command line arguments. We listed each available argument in Table \ref{tab:CommandLineArguments}.
+
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}%  1 is the default, change whatever you need
+        \begin{tabular}{|c|c|p{0.55\textwidth}|}
+            \hline
+            Mode & Argument & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|=|}
+            \texttt{Train} & \texttt{-{}-trial TRIAL} & If training is resumed from a previous run with multiple trials, Trial 0 is used on default. This behavior can be changed, by specifying a specific trial. \\
+            \hline
+            \multirow{15}{*}{\texttt{Enjoy}} & \texttt{-{}-type TYPE} & Specifies which type of checkpoint to load (best or last). Defaults to best. \\
+            & \texttt{-{}-checkpoint-path PATH} & Path to a log directory to load the model from. Defaults to the log directory specified in the given config file. \\
+            & \texttt{-{}-video} & If set, a video is created from the rendered environment output and saved to the log directory. \\
+            & \texttt{-{}-obs-video} & If set, a video is created from the observations generated by the environment and saved to the log directory. \\
+            & \texttt{-{}-stochastic} & If set, the model will use stochastic actions instead of deterministic actions. \\
+            & \texttt{-{}-evaluate EPISODES} & If set, activates model evaluation in normal evaluation mode during enjoy replay for given number of episodes. The evaluation results will be saved in the model's log directory. \\
+            & \texttt{-{}-strict} & If set, evaluation will only use a single environment (equals slow evaluation mode). \\
+            & \texttt{-{}-trial TRIAL} & The number of the trial to load from the log directory. Defaults to trial zero. \\
+            & \texttt{-{}-plot} & If set, plots will be generated from the training tensorboad data and saved in the model's log directory.\\
+            \hline
+            \texttt{Search} & \texttt{-{}-plot} & Sets weather or not to plot the distribution of choosen hyperparameters. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Mode Specific Command Line Arguments]{Description of lab mode specific command line arguments.} \label{tab:CommandLineArguments}
+\end{table}

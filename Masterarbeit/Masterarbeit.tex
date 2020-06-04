@@ -23,15 +23,15 @@
 \usepackage[ruled, linesnumbered, algosection]{algorithm2e}
 \usepackage{listings}
 \usepackage{subcaption}
-%\usepackage{numprint}
-%\npdecimalsign{.}
-%\nprounddigits{2}
+\usepackage{threeparttable}
 \usepackage{dcolumn}
+\usepackage{multirow}
+\usepackage{hhline}
 \newcolumntype{L}{D{.}{.}{2,2}}
 \makeatletter
 \newcolumntype{B}[3]{>{\boldmath\DC@{#1}{#2}{#3}}c<{\DC@end}}
 \makeatother
-
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
 % Options for algorithm2e
 \DontPrintSemicolon
@@ -119,5 +119,9 @@ Since the early years of computer science navigation tasks were heavily explored
 
 \bibliographystyle{abbrv}
 \bibliography{sigproc}
+
+\appendix
+
+\include{baselines_lab_config}
 
 \end{document}
