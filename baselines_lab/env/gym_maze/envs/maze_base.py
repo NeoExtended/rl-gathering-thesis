@@ -176,7 +176,7 @@ class MazeBase(gym.Env):
         rgb_image = np.full((*self.maze.shape, 3), BACKGROUND_COLOR, dtype=int)
         maze_rgb = np.full((*self.maze.shape, 3), MAZE_COLOR, dtype=int)
         rgb_image = np.where(np.stack((self.freespace,)*3, axis=-1), maze_rgb, rgb_image)
-        #rgb_image[self.particle_locations[:, 0], self.particle_locations[:, 1]] = PARTICLE_COLOR
+        rgb_image[self.particle_locations[:, 0], self.particle_locations[:, 1]] = PARTICLE_COLOR
 
         cv2.circle(rgb_image, tuple(self.goal), self.goal_range, (255, 0, 0), thickness=1)
         rgb_image = np.clip(rgb_image, 0, 255)
