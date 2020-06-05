@@ -2,7 +2,7 @@ import tensorflow as tf
 from stable_baselines.common import tf_layers
 from stable_baselines.common.policies import ActorCriticPolicy
 
-from utils.tf_utils import build_cnn
+from baselines_lab.utils.tf_utils import build_cnn
 
 
 class RndPolicy(ActorCriticPolicy):
