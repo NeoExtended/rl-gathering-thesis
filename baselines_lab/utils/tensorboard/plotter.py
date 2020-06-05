@@ -3,7 +3,6 @@ from typing import List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import savgol_filter
 
 # logging.getLogger('matplotlib.font_manager').disabled = True
 from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader
@@ -20,7 +19,7 @@ class Plotter(TensorboardLogReader):
         self.path = self.log_dir.joinpath("figures")
         self.file_format = file_format
 
-    def make_plot(self, tags: List[str], names: List[str], plot_avg_only: bool = False) -> None:
+    def make_plot(self, tags: List[str], names: List[str], plot_avg_only: bool = False, smoothing: float = 0.6) -> None:
         """
         Creates and saves the plots defined by the given tags.
         :param tags: (List[str]) Tags which correspond to summary tag names in the tensorboard logs
@@ -46,25 +45,45 @@ class Plotter(TensorboardLogReader):
                     step_data, value_data = self._interpolate(step_data, value_data)
 
                 arr = np.array(value_data)
+                if smoothing > 0:
+                    #arr = self._moving_average(arr, smoothing)
+                    for idx, run in enumerate(arr):
+                        arr[idx] = self._smooth(arr[idx], weight=smoothing)
                 mu = np.mean(arr, axis=0)
                 std = np.std(arr, axis=0)
 
                 self._make_multi_plot(step_data[0], mu, std, xlabel="steps", ylabel=name, avg_only=plot_avg_only)
             else:
-                self._make_plot(step_data[0], value_data[0], xlabel="steps", ylabel=name)
+                self._make_plot(step_data[0], value_data[0], xlabel="steps", ylabel=name, smoothing=smoothing)
             self._save_fig(str(self.path.joinpath("{}.{}".format(name.replace(" ", "_"), self.file_format))))
 
-    def _make_multi_plot(self, x, mu, std, xlabel=None, ylabel=None, name=None, avg_only=False):
+    def _make_multi_plot(self, x, mu, std, xlabel=None, ylabel=None, name=None, avg_only=False, smoothing=False):
         self._prepare_plot(xlabel, ylabel, name)
         if not avg_only:
             plt.fill_between(x, mu + std, mu - std, facecolor='blue', alpha=0.25)
         plt.plot(x, mu, linewidth=1.0)
 
-    def _make_plot(self, x, y, xlabel=None, ylabel=None, name=None, smoothing=False):
+    def _make_plot(self, x, y, xlabel=None, ylabel=None, name=None, smoothing=0.0):
         self._prepare_plot(xlabel, ylabel, name)
-        if smoothing:
-            y = savgol_filter(y, 51, 3)
+        if smoothing > 0.0:
+            y = self._smooth(y, weight=smoothing)
         plt.plot(x, y, linewidth=1.0)
+
+    def _moving_average(self, arr, n=3):
+        if len(arr.shape) > 1:
+            return np.apply_along_axis(lambda m: np.convolve(m, np.ones(n), 'valid') / n, axis=1, arr=arr)
+        else:
+            return np.convolve(arr, np.ones(n), 'valid') / n
+
+    def _smooth(self, scalars, weight=0.6):
+        last = scalars[0]  # First value in the plot (first timestep)
+        smoothed = list()
+        for point in scalars:
+            smoothed_val = last * weight + (1 - weight) * point  # exponential moving average
+            smoothed.append(smoothed_val)
+            last = smoothed_val
+
+        return smoothed
 
     def _prepare_plot(self, xlabel=None, ylabel=None, name=None):
         plt.figure(figsize=(8, 4))

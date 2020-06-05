@@ -2,10 +2,8 @@ import logging
 from pathlib import Path
 from typing import Tuple, List, Union, Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from scipy.signal import savgol_filter
 
 # logging.getLogger('matplotlib.font_manager').disabled = True
 

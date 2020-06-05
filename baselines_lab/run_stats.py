@@ -65,16 +65,16 @@ def process_discrete_file(file, config):
     file_data["Best"] = "{:.2f}".format(min)
     file_data["Avg"] = "{:.2f}".format(avg)
     if env_kwargs.get("dynamic_episode_length", False):
-        file_data["Drop"] = human_format(int(drop_train))
-    else:
         file_data["Drop"] = human_format(int(drop_test))
+    else:
+        file_data["Drop"] = human_format(int(drop_train))
     file_data["Run"] = file.name
     return file_data
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-    log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\VesselMaze02\\discrete")
+    log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\Maze0318\\Discrete")
 
     directories = [f.path for f in os.scandir(log_dir_path) if f.is_dir()]
     #fieldnames = ["Run", "Obs Norm", "Rew Norm", "TP", "DEL", "RND", "GR", "Best", "Avg", "Drop"]
@@ -85,6 +85,7 @@ if __name__ == "__main__":
     for dir in directories:
         entries.append(process_file(Path(dir)))
     dataframe = pd.DataFrame(entries, columns=fieldnames)
-    dataframe.sort_values(fieldnames[:sort], inplace=True)
+    dataframe.sort_values(fieldnames[1:sort], inplace=True, ascending=False, na_position="first")
+    dataframe.reset_index(drop=True, inplace=True)
     dataframe.to_csv(str(log_dir_path.joinpath('output.csv')), index_label="Index")
 
