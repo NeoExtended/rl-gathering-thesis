@@ -3,6 +3,15 @@ import tensorflow as tf
 from stable_baselines.common import tf_layers
 
 
+def build_dynamic_cnn(input, arch, activ=tf.nn.leaky_relu, **kwargs):
+    current_layer = input
+    for idx, layer in enumerate(arch):
+        filters, filter_size, stride = layer
+        current_layer = activ(tf_layers.conv(current_layer, "c{}".format(idx), n_filters=filters, filter_size=filter_size, stride=stride), **kwargs)
+    to_fc = tf_layers.conv_to_fc(current_layer)
+    return to_fc
+
+
 def build_cnn(scaled_images, activ=tf.nn.leaky_relu, **kwargs):
     """
     CNN from Nature paper.
