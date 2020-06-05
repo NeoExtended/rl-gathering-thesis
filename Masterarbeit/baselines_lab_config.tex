@@ -118,7 +118,7 @@ When installing Python packages, many dependencies will be installed automatical
     \caption[Additional Python Packages]{List of all additional Python packages in the virtual Python environment used for all experiments.} \label{tab:AdditionalPackages}
 \end{table}
 
-\section{Config Files} \label{sec:BLConfigFiles}
+\section{Functions and Configuration Files} \label{sec:BLConfigFiles}
 We already talked about lab configuration files in Section \ref{sec:blFunctions}. In this section we want to list all Baselines Lab specific keywords for lab configuration files and give a few more general examples. 
 
 
@@ -128,7 +128,7 @@ We already talked about lab configuration files in Section \ref{sec:blFunctions}
     \begin{center}
         \small
         \bgroup
-        \def\arraystretch{1.25}%  1 is the default, change whatever you need
+        \def\arraystretch{1.25}
         \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
             \hline
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
@@ -152,7 +152,7 @@ Baselines Lab also defines a new network type for fully configurable CNN and MLP
     \begin{center}
         \small
         \bgroup
-        \def\arraystretch{1.25}%  1 is the default, change whatever you need
+        \def\arraystretch{1.25}
         \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
             \hline
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
@@ -172,9 +172,63 @@ Baselines Lab also defines a new network type for fully configurable CNN and MLP
     \caption[Configuration File Env Keyword]{Description of the Baselines Lab specific keywords for the environment section.} \label{tab:EnvironmentKeywords}
 \end{table}
 
-\paragraph{Meta.} Meta.
+\paragraph{Meta.} The \textit{meta} keyword defines a number of general training and program parameters, most important the number of training steps \texttt{n\_timesteps} and the log directory \texttt{log\_dir}. A complete list of all available keywords and their meaning can be found in Table \ref{tab:MetaKeywords}.
 
-\paragraph{Search.} Search.
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}
+        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+            \hline
+            \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            n\_timesteps & Total number of training steps for the model. \\
+            log\_dir & Location of the log directory. Baselines Lab will automatically create a subfolder with a timestamp at the given location for each individual run. \\
+            seed & The global random seed. \\
+            save\_interval & Number of timesteps between each model checkpoint. \\
+            n\_keep & Total number of checkpoint to store (defaults to 5). If a new checkpoint is created the oldest checkpoint may be deleted if more than n\_keep checkpoints are already saved. \\
+            keep\_best & Sets weather or not to always save the best model. Also enables or disables model evaluation during training. \\
+            n\_eval\_episodes & Number of episodes during training evaluation. Defaults to 32. \\
+            n\_trials & Number of experiment repetitions. If n\_trials is greater than one, the experiment will be repeated several times with the same parameters. \\
+            plot & Sets weather or not plots should be automatically generated at the end of the training from the tensorboard log data. \\
+            record\_images & Sets weather or not to save images from the environment to the tensorboard log during training. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Configuration File Meta Keyword]{Description of the Baselines Lab specific keywords for the meta section.} \label{tab:MetaKeywords}
+\end{table}
+
+
+\paragraph{Search.} To parameterize automated hyperparametersearch, a dedicated section must be created with the keyword \texttt{search}. In this section we can define the sampler and pruner methods as well as general parameters (e.g. how many trials should be performed). We included a description for all available keywords in Table \ref{tab:SearchKeywords}. Pruners and samplers can be created by either stating their name only, or by creating a subkey named \texttt{method} and then adding additional subkeys to parameterize the sampler or pruner. Parameters for the samplers and pruners can be found in the Optuna documentation at \cite{optuna-docs}.
+
+
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}
+        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+            \hline
+            \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            n\_trials & Total number of trials to run to find optimal hyperparameters. \\
+            n\_timesteps & Total number of training steps during hyperparametersearch. \\
+            n\_evaluations & Total number of evaluations for each trial. The trial may be pruned after each evaluation, if its performance is worse than the performance of previous trials depending on the pruner. \\
+            eval\_method & Evaluation method to use. May be \textit{fast}, \textit{normal} or \textit{slow}. See Section \ref{sec:blFunctions} for details. \\
+            n\_test\_episodes & Number of episodes to perform during evaluation. \\
+            deterministic & Sets weather or not to use deterministic actions during evaluation. \\
+            n\_jobs & Sets the number of trials to run in parallel (defaults to one). \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Configuration File Search Keyword]{Description of the Baselines Lab specific keywords for the search section.} \label{tab:SearchKeywords}
+\end{table}
+
+
+The search section is also used to define which parameters should be included in the hyperparametersearch. Depending on the used RL algorithm, a set of parameters will be automatically included with a default range of possible parameters. To set parameters to a fixed value, these parameters must be defined in the regular \texttt{algorithm} section. To add new parameters to the hyperparametersearch or update the default range, we can add a new \texttt{algorithm} or \texttt{env} keyword as subkey of the \texttt{search keyword}. Instead of assigning values to the keyword, we then create subkeys defining the possible values. An example can be seen in figure \ref{fig:BasicSearchConfig}. All sampling methods supported by Optuna can be also used in Baselines Lab, by defining the method with the \texttt{method} keyword (see Optuna documentation for more info \cite{optuna-docs}). For all range based sampling methods, we can then define their lowest value and their highest value with the keywords \texttt{low} and \texttt{high}. The \textit{categorical} method receives a list from a keyword called \texttt{choices}.
 
 
 \section{Command Line Arguments} \label{sec:BLCommandLine}
@@ -207,7 +261,7 @@ Depending on the lab mode, there are mode specific command line arguments. We li
             & \texttt{-{}-evaluate EPISODES} & If set, activates model evaluation in normal evaluation mode during enjoy replay for given number of episodes. The evaluation results will be saved in the model's log directory. \\
             & \texttt{-{}-strict} & If set, evaluation will only use a single environment (equals slow evaluation mode). \\
             & \texttt{-{}-trial TRIAL} & The number of the trial to load from the log directory. Defaults to trial zero. \\
-            & \texttt{-{}-plot} & If set, plots will be generated from the training tensorboad data and saved in the model's log directory.\\
+            & \texttt{-{}-plot} & If set, plots will be generated from the training tensorboard data and saved in the model's log directory.\\
             \hline
             \texttt{Search} & \texttt{-{}-plot} & Sets weather or not to plot the distribution of choosen hyperparameters. \\
             \hline
@@ -216,3 +270,6 @@ Depending on the lab mode, there are mode specific command line arguments. We li
     \end{center}
     \caption[Mode Specific Command Line Arguments]{Description of lab mode specific command line arguments.} \label{tab:CommandLineArguments}
 \end{table}
+
+\section{Random Network Distillation Module}
+RND Module parameter desc
