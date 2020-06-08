@@ -6,6 +6,7 @@ Baselines Lab uses the Python distribution Anaconda \cite{anaconda}. The lab dep
 
 \begin{table}[ht]
     \begin{center}
+        \small
         \begin{threeparttable}
             \begin{tabular}{|p{4cm}|R{1.5cm}|}
                 \hline
@@ -30,7 +31,9 @@ Baselines Lab uses the Python distribution Anaconda \cite{anaconda}. The lab dep
             \end{tablenotes}
         \end{threeparttable}
     \end{center}
+    \vspace*{-1em}
     \caption[Python Package Requirements]{Python Package Requirements} \label{tab:PackageRequirements}
+    \vspace*{-0.8em}
 \end{table}
 
 
@@ -38,7 +41,7 @@ When installing Python packages, many dependencies will be installed automatical
 
 \begin{table}[ht]
     \begin{center}
-        \footnotesize
+        \small
         \begin{tabular}{c c}
             \begin{tabular}{|p{4cm}|R{1.75cm}|}
                 \hline
@@ -115,21 +118,19 @@ When installing Python packages, many dependencies will be installed automatical
             \end{tabular} \\
         \end{tabular}  
     \end{center}
+    %\vspace*{-1em}
     \caption[Additional Python Packages]{List of all additional Python packages in the virtual Python environment used for all experiments.} \label{tab:AdditionalPackages}
 \end{table}
 
 \section{Functions and Configuration Files} \label{sec:BLConfigFiles}
 We already talked about lab configuration files in Section \ref{sec:blFunctions}. In this section we want to list all Baselines Lab specific keywords for lab configuration files and give a few more general examples. 
 
-
-\paragraph{Algorithm.} We begin with \textit{algorithm} specific keywords which define and parameterize the RL algorithm used during training. The \texttt{algorithm} keyword is therefore mandatory for each configuration file. We listed Baselines Lab specific parameters in Table \ref{tab:AlgorithmKeywords}. Additionally, all parameters available for the individual RL algorithm implementations can be specified as children of the algorithm keyword and will be directly forwarded. A list of these parameters can be found in the Stable Baselines documentation \cite{stable-baselines-docs}. 
-
 \begin{table}[ht]
     \begin{center}
         \small
         \bgroup
         \def\arraystretch{1.25}
-        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+        \begin{tabular}{|>{\ttfamily}c|p{0.74\textwidth}|}
             \hline
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
             \hhline{|=|=|}
@@ -141,19 +142,55 @@ We already talked about lab configuration files in Section \ref{sec:blFunctions}
         \end{tabular}
         \egroup
     \end{center}
+    %\vspace*{-1em}
     \caption[Configuration File Algorithm Keyword]{Description of the Baselines Lab specific keywords for the algorithm section.} \label{tab:AlgorithmKeywords}
 \end{table}
 
-Baselines Lab also defines a new network type for fully configurable CNN and MLP networks. TODO.
+\paragraph{Algorithm.} We begin with \textit{algorithm} specific keywords which define and parameterize the RL algorithm used during training. The \texttt{algorithm} keyword is therefore mandatory for each configuration file. We listed Baselines Lab specific parameters in Table \ref{tab:AlgorithmKeywords}. Additionally, all parameters available for the individual RL algorithm implementations can be specified as children of the algorithm keyword and will be directly forwarded. A list of these parameters can be found in the Stable Baselines documentation \cite{stable-baselines-docs}. 
 
-\paragraph{Environment.} The environment can be configured using the \texttt{env} keyword. Since every training or enjoy session needs an environment, the env keyword is also mandatory for each lab configuration file. The env keyword also specifies how observations are processed before they are passed to the RL algorithm and may pass values to the environment itself. Table \ref{tab:EnvironmentKeywords} gives a complete overview over all available keywords. All keywords which do not match any lab specific keyword will be directly passed to the environment.
-
-\begin{table}[ht]
+\begin{table}[!ht]
     \begin{center}
         \small
         \bgroup
         \def\arraystretch{1.25}
-        \begin{tabular}{|>{\ttfamily}c|p{0.7\textwidth}|}
+        \begin{tabular}{|>{\ttfamily}c|p{0.75\textwidth}|}
+            \hline
+            \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            scale & Weather or not to scale the inputs by $x \mapsto x / 255$ \\
+            extractor\_arch & Architecture for the CNN extractor layers. Is given in tuple form of a list of triplets (n\_filters, filter\_size, stride) where each triplet defines a CNN layer. \\
+            mlp\_arch & Architecture for the MLP layers which get their input from the CNN extractor. May be a list of integer values where each value defines the number of neurons in a fully connected layer. The last element may be a dictionary with the entries \textit{pi} and \textit{vi} which both may contain lists of integers to define a diverging network for the policy network and the value function. \\
+            extractor\_act & Defines the activation function for the extractor network. \\
+            mlp\_act & Defines the activation function for the MLP network. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    %\vspace*{-1em}
+    \caption[Configuration of the GeneralCnnPolicy]{Description of the Baselines Lab specific keywords for the policy class GeneralCnnPolicy.} \label{tab:NetworkKeywords}
+\end{table}
+
+Baselines Lab also defines a new network type for fully configurable CNN networks. While Stable Baselines only offers to fully configure an MLP network, Baselines Lab introduces a new network class which is fully customizable. To use the new network type, we use the policy type \textit{GeneralCnnPolicy} and can then use the keywords as shown in Table \ref{tab:NetworkKeywords} to customize the network. 
+
+\begin{figure}[hp]
+    \lstinputlisting[language=yaml]{figures/baselines_details/network.yml}
+    \vspace*{-1em}
+    \caption{Basic GeneralCnnPolicy configuration.}
+    \label{fig:BasicNetworkConfig}
+%    \vspace*{-1em}
+\end{figure}
+
+We also included an example configuration which is given in Figure \ref{fig:BasicNetworkConfig}. The configuration constructs a network with three convolutional layers with 32, 64 and 64 filters respectively which is directly connected to a fully-connected layer with 512 neurons (similar to the network used by Huang et al. see \ref{sec:TDDRL}). The network then diverges into two ends where the policy network and the value network both have a dedicated fully-connected layer with 256 neurons. Leaky ReLU activations are used for both the CNN extractor and the MLP network.
+
+
+\paragraph{Environment.} The environment can be configured using the \texttt{env} keyword. Since every training or enjoy session needs an environment, the env keyword is also mandatory for each lab configuration file. The env keyword also specifies how observations are processed before they are passed to the RL algorithm and may pass values to the environment itself. Table \ref{tab:EnvironmentKeywords} gives a complete overview over all available keywords. All keywords which do not match any lab specific keyword will be directly passed to the environment.
+
+\begin{table}[hp]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}
+        \begin{tabular}{|>{\ttfamily}c|p{0.75\textwidth}|}
             \hline
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
             \hhline{|=|=|}
@@ -169,12 +206,14 @@ Baselines Lab also defines a new network type for fully configurable CNN and MLP
         \end{tabular}
         \egroup
     \end{center}
+    \vspace*{-1em}
     \caption[Configuration File Env Keyword]{Description of the Baselines Lab specific keywords for the environment section.} \label{tab:EnvironmentKeywords}
+    \vspace*{-1em}
 \end{table}
 
 \paragraph{Meta.} The \textit{meta} keyword defines a number of general training and program parameters, most important the number of training steps \texttt{n\_timesteps} and the log directory \texttt{log\_dir}. A complete list of all available keywords and their meaning can be found in Table \ref{tab:MetaKeywords}.
 
-\begin{table}[ht]
+\begin{table}[hp]
     \begin{center}
         \small
         \bgroup
@@ -204,7 +243,7 @@ Baselines Lab also defines a new network type for fully configurable CNN and MLP
 \paragraph{Search.} To parameterize automated hyperparametersearch, a dedicated section must be created with the keyword \texttt{search}. In this section we can define the sampler and pruner methods as well as general parameters (e.g. how many trials should be performed). We included a description for all available keywords in Table \ref{tab:SearchKeywords}. Pruners and samplers can be created by either stating their name only, or by creating a subkey named \texttt{method} and then adding additional subkeys to parameterize the sampler or pruner. Parameters for the samplers and pruners can be found in the Optuna documentation at \cite{optuna-docs}.
 
 
-\begin{table}[ht]
+\begin{table}[hp]
     \begin{center}
         \small
         \bgroup
@@ -242,7 +281,7 @@ Baselines Lab offers a number of command line arguments which control the genera
 
 Depending on the lab mode, there are mode specific command line arguments. We listed each available argument in Table \ref{tab:CommandLineArguments}.
 
-\begin{table}[ht]
+\begin{table}[hp]
     \begin{center}
         \small
         \bgroup
@@ -258,7 +297,7 @@ Depending on the lab mode, there are mode specific command line arguments. We li
             & \texttt{-{}-video} & If set, a video is created from the rendered environment output and saved to the log directory. \\
             & \texttt{-{}-obs-video} & If set, a video is created from the observations generated by the environment and saved to the log directory. \\
             & \texttt{-{}-stochastic} & If set, the model will use stochastic actions instead of deterministic actions. \\
-            & \texttt{-{}-evaluate EPISODES} & If set, activates model evaluation in normal evaluation mode during enjoy replay for given number of episodes. The evaluation results will be saved in the model's log directory. \\
+            & \texttt{-{}-evaluate EPISODES} & Activates model evaluation in normal evaluation mode during enjoy replay for given number of episodes. Evaluation results will be saved in the log directory. \\
             & \texttt{-{}-strict} & If set, evaluation will only use a single environment (equals slow evaluation mode). \\
             & \texttt{-{}-trial TRIAL} & The number of the trial to load from the log directory. Defaults to trial zero. \\
             & \texttt{-{}-plot} & If set, plots will be generated from the training tensorboard data and saved in the model's log directory.\\
@@ -268,8 +307,40 @@ Depending on the lab mode, there are mode specific command line arguments. We li
         \end{tabular}
         \egroup
     \end{center}
+    \vspace*{-1em}
     \caption[Mode Specific Command Line Arguments]{Description of lab mode specific command line arguments.} \label{tab:CommandLineArguments}
+    \vspace*{-2em}
 \end{table}
 
 \section{Random Network Distillation Module}
-RND Module parameter desc
+We already described how we implemented RND curiosity reward in Section \ref{sec:blRND}. In this section we want to list all parameters for our RND reward wrapper. Each of these parameters can be configured using lab config files. We included a complete list in Table \ref{tag:RNDParameters}. The parameters \textit{gamma}, \textit{learning\_rate}, \textit{train\_freq} and \textit{buffer\_size} can be automatically set to match the parameters used for the RL algorithm, by setting the key \texttt{auto\_params: true} in the configuration file under \texttt{curiosity}. All default parameters are set to match the original implementation as close as possible.
+
+\begin{table}[ht]
+    \begin{center}
+        \small
+        \bgroup
+        \def\arraystretch{1.25}
+        \begin{tabular}{|>{\ttfamily}c|p{0.65\textwidth}|}
+            \hline
+            \normalfont{Parameter} & \multicolumn{1}{c|}{Description} \\
+            \hhline{|=|=|}
+            intrinsic\_reward\_weight & Weight for the intrinsic reward. \\
+            buffer\_size & Size of the internal replay buffer used to train the predictor network. \\
+            train\_freq & Number of steps between each training of the predictor network. \\
+            gradient\_steps & Number of training epochs. \\
+            batch\_size & Number of samples to use during each training epoch. Samples are randomly drawn from the replay buffer. \\
+            learning\_starts & Step at which the predictor will be trained for the first time. \\
+            filter\_end\_of\_episode & Weather or not the end of episode signal should be filtered and not propagated to the RL algorithm. \\
+            filter\_reward & Weather or not to filter extrinsic reward. \\
+            norm\_obs & Weather or not to normalize observations for the target and predictor networks. \\
+            norm\_ext\_reward & Weather or not to norm the extrinsic reward. \\
+            gamma & Gamma for the reward normalization. \\
+            learning\_rate & The predictor learning rate. \\
+            training & Weather or not the predictor should be trained. \\
+            monitor & Weather or not to create curiosity specific Tensorboard logs. \\
+            \hline
+        \end{tabular}
+        \egroup
+    \end{center}
+    \caption[Parameters for the RND Wrapper]{Description of the parameters for the RND wrapper.} \label{tab:RNDParameters}
+\end{table}
