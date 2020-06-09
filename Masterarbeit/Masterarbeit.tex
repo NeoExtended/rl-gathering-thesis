@@ -82,7 +82,9 @@ published or written by another person except where due reference is made in the
 \centerline{\bfseries Abstract}
 \vspace*{1em}
 \noindent
-Since the early years of computer science navigation tasks were heavily explored. Since most of these tasks are NP-hard, even modern computers struggle with the optimal solution of larger instances for those problems. To overcome this problem various approximation algorithms have been developed to get usable results in a relatively short time. In this work we focus on a specific problem: The navigation of particles by a single global force - also known as tilt problem. We exploit recent developments in the area of reinforcement learning to navigate all particles to a given goal position and compare the results to state-of-the-art approximation algorithms. % Running todo
+Since the early years of computer science, navigation tasks were heavily explored. Weather it is about planning optimal routes, exploring spaces or avoiding obstacles, most tasks have been found to be exceptionally hard to solve optimally. Therefore even modern computers struggle with the optimal solution of larger instances for those problems. By sacrificing optimal results for speed, the traditional approach was to find approximation algorithms which ideally guarantee some performance bound and yield usable results in a relatively short time. 
+
+In this work we want to focus on a specific problem: The navigation of particles by a single global force - also known as tilt problem. The particles must be navigated to a given goal position through a maze-like environment. Instead of using traditional approximation algorithms, we use reinforcement learning (RL) to navigate the particles. We explore, how recent RL techniques perform under different settings and compare the results to multiple state-of-the-art approximation algorithms.
 \cleardoublepage
 
 \microtypesetup{protrusion=false}
