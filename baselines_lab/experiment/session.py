@@ -6,7 +6,15 @@ from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 from stable_baselines.common.vec_env import VecVideoRecorder
-from stable_baselines.gail import ExpertDataset
+
+# Load mpi4py-dependent algorithms only if mpi is installed.
+try:
+    import mpi4py
+except ImportError:
+    mpi4py = None
+
+if mpi4py is not None:
+    from stable_baselines.gail import ExpertDataset
 
 from baselines_lab.env import create_environment
 from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, VecGifRecorder
