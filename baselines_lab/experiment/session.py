@@ -185,6 +185,7 @@ class TrainSession(Session):
                 self._run_experiment()
                 del self.env
                 del self.agent
+                del self.saver
 
         if self.config['meta'].get('plot', False):
             self._plot(self.log)

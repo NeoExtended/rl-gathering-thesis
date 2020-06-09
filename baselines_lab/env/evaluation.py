@@ -73,7 +73,7 @@ class Evaluator:
             return self._evaluate_normal(model)
 
     def close(self):
-        if self.test_env:
+        if self.test_env is not None:
             self.test_env.close()
 
     def _evaluate_fast(self):

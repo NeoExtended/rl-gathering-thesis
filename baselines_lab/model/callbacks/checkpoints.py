@@ -9,7 +9,7 @@ from stable_baselines.common.vec_env import VecNormalize
 
 from baselines_lab.env.evaluation import Evaluator
 from baselines_lab.env.wrappers import CuriosityWrapper
-from utils import util
+from baselines_lab.utils import util
 
 
 class CheckpointManager(BaseCallback):
@@ -43,7 +43,6 @@ class CheckpointManager(BaseCallback):
         self.best = None
         self.best_score = float('-inf')
         self.last_save = 0
-        self.env = None
         self.wrappers = []
         self.tb_log = tb_log
         self.writer = None
