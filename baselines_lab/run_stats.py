@@ -60,7 +60,7 @@ def process_discrete_file(file, config):
         file_data["RND"] = "{:.2f}".format(scale)
 
     info = TrainingInformation(str(file))
-    drop_train, drop_test, avg, min = info.log_key_points(drop_level=0.05)
+    drop_train, drop_test, avg, min = info.log_key_points(drop_level=0.05, max_step=6000000)
 
     file_data["Best"] = "{:.2f}".format(min)
     file_data["Avg"] = "{:.2f}".format(avg)
@@ -74,12 +74,12 @@ def process_discrete_file(file, config):
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-    log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\Maze0318\\Discrete")
+    log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\VesselMaze02\\continuous")
 
     directories = [f.path for f in os.scandir(log_dir_path) if f.is_dir()]
     #fieldnames = ["Run", "Obs Norm", "Rew Norm", "TP", "DEL", "RND", "GR", "Best", "Avg", "Drop"]
-    fieldnames = discrete_fieldnames
-    sort = 6 # 6/8
+    fieldnames = continuous_fieldnames
+    sort = 8 # 6/8
 
     entries = []
     for dir in directories:

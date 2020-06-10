@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Tuple, List, Union, Dict
+from typing import Tuple, List, Union, Dict, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -10,10 +10,12 @@ import tensorflow as tf
 IMAGES_PATH = ".."
 
 
-def read_summary_values(file, tags):
+def read_summary_values(file, tags, max_step=None):
     steps = [list() for tag in tags]
     values = [list() for tag in tags]
     for summary in tf.train.summary_iterator(file):
+        if max_step is not None and summary.step > max_step:
+            continue
         for value in summary.summary.value:
             for i, tag in enumerate(tags):
                 if tag in value.tag:
@@ -27,16 +29,17 @@ class TensorboardLogReader:
     Class for automated plot creation from tensorboard log files.
     :param file_format: (str) File format for the created plots.
     :param log_dir: (str) Root directory for the tensorboard logs.
+    :param max_step: (int) Last step that is read from the log.
     """
     def __init__(self, log_dir: Union[str, List[str]]) -> None:
         self.log_dir = Path(log_dir)
         self.files = list(self.log_dir.glob("**/events.out.tfevents.*"))
 
-    def _read_tensorboard_data(self, tags: List[str]) -> Dict[str, Tuple[List, List]]:
+    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Tuple[List, List]]:
         tag_values = {}
         for file in self.files:
             logging.info("Reading tensorboard logs from {}. This may take a while...".format(file))
-            data = read_summary_values(str(file), tags)
+            data = read_summary_values(str(file), tags, max_step)
             for tag in data:
                 if tag not in tag_values:
                     tag_values[tag] = (list(), list())
