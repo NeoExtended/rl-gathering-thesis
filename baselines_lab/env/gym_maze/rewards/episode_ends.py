@@ -44,7 +44,7 @@ class DynamicEpisodeEnd(EpisodeEndRewardGenerator):
             self.normalization = np.sum(self.dynamic_moves)
 
     def _step(self, action, locations) -> Tuple[bool, float]:
-        if self.calculator.step_reward > 0:
+        if self.calculator.step_reward > 0 and self.tier < len(self.dynamic_moves):
             self.moves_left += self.dynamic_moves[self.tier]
             self.tier += 1
 
