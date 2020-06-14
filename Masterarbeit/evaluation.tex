@@ -171,13 +171,15 @@ By looking at the data, we can see, that many parameters do work very well and o
             3 &  &  &  & X & 0.25 &  & 110.94 & 117.82 & 750K \\
             4 &  &  & X &  &  &  & 135.03 & 145.34 & 629K \\
             5 &  &  & X &  & 0.25 &  & 324.29 & 422.48 & 456K \\
-            6 &  & X & X &  &  &  & 83.78 & 84.66 & 461K \\
-            7 &  & X & X &  &  & 1.00 & 93.31 & 94.30 & 406K \\
-            8 & X & X & X &  &  & 1.00 & 59.31 & \textbf{65.68} & 190K \\
-            9 & X & X & X &  &  &  & \textbf{57.38} & 66.81 & 182K \\
-            10 & X & X & X &  & 0.50 &  & 84.52 & 207.78 & \textbf{181K} \\
-            11 & X & X & X & X &  &  & 65.34 & 78.93 & 400K \\
-            12 & X & X & X & X & 0.50 &  & 500.00 & 500.00 & 3M \\
+            6 &  &  & X & X &  &  & 477.62 & 491.48 & 3M \\
+            7 &  & X & X &  &  &  & 83.78 & 84.66 & 461K \\
+            8 &  & X & X &  &  & 1.00 & 93.31 & 94.30 & 406K \\
+            9 & X & X &  & X &  &  & 65.72 & 67.17 & 400K \\
+            10 & X & X & X &  &  & 1.00 & 59.31 & \textbf{65.68} & 190K \\
+            11 & X & X & X &  &  &  & \textbf{57.38} & 66.81 & 182K \\
+            12 & X & X & X &  & 0.50 &  & 84.52 & 207.78 & \textbf{181K} \\
+            13 & X & X & X & X &  &  & 65.34 & 78.93 & 400K \\
+            14 & X & X & X & X & 0.50 &  & 500.00 & 500.00 & 3M \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -202,17 +204,19 @@ Similar to the results obtained when using discrete rewards, we can see, that no
             2 &  &  &  & X & 0.25 &  & X &  & 394.12 & 413.82 & 800K \\
             3 &  &  & X &  &  &  &  &  & 146.38 & 149.47 & 787K \\
             4 &  &  & X &  &  &  & X &  & 102.44 & 103.96 & 718K \\
-            5 &  & X & X &  &  &  & X & X & 90.47 & 98.18 & 370K \\
-            6 &  & X & X &  &  &  & X &  & 101.62 & 102.40 & 525K \\
-            7 &  & X & X &  &  & 1.00 & X &  & 96.22 & 103.99 & 614K \\
-            8 &  & X & X &  & 0.25 &  & X &  & 198.44 & 335.29 & 561K \\
-            9 & X & X & X &  &  &  &  &  & \textbf{56.59} & \textbf{59.04} & \textbf{127K} \\
-            10 & X & X & X &  &  &  & X & X & 58.72 & 65.46 & 152K \\
-            11 & X & X & X &  &  &  & X &  & 61.81 & 71.28 & 147K \\
-            12 & X & X & X &  &  & 1.00 &  &  & 60.53 & 62.46 & 149K \\
-            13 & X & X & X &  &  & 1.00 & X &  & 59.09 & 68.69 & 151K \\
-            14 & X & X & X &  & 0.25 &  & X & X & 69.41 & 246.38 & 158K \\
-            15 & X & X & X & X &  &  & X & X & 79.19 & 79.39 & 400K \\
+            5 &  &  & X & X &  &  & X &  & 92.12 & 96.00 & 400K \\
+            6 &  & X & X &  &  &  & X & X & 90.47 & 98.18 & 370K \\
+            7 &  & X & X &  &  &  & X &  & 101.62 & 102.40 & 525K \\
+            8 &  & X & X &  &  & 1.00 & X &  & 96.22 & 103.99 & 614K \\
+            9 &  & X & X &  & 0.25 &  & X &  & 198.44 & 335.29 & 561K \\
+            10 & X & X &  & X &  &  & X &  & 82.41 & 83.32 & 400K \\
+            11 & X & X & X &  &  &  &  &  & \textbf{56.59} & \textbf{59.04} & \textbf{127K} \\
+            12 & X & X & X &  &  &  & X & X & 58.72 & 65.46 & 152K \\
+            13 & X & X & X &  &  &  & X &  & 61.81 & 71.28 & 147K \\
+            14 & X & X & X &  &  & 1.00 &  &  & 60.53 & 62.46 & 149K \\
+            15 & X & X & X &  &  & 1.00 & X &  & 59.09 & 68.69 & 151K \\
+            16 & X & X & X &  & 0.25 &  & X & X & 69.41 & 246.38 & 158K \\
+            17 & X & X & X & X &  &  & X & X & 79.19 & 79.39 & 400K \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -231,12 +235,13 @@ Similar to the results obtained when using discrete rewards, we can see, that no
             \cmidrule(lr){2-7}\cmidrule(lr){8-9}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  &  & X & 0.25 &  & 496.03 & 498.68 & 5.75M \\
-            2 &  &  & X &  & 0.25 &  & 500.00 & 500.00 & 6M \\
-            3 & X & X & X &  &  &  & 97.28 & 100.09 & 762K \\
-            4 & X & X & X &  &  & 1.00 & 93.78 & \textbf{95.15} & 828K \\
-            5 & X & X & X &  & 0.50 &  & 107.31 & 109.18 & \textbf{694K} \\
-            6 & X & X & X & X &  &  & \textbf{89.62} & 96.38 & 1.2M \\
+            1 &  &  &  & X & 0.25 &  & 478.91 & 487.95 & 9.99M \\
+            2 &  &  & X &  & 0.25 &  & 491.19 & 497.06 & 9.99M \\
+            3 & X & X &  & X &  &  & \textbf{89.38} & 95.75 & 1.2M \\
+            4 & X & X & X &  &  &  & 97.28 & 100.09 & 762K \\
+            5 & X & X & X &  &  & 1.00 & 93.78 & \textbf{95.15} & 828K \\
+            6 & X & X & X &  & 0.50 &  & 107.31 & 109.18 & \textbf{694K} \\
+            7 & X & X & X & X &  &  & 89.62 & 96.38 & 1.2M \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -252,23 +257,58 @@ Similar to the results obtained when using discrete rewards, we can see, that no
             \cmidrule(lr){2-9}\cmidrule(lr){10-11}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  & X &  & 0.25 &  & X &  & 487.88 & 493.52 & 6M \\
-            2 &  & X & X &  &  &  &  &  & 488.88 & 496.29 & 6M \\
-            3 &  & X & X &  &  &  & X & X & 489.22 & 493.64 & 6M \\
-            4 &  & X & X &  &  &  & X &  & 496.34 & 498.12 & 6M \\
-            5 &  & X & X &  &  & 1.00 & X &  & 484.53 & 493.48 & 6M \\
+            1 &  &  & X &  & 0.25 &  & X &  & 451.00 & 476.26 & 7.92M \\
+            2 &  & X & X &  &  &  &  &  & 423.09 & 433.16 & 7.81M \\
+            3 &  & X & X &  &  &  & X & X & 373.28 & 405.12 & 8M \\
+            4 &  & X & X &  &  &  & X &  & 416.28 & 458.89 & 7.91M \\
+            5 &  & X & X &  &  & 1.00 & X &  & 418.75 & 470.94 & 7.05M \\
             6 & X & X & X &  &  &  &  &  & 93.97 & 98.73 & \textbf{501K} \\
             7 & X & X & X &  &  &  & X & X & 103.16 & 105.57 & 628K \\
             8 & X & X & X &  &  &  & X &  & 91.06 & \textbf{96.72} & 532K \\
             9 & X & X & X &  &  & 1.00 &  &  & \textbf{89.41} & 100.26 & 600K \\
             10 & X & X & X &  &  & 1.00 & X &  & 95.16 & 98.65 & 507K \\
             11 & X & X & X &  & 0.25 &  & X & X & 126.94 & 197.88 & 601K \\
+            12 & X & X & X & X &  &  & X & X & 185.62 & 193.65 & 2.8M \\
             \bottomrule
         \end{tabular}
     \end{center}
-    \caption[Evaluation of Continuous Reward with the Vessel Environment]{Evaluation of discrete rewards with the vessel environment.} \label{tab:VesselMaze02/Reward/Continuous}
+    \caption[Evaluation of Continuous Reward with the Vessel Environment]{Evaluation of continuous rewards with the vessel environment.} \label{tab:VesselMaze02/Reward/Continuous}
 \end{table}
 
+\begin{table}[ht]
+    \begin{center}
+        \begin{tabular}{rccccccccrrr}
+            \toprule
+             & \multicolumn{8}{c}{Reward Component} & \multicolumn{2}{c}{Episode Length} & \\
+            \cmidrule(lr){2-9}\cmidrule(lr){10-11}
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
+            \midrule
+            1 & X & X & X &  &  &  &  &  & 328.97 & 352.97 & 7.46M \\
+            2 & X & X & X &  &  &  & X &  & \textbf{308.31} & 333.53 & 7.34M \\
+            3 & X & X & X &  &  & 1.00 & X &  & 324.78 & \textbf{333.35} & \textbf{6.75M} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Evaluation of Continuous Reward with the Brain Environment]{Evaluation of continuous rewards with the brain environment.} \label{tab:VesselMaze02/Reward/Continuous}
+\end{table}
+
+\begin{table}[ht]
+    \begin{center}
+        \begin{tabular}{rccccccrrr}
+            \toprule
+             & \multicolumn{6}{c}{Reward Component} & \multicolumn{2}{c}{Episode Length} & \\
+            \cmidrule(lr){2-7}\cmidrule(lr){8-9}
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
+            \midrule
+            1 & X & X &  & X &  &  & 500.00 & 500.00 & 12M \\
+            2 & X & X & X &  &  & 1.00 & \textbf{311.44} & \textbf{319.23} & \textbf{7.15M} \\
+            3 & X & X & X &  &  & 1.00 & 312.19 & 335.09 & 7.23M \\
+            4 & X & X & X &  & 0.50 &  & 479.59 & 486.36 & 12M \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Evaluation of Discrete Reward with the Brain Environment]{Evaluation of discrete rewards with the brain environment.} \label{tab:VesselMaze02/Reward/Continuous}
+\end{table}
 
 \section{Observations} \label{sec:EvalObs}
 Observations
