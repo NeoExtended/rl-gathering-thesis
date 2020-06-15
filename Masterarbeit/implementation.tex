@@ -295,7 +295,7 @@ The sparseness of this reward signal may significantly increase the complexity o
     \caption[Implementation Design for the Reward Generators]{Implementation design for the reward generators. To improve efficiency, all reward components share an object called of the type \textit{InformationStepProvider} which ensures that the same calculations are not repeated multiple times.}
     \label{fig:RewardDesign}
     %\vspace*{-12pt}
-  \end{figure}
+\end{figure}
 
 \paragraph{Discrete Reward.}
 We implemented a reward which works similar to the original reward, but with a dynamic number of subgoals. We also drastically increased the number of subgoals, to make the reward less sparse. Instead of rewarding the agent at 4-8 subgoals (which in the original implementation were all given to the agent if its solution was already close to the goal position) we dynamically compute a number of subgoals depending on the size of the maze and distribute these subgoals evenly. This way the agent already receives reward at early stages of the training process. We estimate the number of subgoals by halving the maximum distance any particle can be away from the goal position. Subgoals which are easier to reach (the first subgoals) generate a smaller reward than later ones.
