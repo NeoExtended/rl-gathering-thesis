@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_05_08_164018
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_05_08_211725
+
+jobs:
+  - type: figure
+    alias:
+      "2020_05_08_164018": "Run 1"
+      "2020_05_08_211725": "Run 2"
