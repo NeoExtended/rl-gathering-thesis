@@ -31,6 +31,26 @@ class WarpGrayscaleFrame(gym.ObservationWrapper):
         return frame[:, :, None]
 
 
+class NoObsWrapper(gym.Wrapper):
+    def __init__(self, env):
+        """
+        Deletes the observation from the env and replaces it with a counter which increases with each step.
+        """
+        gym.Wrapper.__init__(self, env)
+        self.counter = 0
+        self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(1), dtype=int)
+
+    def step(self, action):
+        obs, rew, done, info = super(NoObsWrapper, self).step(action)
+        self.counter += 1
+        return self.counter, rew, done, info
+
+    def reset(self, **kwargs):
+        super(NoObsWrapper, self).reset(**kwargs)
+        self.counter = 0
+        return self.counter
+
+
 class VecGifRecorder(VecEnvWrapper):
     """
     Records videos from the environment in gif format.
