@@ -37,17 +37,17 @@ class NoObsWrapper(gym.Wrapper):
         Deletes the observation from the env and replaces it with a counter which increases with each step.
         """
         gym.Wrapper.__init__(self, env)
-        self.counter = 0
-        self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(1), dtype=int)
+        self.counter = np.array([0])
+        self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(1,), dtype=int)
 
     def step(self, action):
         obs, rew, done, info = super(NoObsWrapper, self).step(action)
-        self.counter += 1
+        self.counter[0] += 1
         return self.counter, rew, done, info
 
     def reset(self, **kwargs):
         super(NoObsWrapper, self).reset(**kwargs)
-        self.counter = 0
+        self.counter[0] = 0
         return self.counter
 
 
