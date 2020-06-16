@@ -1,10 +1,15 @@
+import argparse
 import os
 import logging
+import sys
+
+import yaml
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from baselines_lab.utils.tensorboard import TrainingInformation
 from baselines_lab.utils import config_util
+from utils.tensorboard import Plotter
 
 tags = ["episode_length/eval_ep_length_mean"]
 discrete_fieldnames = ["Run", "ON", "RN", "TP", "DEL", "RND", "GR", "Best", "Avg", "Drop"]
@@ -17,7 +22,7 @@ def human_format(num):
     while abs(num) >= 1000:
         magnitude += 1
         num /= 1000.0
-    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'k', 'M', 'G', 'T'][magnitude])
 
 
 def process_file(file):
@@ -134,23 +139,77 @@ def to_latex(frame : pd.DataFrame, location: str, n_value_cols=3):
         f.write("\\end{table}")
 
 
+def parse_args(args):
+    parser = argparse.ArgumentParser("Run script for baselines lab stats module.")
+
+    parser.add_argument("config_file", type=str, help="Location of the lab config file. May be a list or a directory.")
+    return parser.parse_args(args=args)
+
+
+def make_table(config, directories):
+    pass
+
+
+def make_figure(config, directories):
+    file_format = config.get("format", "pdf")
+    output_dir = config.get("output", "./logs")
+    tags = config.get("tags", ["episode_length/ep_length_mean"])
+    names = config.get("names", ["Episode Length"])
+    if len(tags) != len(names):
+        raise ValueError("There must be a name for each tag and vice versa!")
+    plot_avg_only = config.get("plot_avg_only", False)
+    smoothing = config.get("smoothing", 0.9)
+    alias = config.get("alias", None)
+
+
+    plot = Plotter(file_format, directories, output_dir)
+    plot.make_plot(tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
+
+
+def main(args=None):
+    # parse arguments
+    if args is None:
+        args = sys.argv[1:]
+    args = parse_args(args)
+
+    logging.getLogger().setLevel(logging.INFO)
+    file = open(args.config_file, "r")
+    config = yaml.load(file)
+    file.close()
+
+    directories = []
+    for dir in config["runs"]:
+        filelist = os.listdir(dir)
+        if "config.yml" in filelist:  # Directory is a run dir
+            directories.append(dir)
+        else:  # Directory contains multiple run dirs.
+            directories.extend([f.path for f in os.scandir(dir) if f.is_dir()])
+
+    for job in config["jobs"]:
+        type = job["type"]
+        if type == "figure":
+            make_figure(job, directories)
+        elif type == "table":
+            make_table(job, directories)
+
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
-    log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\VesselMaze02\\discrete")
+    main()
 
-    directories = [f.path for f in os.scandir(log_dir_path) if f.is_dir()]
-    #fieldnames = ["Run", "Obs Norm", "Rew Norm", "TP", "DEL", "RND", "GR", "Best", "Avg", "Drop"]
-    fieldnames = discrete_fieldnames
-    sort = 6 # 6/8
-
-    entries = []
-    for dir in directories:
-        entries.append(process_file(Path(dir)))
-    dataframe = pd.DataFrame(entries, columns=fieldnames)
-    dataframe.sort_values(fieldnames[1:sort], inplace=True, ascending=False, na_position="first")
-    dataframe.reset_index(drop=True, inplace=True)
-    #to_latex_frame(dataframe, ["Best", "Avg", "Drop"], ["min", "min", "min"])
-    #dataframe.to_csv(str(log_dir_path.joinpath('output.csv')), index_label="Index")
-    to_latex(dataframe, str(log_dir_path.joinpath('output.tex')))
+    # log_dir_path = Path("F:\\Uni\\2020_Semester XIV\\Learning_Archive\\Reward_Experimente\\VesselMaze02\\discrete")
+    #
+    # directories = [f.path for f in os.scandir(log_dir_path) if f.is_dir()]
+    # #fieldnames = ["Run", "Obs Norm", "Rew Norm", "TP", "DEL", "RND", "GR", "Best", "Avg", "Drop"]
+    # fieldnames = discrete_fieldnames
+    # sort = 6 # 6/8
+    #
+    # entries = []
+    # for dir in directories:
+    #     entries.append(process_file(Path(dir)))
+    # dataframe = pd.DataFrame(entries, columns=fieldnames)
+    # dataframe.sort_values(fieldnames[1:sort], inplace=True, ascending=False, na_position="first")
+    # dataframe.reset_index(drop=True, inplace=True)
+    # #to_latex_frame(dataframe, ["Best", "Avg", "Drop"], ["min", "min", "min"])
+    # #dataframe.to_csv(str(log_dir_path.joinpath('output.csv')), index_label="Index")
+    # to_latex(dataframe, str(log_dir_path.joinpath('output.tex')))
 

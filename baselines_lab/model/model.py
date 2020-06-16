@@ -2,6 +2,7 @@ import copy
 import logging
 
 import gym
+import tensorflow as tf
 
 # from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, DDPG, TRPO, SAC, TD3
 from stable_baselines import PPO2, A2C, ACER, ACKTR, DQN, HER, SAC, TD3
@@ -60,6 +61,8 @@ def create_model(config: dict, env: gym.Env, seed: int) -> BaseRLModel:
     else:
         logging.info("Creating new model for {}.".format(name))
         policy_name = policy_config.pop('name')
+        if policy_config.get("act_fun", None):
+            policy_config["act_fun"] = tf.keras.activations.deserialize(policy_config.get("act_fun"))
 
         return ALGOS[name](
             seed=seed,

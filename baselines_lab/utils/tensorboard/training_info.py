@@ -12,12 +12,13 @@ class TrainingInformation(TensorboardLogReader):
     :param file_format: (str) File format for the created plots.
     :param log_dir: (str) Root directory for the tensorboard logs.
     """
-    def __init__(self, log_dir: Union[str, List[str]]) -> None:
-        super(TrainingInformation, self).__init__(log_dir)
+    def __init__(self, log_dir: str) -> None:
+        super(TrainingInformation, self).__init__([log_dir])
+        self.log_dir = log_dir
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
-        tag_values = self._read_tensorboard_data(tags, max_step=max_step)
+        tag_values = self._read_tensorboard_data(tags, max_step=max_step)[self.log_dir]
 
         drop1 = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
         drop2 = self._get_drop(tag_values.get("episode_length/eval_ep_length_mean"), drop_level=drop_level)

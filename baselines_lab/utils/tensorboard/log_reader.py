@@ -31,21 +31,27 @@ class TensorboardLogReader:
     :param log_dir: (str) Root directory for the tensorboard logs.
     :param max_step: (int) Last step that is read from the log.
     """
-    def __init__(self, log_dir: Union[str, List[str]]) -> None:
-        self.log_dir = Path(log_dir)
-        self.files = list(self.log_dir.glob("**/events.out.tfevents.*"))
+    def __init__(self, log_dirs: List[str]) -> None:
+        self.tb_logs = {}
 
-    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Tuple[List, List]]:
-        tag_values = {}
-        for file in self.files:
-            logging.info("Reading tensorboard logs from {}. This may take a while...".format(file))
-            data = read_summary_values(str(file), tags, max_step)
-            for tag in data:
-                if tag not in tag_values:
-                    tag_values[tag] = (list(), list())
-                tag_values[tag][0].append(data[tag][0])
-                tag_values[tag][1].append(data[tag][1])
-        return tag_values
+        for file in log_dirs:
+            self.tb_logs[file] = list(Path(file).glob("**/events.out.tfevents.*"))
+
+    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List, List]]]:
+        values = {}
+        for dir in self.tb_logs:
+            tag_values = {}
+            for log_file in self.tb_logs[dir]:
+                logging.info("Reading tensorboard logs from {}. This may take a while...".format(log_file))
+                data = read_summary_values(str(log_file), tags, max_step)
+                for tag in data:
+                    if tag not in tag_values:
+                        tag_values[tag] = (list(), list())
+                    tag_values[tag][0].append(data[tag][0])
+                    tag_values[tag][1].append(data[tag][1])
+
+            values[dir] = tag_values
+        return values
 
     def _interpolate(self, step_data: np.ndarray, value_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         mins = [np.min(steps) for steps in step_data]

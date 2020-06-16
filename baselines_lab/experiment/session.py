@@ -74,7 +74,7 @@ class Session(ABC):
             file_format = self.config['meta']['plot'].get('format', file_format)
             PLOT_TAGS.extend(self.config['meta']['plot'].get('tags'))
             PLOT_NAMES.extend(self.config['meta']['plot'].get('names'))
-        plotter = Plotter(file_format, log_dir)
+        plotter = Plotter(file_format, [log_dir])
         plotter.make_plot(PLOT_TAGS, PLOT_NAMES)
 
 
