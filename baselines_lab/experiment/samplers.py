@@ -18,11 +18,17 @@ class Sampler(ABC):
             search_config = config['search']
             if search_config.get('algorithm', None):
                 for sample_name in search_config['algorithm']:
-                    self.alg_parameters[sample_name] = self._parse_config(search_config['algorithm'][sample_name])
+                    if sample_name not in self.config['algorithm']:
+                        self.alg_parameters[sample_name] = self._parse_config(search_config['algorithm'][sample_name])
 
             if search_config.get('env', None):
                 for sample_name in search_config['env']:
-                    self.env_parameters[sample_name] = self._parse_config(search_config['env'][sample_name])
+                    if sample_name not in self.config['env']:
+                        self.env_parameters[sample_name] = self._parse_config(search_config['env'][sample_name])
+
+        for key in list(parameters.keys()):
+            if key in self.config['algorithm']:
+                del parameters[key]
 
         parameters.update(self.alg_parameters)
         self.alg_parameters.update(parameters)
