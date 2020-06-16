@@ -131,6 +131,8 @@ Throughout this section we will provide a number of tables, which use abbreviati
             \toprule
             \multicolumn{1}{c}{Reward Component} & Abbreviation \\
             \midrule
+            Continuous Reward & CR \\
+            Discrete Reward & DR \\
             Observation Normalization & ON \\
             Reward Normalization & RN \\
             Time Penalty & TP \\
@@ -167,18 +169,18 @@ Looking at the data, we can see, that many parameters do work very well and our 
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
             1 &  &  &  & X &  &  & 256.78 & 295.04 & 1.25M \\
-            2 &  &  &  & X & 0.50 &  & 499.97 & 499.99 & 750K \\
-            3 &  &  &  & X & 0.25 &  & 110.94 & 117.82 & 750K \\
-            4 &  &  & X &  &  &  & 135.03 & 145.34 & 629K \\
-            5 &  &  & X &  & 0.25 &  & 324.29 & 422.48 & 456K \\
+            2 &  &  &  & X & 0.50 &  & 499.97 & 499.99 & 750k \\
+            3 &  &  &  & X & 0.25 &  & 110.94 & 117.82 & 750k \\
+            4 &  &  & X &  &  &  & 135.03 & 145.34 & 629k \\
+            5 &  &  & X &  & 0.25 &  & 324.29 & 422.48 & 456k \\
             6 &  &  & X & X &  &  & 477.62 & 491.48 & 3M \\
-            7 &  & X & X &  &  &  & 83.78 & 84.66 & 461K \\
-            8 &  & X & X &  &  & 1.00 & 93.31 & 94.30 & 406K \\
-            9 & X & X &  & X &  &  & 65.72 & 67.17 & 400K \\
-            10 & X & X & X &  &  & 1.00 & 59.31 & \textbf{65.68} & 190K \\
-            11 & X & X & X &  &  &  & \textbf{57.38} & 66.81 & 182K \\
-            12 & X & X & X &  & 0.50 &  & 84.52 & 207.78 & \textbf{181K} \\
-            13 & X & X & X & X &  &  & 65.34 & 78.93 & 400K \\
+            7 &  & X & X &  &  &  & 83.78 & 84.66 & 461k \\
+            8 &  & X & X &  &  & 1.00 & 93.31 & 94.30 & 406k \\
+            9 & X & X &  & X &  &  & 65.72 & 67.17 & 400k \\
+            10 & X & X & X &  &  & 1.00 & 59.31 & \textbf{65.68} & 190k \\
+            11 & X & X & X &  &  &  & \textbf{57.38} & 66.81 & 182k \\
+            12 & X & X & X &  & 0.50 &  & 84.52 & 207.78 & \textbf{181k} \\
+            13 & X & X & X & X &  &  & 65.34 & 78.93 & 400k \\
             14 & X & X & X & X & 0.50 &  & 500.00 & 500.00 & 3M \\
             \bottomrule
         \end{tabular}
@@ -189,36 +191,6 @@ Looking at the data, we can see, that many parameters do work very well and our 
 
 The evaluation results using continuous reward show similar outcomes to the experiments using discrete reward. The most important finding is, that the best continuous reward is able to produce superior results in every category compared to the best discrete reward. Especially the time of first notable improvement is about 30\% earlier. We included a plot showing the average episode length during training in Figure \ref{fig:ContinuousVsDiscrete}. This further supports our decision to create more dense rewards. 
 
-
-\begin{figure}[htp]
-    
-    \begin{center}
-        \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/continuous_vs_discrete_ep_len.pdf}
-    \end{center}
-    
-    %\vspace*{-6pt}
-    \caption[Training Curves with Curiosity Reward]{(TODO: This is a placeholder. Replace with better examples and averaged/smoothed curve.) Average episode length on the corridor environment.}
-    \label{fig:ContinuousVsDiscrete}
-    %\vspace*{-12pt}
-\end{figure}
-
-
-\begin{figure}[htp]
-    
-    \begin{center}
-        \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/curiosity_diverge.pdf}
-    \end{center}
-    
-    %\vspace*{-6pt}
-    \caption[Training Curves with Curiosity Reward]{(TODO: This is a placeholder. Replace with better examples and averaged/smoothed curve.) Average episode length during training with curiosity reward on the corridor instance.}
-    \label{fig:CuriosityDiverge}
-    %\vspace*{-12pt}
-\end{figure}
-
-
-Similar to the results obtained when using discrete rewards, we can see, that normalization massively improves performance for continuous rewards. Curiosity also does not seem to improve the results and often tends to diverge at the end of training as shown in Figure \ref{fig:CuriosityDiverge}. Otherwise the corridor instance seems to be too easy to show differences between other reward parameters. Like before, gathering reward does not seem to have any positive or negative impact. The use of positive only rewards shows to improve performance without normalization (see Experiments 3/4), but only has a small impact with normalization (see Experiments 12/13). Interestingly internal normalization which balances the total cost reward against the maximum cost reward has shown to worsen the results on the corridor environment (see Experiments 11/13). 
-
-
 \begin{table}[htp]
     \begin{center}
         \begin{tabular}{rccccccccrrr}
@@ -227,28 +199,61 @@ Similar to the results obtained when using discrete rewards, we can see, that no
             \cmidrule(lr){2-9}\cmidrule(lr){10-11}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  &  & X &  &  & X &  & 101.06 & 106.07 & 600K \\
-            2 &  &  &  & X & 0.25 &  & X &  & 394.12 & 413.82 & 800K \\
-            3 &  &  & X &  &  &  &  &  & 146.38 & 149.47 & 787K \\
-            4 &  &  & X &  &  &  & X &  & 102.44 & 103.96 & 718K \\
-            5 &  &  & X & X &  &  & X &  & 92.12 & 96.00 & 400K \\
-            6 &  & X & X &  &  &  & X & X & 90.47 & 98.18 & 370K \\
-            7 &  & X & X &  &  &  & X &  & 101.62 & 102.40 & 525K \\
-            8 &  & X & X &  &  & 1.00 & X &  & 96.22 & 103.99 & 614K \\
-            9 &  & X & X &  & 0.25 &  & X &  & 198.44 & 335.29 & 561K \\
-            10 & X & X &  & X &  &  & X &  & 82.41 & 83.32 & 400K \\
-            11 & X & X & X &  &  &  &  &  & \textbf{56.59} & \textbf{59.04} & \textbf{127K} \\
-            12 & X & X & X &  &  &  & X & X & 58.72 & 65.46 & 152K \\
-            13 & X & X & X &  &  &  & X &  & 61.81 & 71.28 & 147K \\
-            14 & X & X & X &  &  & 1.00 &  &  & 60.53 & 62.46 & 149K \\
-            15 & X & X & X &  &  & 1.00 & X &  & 59.09 & 68.69 & 151K \\
-            16 & X & X & X &  & 0.25 &  & X & X & 69.41 & 246.38 & 158K \\
-            17 & X & X & X & X &  &  & X & X & 79.19 & 79.39 & 400K \\
+            1 &  &  &  & X &  &  & X &  & 101.06 & 106.07 & 600k \\
+            2 &  &  &  & X & 0.25 &  & X &  & 394.12 & 413.82 & 800k \\
+            3 &  &  & X &  &  &  &  &  & 146.38 & 149.47 & 787k \\
+            4 &  &  & X &  &  &  & X &  & 102.44 & 103.96 & 718k \\
+            5 &  &  & X & X &  &  & X &  & 92.12 & 96.00 & 400k \\
+            6 &  & X & X &  &  &  & X & X & 90.47 & 98.18 & 370k \\
+            7 &  & X & X &  &  &  & X &  & 101.62 & 102.40 & 525k \\
+            8 &  & X & X &  &  & 1.00 & X &  & 96.22 & 103.99 & 614k \\
+            9 &  & X & X &  & 0.25 &  & X &  & 198.44 & 335.29 & 561k \\
+            10 & X & X &  & X &  &  & X &  & 82.41 & 83.32 & 400k \\
+            11 & X & X & X &  &  &  &  &  & \textbf{56.59} & \textbf{59.04} & \textbf{127k} \\
+            12 & X & X & X &  &  &  & X & X & 58.72 & 65.46 & 152k \\
+            13 & X & X & X &  &  &  & X &  & 61.81 & 71.28 & 147k \\
+            14 & X & X & X &  &  & 1.00 &  &  & 60.53 & 62.46 & 149k \\
+            15 & X & X & X &  &  & 1.00 & X &  & 59.09 & 68.69 & 151k \\
+            16 & X & X & X &  & 0.25 &  & X & X & 69.41 & 246.38 & 158k \\
+            17 & X & X & X & X &  &  & X & X & 79.19 & 79.39 & 400k \\
             \bottomrule
         \end{tabular}
     \end{center}
     \caption[Evaluation of Continuous Reward with the Corridor Environment]{Evaluation of continuous rewards with the corridor environment.} \label{tab:Maze0318/Reward/Continuous}
 \end{table}
+
+
+\begin{figure}[htp]
+    
+    \begin{center}
+        \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/continuous_vs_discrete.pdf}
+    \end{center}
+    
+    %\vspace*{-6pt}
+    \caption[Training Curves with Curiosity Reward]{Average episode length on the corridor environment during training. The legend refers to experiment numbers.}
+    \label{fig:ContinuousVsDiscrete}
+    %\vspace*{-12pt}
+\end{figure}
+
+\begin{figure}[htp]
+    
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/curiosity_divergence_ep_len.pdf} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/curiosity_divergence_int_rew.pdf} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/curiosity_divergence_ext_rew.pdf}
+        \end{tabular}
+
+    \end{center}
+    
+    %\vspace*{-6pt}
+    \caption[Problems with Curiosity Reward]{Learning curves for training with curiosity reward. We observed, that often intrinsic rewards tends to take over and result in a performance collapse during training at some point. This can be seen, by comparing the intrinsic to the extrinsic reward and looking at the episode length: At around 1.5 million training steps, the intrinsic reward begins to increase, while the extrinsic reward stays at a constant value. At the same time, the average episode length begins to increase.}
+    \label{fig:CuriosityDiverge}
+    %\vspace*{-12pt}
+\end{figure}
+
+
+Similar to the results obtained when using discrete rewards, we can see, that normalization massively improves performance for continuous rewards. Curiosity also does not seem to improve the results and often tends to diverge from the optimum at the end of training as shown in Figure \ref{fig:CuriosityDiverge}. Otherwise the corridor instance seems to be too easy to show differences between other reward parameters. Like before, gathering reward does not seem to have any positive or negative impact. The use of positive only rewards shows to improve performance without normalization (see Experiments 3/4), but only has a small impact with normalization (see Experiments 12/13). Interestingly internal normalization which balances the total cost reward against the maximum cost reward has shown to worsen the results on the corridor environment (see Experiments 11/13). 
 
 
 \paragraph{Vessel Environment.} We repeat multiple experiments on the more complicated, but similarly large vessel instance. The results for discrete rewards are shown in Table \ref{tab:VesselMaze02/Reward/Discrete} and the results for continuous reward in Table \ref{tab:VesselMaze02/Reward/Continuous}. To compensate for the more complex environment, we double the training time for the agent and train for 6 millions steps per trial. 
@@ -266,9 +271,9 @@ Looking at the results for discrete rewards in Table \ref{tab:VesselMaze02/Rewar
             1 &  &  &  & X & 0.25 &  & 478.91 & 487.95 & 9.99M \\
             2 &  &  & X &  & 0.25 &  & 491.19 & 497.06 & 9.99M \\
             3 & X & X &  & X &  &  & \textbf{89.38} & 95.75 & 1.2M \\
-            4 & X & X & X &  &  &  & 97.28 & 100.09 & 762K \\
-            5 & X & X & X &  &  & 1.00 & 93.78 & \textbf{95.15} & 828K \\
-            6 & X & X & X &  & 0.50 &  & 107.31 & 109.18 & \textbf{694K} \\
+            4 & X & X & X &  &  &  & 97.28 & 100.09 & 762k \\
+            5 & X & X & X &  &  & 1.00 & 93.78 & \textbf{95.15} & 828k \\
+            6 & X & X & X &  & 0.50 &  & 107.31 & 109.18 & \textbf{694k} \\
             7 & X & X & X & X &  &  & 89.62 & 96.38 & 1.2M \\
             \bottomrule
         \end{tabular}
@@ -293,12 +298,12 @@ The results for continuous rewards differ from the results for discrete rewards.
             3 &  & X & X &  &  &  & X & X & 373.28 & 405.12 & 8M \\
             4 &  & X & X &  &  &  & X &  & 416.28 & 458.89 & 7.91M \\
             5 &  & X & X &  &  & 1.00 & X &  & 418.75 & 470.94 & 7.05M \\
-            6 & X & X & X &  &  &  &  &  & 93.97 & 98.73 & \textbf{501K} \\
-            7 & X & X & X &  &  &  & X & X & 103.16 & 105.57 & 628K \\
-            8 & X & X & X &  &  &  & X &  & 91.06 & \textbf{96.72} & 532K \\
-            9 & X & X & X &  &  & 1.00 &  &  & \textbf{89.41} & 100.26 & 600K \\
-            10 & X & X & X &  &  & 1.00 & X &  & 95.16 & 98.65 & 507K \\
-            11 & X & X & X &  & 0.25 &  & X & X & 126.94 & 197.88 & 601K \\
+            6 & X & X & X &  &  &  &  &  & 93.97 & 98.73 & \textbf{501k} \\
+            7 & X & X & X &  &  &  & X & X & 103.16 & 105.57 & 628k \\
+            8 & X & X & X &  &  &  & X &  & 91.06 & \textbf{96.72} & 532k \\
+            9 & X & X & X &  &  & 1.00 &  &  & \textbf{89.41} & 100.26 & 600k \\
+            10 & X & X & X &  &  & 1.00 & X &  & 95.16 & 98.65 & 507k \\
+            11 & X & X & X &  & 0.25 &  & X & X & 126.94 & 197.88 & 601k \\
             12 & X & X & X & X &  &  & X & X & 185.62 & 193.65 & 2.8M \\
             \bottomrule
         \end{tabular}
