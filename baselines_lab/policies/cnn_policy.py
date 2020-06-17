@@ -3,7 +3,7 @@ from stable_baselines.common import tf_layers
 from stable_baselines.common.policies import ActorCriticPolicy, mlp_extractor
 
 from baselines_lab.utils.tf_utils import build_cnn, build_dynamic_cnn
-
+import numpy as np
 
 class SimpleMazeCnnPolicy(ActorCriticPolicy):
     """
@@ -15,9 +15,9 @@ class SimpleMazeCnnPolicy(ActorCriticPolicy):
         with tf.variable_scope("model", reuse=reuse):
             activ = tf.nn.leaky_relu
             extracted_features = build_cnn(self.processed_obs, **kwargs)
-            pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512))
+            pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512, init_scale=np.sqrt(2)))
 
-            value_fn = tf.layers.dense(vf_latent, 1, name='vf')
+            value_fn = tf_layers.linear(vf_latent, 'vf', 1)
 
             self._proba_distribution, self._policy, self.q_value = \
                 self.pdtype.proba_distribution_from_latent(pi_latent, vf_latent, init_scale=0.01)
