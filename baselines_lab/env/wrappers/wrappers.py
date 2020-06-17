@@ -40,9 +40,9 @@ class NoObsWrapper(gym.Wrapper):
         self.counter = np.array([0])
         self.rew_is_obs = rew_is_obs
         if rew_is_obs:
-            self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(2,), dtype=int)
+            self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(2,), dtype=np.float)
         else:
-            self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(1,), dtype=int)
+            self.observation_space = gym.spaces.Box(low=0, high=np.inf, shape=(1,), dtype=np.int64)
 
     def step(self, action):
         obs, rew, done, info = super(NoObsWrapper, self).step(action)
