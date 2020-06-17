@@ -58,12 +58,13 @@ class Plotter(TensorboardLogReader):
             for i, log_dir in enumerate(self.tb_logs):
                 step_data, value_data = tag_values[log_dir][tag]
                 step_data, value_data = np.asarray(step_data), np.asarray(value_data)
-                label = None
+                legend_label = None
                 if alias:
-                    label = alias[os.path.basename(log_dir)]
-                self._add_plot(step_data, value_data, self.cmap(i), label, plot_avg_only, smoothing)
+                    legend_label = alias[os.path.basename(log_dir)]
+                self._add_plot(step_data, value_data, self.cmap(i), legend_label, plot_avg_only, smoothing)
 
-            plt.legend()
+            if alias:
+                plt.legend()
             self._save_fig(str(self.path.joinpath("{}.{}".format(name.replace(" ", "_"), self.file_format))))
             plt.close()
 
