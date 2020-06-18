@@ -18,7 +18,8 @@ class TrainingInformation(TensorboardLogReader):
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
-        tag_values = self._read_tensorboard_data(tags, max_step=max_step)[self.log_dir]
+        self._read_tensorboard_data(tags, max_step=max_step)
+        tag_values = self.values[self.log_dir]
 
         drop1 = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
         drop2 = self._get_drop(tag_values.get("episode_length/eval_ep_length_mean"), drop_level=drop_level)
@@ -29,13 +30,15 @@ class TrainingInformation(TensorboardLogReader):
             step_data, value_data = self._interpolate(step_data, value_data)
         avg = np.mean(value_data, axis=0)[-1]
         min = np.min(value_data, axis=0)[-1]
+        delta = np.average(self.deltas[self.log_dir])
 
         logging.info(str(self.log_dir))
         logging.info("Drop Train: {}".format(drop1))
         logging.info("Drop Test: {}".format(drop2))
         logging.info("Avg: {}".format(avg))
         logging.info("Min: {}".format(min))
-        return drop1, drop2, avg, min
+        logging.info("Time: {}".format(delta))
+        return drop1, drop2, avg, min, delta
 
     def _get_drop(self, drop_data, drop_level=0.05, drop_min=100000) -> int:
         step_data, value_data = drop_data

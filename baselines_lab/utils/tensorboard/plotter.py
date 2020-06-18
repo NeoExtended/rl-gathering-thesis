@@ -48,7 +48,7 @@ class Plotter(TensorboardLogReader):
         self.path.mkdir(exist_ok=True)
 
         logging.info("Creating plots.")
-        tag_values = self._read_tensorboard_data(tags)
+        self._read_tensorboard_data(tags)
 
         logging.info("Saving plots to {}.".format(self.path))
 
@@ -56,7 +56,7 @@ class Plotter(TensorboardLogReader):
             self._prepare_plot("steps", label, name)
 
             for i, log_dir in enumerate(self.tb_logs):
-                step_data, value_data = tag_values[log_dir][tag]
+                step_data, value_data = self.values[log_dir][tag]
                 step_data, value_data = np.asarray(step_data), np.asarray(value_data)
                 legend_label = None
                 if alias:

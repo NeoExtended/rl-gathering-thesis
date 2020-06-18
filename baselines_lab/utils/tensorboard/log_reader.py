@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Tuple, List, Union, Dict, Optional
+from typing import Tuple, List, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -13,15 +13,22 @@ IMAGES_PATH = ".."
 def read_summary_values(file, tags, max_step=None):
     steps = [list() for tag in tags]
     values = [list() for tag in tags]
+    begin = None
+    end = 0
     for summary in tf.train.summary_iterator(file):
+        if not begin:
+            begin = summary.wall_time
         if max_step is not None and summary.step > max_step:
             continue
+        if summary.wall_time > end:
+            end = summary.wall_time
         for value in summary.summary.value:
             for i, tag in enumerate(tags):
                 if tag in value.tag:
                     steps[i].append(summary.step)
                     values[i].append(value.simple_value)
-    return {tag: (step, val) for tag, step, val in zip(tags, steps, values)}
+    delta = end - begin
+    return {tag: (step, val) for tag, step, val in zip(tags, steps, values)}, delta
 
 
 class TensorboardLogReader:
@@ -37,21 +44,27 @@ class TensorboardLogReader:
         for file in log_dirs:
             self.tb_logs[file] = list(Path(file).glob("**/events.out.tfevents.*"))
 
-    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List, List]]]:
-        values = {}
+        self.values = None
+        self.deltas = None
+
+    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> None:
+        self.values = {}
+        self.deltas = {}
         for dir in self.tb_logs:
             tag_values = {}
+            deltas = []
             for log_file in self.tb_logs[dir]:
                 logging.info("Reading tensorboard logs from {}. This may take a while...".format(log_file))
-                data = read_summary_values(str(log_file), tags, max_step)
+                data, delta = read_summary_values(str(log_file), tags, max_step)
+                deltas.append(delta)
                 for tag in data:
                     if tag not in tag_values:
                         tag_values[tag] = (list(), list())
                     tag_values[tag][0].append(data[tag][0])
                     tag_values[tag][1].append(data[tag][1])
 
-            values[dir] = tag_values
-        return values
+            self.values[dir] = tag_values
+            self.deltas[dir] = deltas
 
     def _interpolate(self, step_data: np.ndarray, value_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         mins = [np.min(steps) for steps in step_data]
