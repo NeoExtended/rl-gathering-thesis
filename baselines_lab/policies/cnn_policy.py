@@ -62,7 +62,7 @@ class GeneralCnnPolicy(ActorCriticPolicy):
             extracted_features = build_dynamic_cnn(self.processed_obs, extractor_arch, extractor_act, **kwargs)
             pi_latent, vf_latent = mlp_extractor(extracted_features, mlp_arch, mlp_act)
 
-            value_fn = tf.layers.dense(vf_latent, 1, name='vf')
+            value_fn = tf_layers.linear(vf_latent, 'vf', 1)
 
             self._proba_distribution, self._policy, self.q_value = \
                 self.pdtype.proba_distribution_from_latent(pi_latent, vf_latent, init_scale=0.01)
