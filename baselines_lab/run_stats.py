@@ -6,7 +6,7 @@ import sys
 import yaml
 from pathlib import Path
 from utils.tables.table_generator import TableGenerator
-from utils.tensorboard import Plotter
+from utils.tensorboard import Plotter, TensorboardLogReader
 
 
 def parse_args(args):
@@ -49,8 +49,9 @@ def make_figure(config, directories):
     smoothing = config.get("smoothing", 0.9)
     alias = config.get("alias", None)
 
-    plot = Plotter(file_format, directories, output_dir)
-    plot.make_plot(tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
+    reader = TensorboardLogReader(directories)
+    plot = Plotter(output_dir, file_format=file_format)
+    plot.tensorboard_plot(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
 
 
 def main(args=None):

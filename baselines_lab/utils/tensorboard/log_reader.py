@@ -31,6 +31,20 @@ def read_summary_values(file, tags, max_step=None):
     return {tag: (step, val) for tag, step, val in zip(tags, steps, values)}, delta
 
 
+def interpolate(step_data: np.ndarray, value_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    mins = [np.min(steps) for steps in step_data]
+    maxs = [np.max(steps) for steps in step_data]
+    min_step = np.min(mins)
+    max_step = np.max(maxs)
+    steps = len(step_data[0])
+    space = np.linspace(min_step, max_step, steps)
+    interpolated = list()
+    for steps, values in zip(step_data, value_data):
+        interpolated.append(np.interp(space, steps, values))
+
+    return np.array([space] * len(step_data)), np.array(interpolated)
+
+
 class TensorboardLogReader:
     """
     Class for automated plot creation from tensorboard log files.
@@ -47,7 +61,7 @@ class TensorboardLogReader:
         self.values = None
         self.deltas = None
 
-    def _read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> None:
+    def read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> None:
         self.values = {}
         self.deltas = {}
         for dir in self.tb_logs:
@@ -65,16 +79,3 @@ class TensorboardLogReader:
 
             self.values[dir] = tag_values
             self.deltas[dir] = deltas
-
-    def _interpolate(self, step_data: np.ndarray, value_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        mins = [np.min(steps) for steps in step_data]
-        maxs = [np.max(steps) for steps in step_data]
-        min_step = np.min(mins)
-        max_step = np.max(maxs)
-        steps = len(step_data[0])
-        space = np.linspace(min_step, max_step, steps)
-        interpolated = list()
-        for steps, values in zip(step_data, value_data):
-            interpolated.append(np.interp(space, steps, values))
-
-        return np.array([space]*len(step_data)), np.array(interpolated)

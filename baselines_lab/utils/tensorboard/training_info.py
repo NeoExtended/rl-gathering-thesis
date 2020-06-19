@@ -3,7 +3,7 @@ from typing import List, Union
 
 import numpy as np
 # logging.getLogger('matplotlib.font_manager').disabled = True
-from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader
+from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader, interpolate
 
 
 class TrainingInformation(TensorboardLogReader):
@@ -18,7 +18,7 @@ class TrainingInformation(TensorboardLogReader):
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
-        self._read_tensorboard_data(tags, max_step=max_step)
+        self.read_tensorboard_data(tags, max_step=max_step)
         tag_values = self.values[self.log_dir]
 
         drop1 = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
@@ -27,7 +27,7 @@ class TrainingInformation(TensorboardLogReader):
         step_data, value_data = np.asarray(step_data), np.asarray(value_data)
         # Check if all rows in step data are equal. If not interpolate.
         if step_data.dtype == np.object or not (step_data == step_data[0]).all():
-            step_data, value_data = self._interpolate(step_data, value_data)
+            step_data, value_data = interpolate(step_data, value_data)
         avg = np.mean(value_data, axis=0)[-1]
         min = np.min(value_data, axis=0)[-1]
         delta = np.average(self.deltas[self.log_dir])
@@ -45,7 +45,7 @@ class TrainingInformation(TensorboardLogReader):
         step_data, value_data = np.asarray(step_data), np.asarray(value_data)
         # Check if all rows in step data are equal. If not interpolate.
         if step_data.dtype == np.object or not (step_data == step_data[0]).all():
-            step_data, value_data = self._interpolate(step_data, value_data)
+            step_data, value_data = interpolate(step_data, value_data)
         mu = np.mean(value_data, axis=0)
         mu0 = np.max(mu)
 

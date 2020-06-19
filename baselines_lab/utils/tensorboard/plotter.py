@@ -1,40 +1,41 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
 # logging.getLogger('matplotlib.font_manager').disabled = True
-from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader
+from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader, interpolate
 
 
-class Plotter(TensorboardLogReader):
+class Plotter:
     """
     Class for automated plot creation from tensorboard log files.
+
     :param file_format: (str) File format for the created plots.
     :param log_dir: (str) Root directory for the tensorboard logs.
     """
-    def __init__(self, file_format: str, log_dirs: List[str], output_path: Optional[str] = None) -> None:
-        super(Plotter, self).__init__(log_dirs)
-        self.path = Path(output_path).joinpath("figures") if output_path is not None else Path(log_dirs[0]).joinpath("figures")
-        self.file_format = file_format
-        if len(log_dirs) < 11:
-            self.cmap = plt.get_cmap("tab10")
-        else:
-            self.cmap = plt.cm.get_cmap("hsv", len(log_dirs) + 5)
 
-    def make_plot(self,
-                  tags: List[str],
-                  names: List[str],
-                  y_labels: Optional[List[str]] = None,
-                  alias: Optional[Dict[str, str]] = None,
-                  plot_avg_only: bool = False,
-                  smoothing: float = 0.6) -> None:
+    def __init__(self, output_path: str, file_format: str = "pdf") -> None:
+        self.path = Path(output_path).joinpath("figures")
+        self.file_format = file_format
+        self.cmap = plt.get_cmap("tab10")
+        self.has_data = False
+
+    def tensorboard_plot(self,
+                         reader: TensorboardLogReader,
+                         tags: List[str],
+                         names: List[str],
+                         y_labels: Optional[List[str]] = None,
+                         alias: Optional[Dict[str, str]] = None,
+                         plot_avg_only: bool = False,
+                         smoothing: float = 0.6):
         """
         Creates and saves the plots defined by the given tags.
+
         :param y_labels: (Optional[List[str]]) Labels for the y axis.
         :param smoothing: (float) Factor for the exponential weighted average smoothing.
         :param plot_avg_only: (bool) Weather or not to only plot the average for runs with multiple trials, or additional std around.
@@ -44,40 +45,44 @@ class Plotter(TensorboardLogReader):
         y_labels = y_labels if y_labels is not None else names
         assert len(tags) == len(names) == len(y_labels), "There must be a name for each tag and vise versa!"
         if alias:
-            assert len(alias) == len(self.tb_logs), "There must be an alias for every log directory!"
+            assert len(alias) == len(reader.tb_logs), "There must be an alias for every log directory!"
         self.path.mkdir(exist_ok=True)
 
+        if len(reader.tb_logs) > 10:
+            self.cmap = plt.cm.get_cmap("hsv", len(reader.tb_logs) + 5)
+
         logging.info("Creating plots.")
-        self._read_tensorboard_data(tags)
+        reader.read_tensorboard_data(tags)
 
         logging.info("Saving plots to {}.".format(self.path))
 
         for tag, name, label in zip(tags, names, y_labels):
-            self._prepare_plot("steps", label, name)
+            self.prepare_plot("steps", label, name)
 
-            for i, log_dir in enumerate(self.tb_logs):
-                step_data, value_data = self.values[log_dir][tag]
+            for i, log_dir in enumerate(reader.tb_logs):
+                step_data, value_data = reader.values[log_dir][tag]
                 step_data, value_data = np.asarray(step_data), np.asarray(value_data)
                 legend_label = None
                 if alias:
                     legend_label = alias[os.path.basename(log_dir)]
-                self._add_plot(step_data, value_data, self.cmap(i), legend_label, plot_avg_only, smoothing)
+                if len(step_data[0]) == 0:
+                    continue
 
-            if alias:
-                plt.legend()
-            self._save_fig(str(self.path.joinpath("{}.{}".format(name.replace(" ", "_"), self.file_format))))
-            plt.close()
+                self.add_plot(step_data, value_data, self.cmap(i), legend_label, plot_avg_only, smoothing)
 
-    def _add_plot(self, step_data: np.ndarray, value_data: np.ndarray, color, label=None, plot_avg_only: bool = False, smoothing: float = 0.6):
-        if len(step_data[0]) == 0:
-            return
+            if self.has_data:
+                if alias:
+                    plt.legend()
+                self.save_fig(str(self.path.joinpath("{}.{}".format(name.replace(" ", "_"), self.file_format))))
 
-        if len(step_data) > 1:
+    def add_plot(self, x: np.ndarray, y: np.ndarray, color, label=None, plot_avg_only: bool = False, smoothing: float = 0.6):
+        self.has_data = True
+        if len(x.shape) > 1:
             # Check if all rows in step data are equal. If not interpolate.
-            if step_data.dtype == np.object or not (step_data == step_data[0]).all():
-                step_data, value_data = self._interpolate(step_data, value_data)
+            if x.dtype == np.object or not (x == x[0]).all():
+                x, y = interpolate(x, y)
 
-            arr = np.array(value_data)
+            arr = np.array(y)
             if smoothing > 0:
                 # arr = self._moving_average(arr, smoothing)
                 for idx, run in enumerate(arr):
@@ -85,9 +90,9 @@ class Plotter(TensorboardLogReader):
             mu = np.mean(arr, axis=0)
             std = np.std(arr, axis=0)
 
-            self._make_multi_plot(step_data[0], mu, std, color, avg_only=plot_avg_only, label=label)
+            self._make_multi_plot(x[0], mu, std, color, avg_only=plot_avg_only, label=label)
         else:
-            self._make_plot(step_data[0], value_data[0], color, smoothing=smoothing, label=label)
+            self._make_plot(x, y, color, smoothing=smoothing, label=label)
 
     def _make_multi_plot(self, x, mu, std, color, label=None, avg_only=False):
         if not avg_only:
@@ -115,7 +120,9 @@ class Plotter(TensorboardLogReader):
 
         return smoothed
 
-    def _prepare_plot(self, xlabel=None, ylabel=None, name=None):
+    def prepare_plot(self, xlabel=None, ylabel=None, name=None):
+        self.close_plot()
+        self.has_data = False
         plt.figure(figsize=(8, 4))
         if name:
             plt.title(name)
@@ -127,10 +134,18 @@ class Plotter(TensorboardLogReader):
         if ylabel:
             plt.ylabel(ylabel)
 
-    def _save_fig(self, path, tight_layout=True, fig_extension="pdf", resolution=300):
+    def close_plot(self):
+        plt.close()
+
+    def save_fig(self, path=None, tight_layout=True, fig_extension=None, resolution=300):
+        if path is None:
+            path = self.path
+        if fig_extension is None:
+            fig_extension = self.file_format
+
         if tight_layout:
             plt.tight_layout()
         ax = plt.gca()
         ax.xaxis.set_major_formatter(ticker.EngFormatter(sep="\N{THIN SPACE}"))
-        #plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+        # plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
         plt.savefig(path, format=fig_extension, dpi=resolution)

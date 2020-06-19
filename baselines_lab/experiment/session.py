@@ -3,6 +3,7 @@ import distutils.spawn
 import logging
 import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from stable_baselines.common.vec_env import VecVideoRecorder
@@ -24,7 +25,7 @@ from baselines_lab.model import create_model
 from baselines_lab.model.callbacks import CheckpointManager, TensorboardLogger
 from baselines_lab.model.callbacks.obs_logger import ObservationLogger
 from baselines_lab.utils import util, config_util
-from baselines_lab.utils.tensorboard.plotter import Plotter
+from baselines_lab.utils.tensorboard import Plotter, TensorboardLogReader
 
 PLOT_TAGS = ["curiosity/ep_ext_reward_mean", "curiosity/ep_int_reward_mean", "episode_length/ep_length_mean", "episode_length/eval_ep_length_mean", "episode_reward", "reward/ep_reward_mean", "reward/eval_ep_reward_mean"]
 PLOT_NAMES = ["normalized extrinsic reward", "intrinsic reward", "episode length", "eval episode length", "total episode reward", "episode reward", "eval episode reward"]
@@ -74,8 +75,9 @@ class Session(ABC):
             file_format = self.config['meta']['plot'].get('format', file_format)
             PLOT_TAGS.extend(self.config['meta']['plot'].get('tags'))
             PLOT_NAMES.extend(self.config['meta']['plot'].get('names'))
-        plotter = Plotter(file_format, [log_dir])
-        plotter.make_plot(PLOT_TAGS, PLOT_NAMES)
+        reader = TensorboardLogReader([log_dir])
+        plotter = Plotter(log_dir, file_format=file_format)
+        plotter.tensorboard_plot(reader, PLOT_TAGS, PLOT_NAMES)
 
 
 class ReplaySession(Session):
