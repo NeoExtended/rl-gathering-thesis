@@ -1,7 +1,9 @@
 import logging
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict, Any
 
+import yaml
 import numpy as np
 import tensorflow as tf
 
@@ -45,7 +47,28 @@ def interpolate(step_data: np.ndarray, value_data: np.ndarray) -> Tuple[np.ndarr
     return np.array([space] * len(step_data)), np.array(interpolated)
 
 
-class TensorboardLogReader:
+class LogReader(ABC):
+    def __init__(self, log_dirs: List[str], log_name):
+        self.logs = {}
+        for file in log_dirs:
+            self.logs[file] = list(Path(file).glob(log_name))
+
+        self.values = None
+
+    @abstractmethod
+    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
+        """
+        Reads data from the log.
+
+        :param tags: Tags to load.
+        :param max_step: Maximum number of steps to load.
+        :return: Returns a dictionary with an entry for each directory. Each entry contains a dicionary with a key for each tag.
+                Each tag then lists the entries for all time - value pairs.
+        """
+        pass
+
+
+class TensorboardLogReader(LogReader):
     """
     Class for automated plot creation from tensorboard log files.
     :param file_format: (str) File format for the created plots.
@@ -53,21 +76,17 @@ class TensorboardLogReader:
     :param max_step: (int) Last step that is read from the log.
     """
     def __init__(self, log_dirs: List[str]) -> None:
-        self.tb_logs = {}
+        super(TensorboardLogReader, self).__init__(log_dirs, "**/events.out.tfevents.*")
 
-        for file in log_dirs:
-            self.tb_logs[file] = list(Path(file).glob("**/events.out.tfevents.*"))
-
-        self.values = None
         self.deltas = None
 
-    def read_tensorboard_data(self, tags: List[str], max_step: Optional[int] = None) -> None:
+    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
         self.values = {}
         self.deltas = {}
-        for dir in self.tb_logs:
+        for dir in self.logs:
             tag_values = {}
             deltas = []
-            for log_file in self.tb_logs[dir]:
+            for log_file in self.logs[dir]:
                 logging.info("Reading tensorboard logs from {}. This may take a while...".format(log_file))
                 data, delta = read_summary_values(str(log_file), tags, max_step)
                 deltas.append(delta)
@@ -79,3 +98,36 @@ class TensorboardLogReader:
 
             self.values[dir] = tag_values
             self.deltas[dir] = deltas
+        return self.values
+
+
+class EvaluationLogReader(LogReader):
+    """
+    Class for evaluation log reading
+    """
+
+    def __init__(self, log_dirs: List[str]) -> None:
+        super(EvaluationLogReader, self).__init__(log_dirs, "**/*.episode_information.yml")
+
+    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
+        self.values = {}
+
+        for dir in self.logs:
+            tag_values = {}
+            for log_file in self.logs[dir]:
+                file = log_file.open("r")
+                values = yaml.load(file)
+                file.close()
+
+                for tag in tags:
+                    steps = []
+                    data = []
+                    for episode in values:
+                        steps.append(episode["x"])
+                        data.append(episode[tag])
+                    if tag not in tag_values:
+                        tag_values[tag] = (list(), list())
+                    tag_values[tag][0].extend(steps)
+                    tag_values[tag][1].extend(data)
+            self.values[dir] = tag_values
+        return self.values

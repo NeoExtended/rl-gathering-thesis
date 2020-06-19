@@ -8,7 +8,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 
 # logging.getLogger('matplotlib.font_manager').disabled = True
-from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader, interpolate
+from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader, interpolate, LogReader
 
 
 class Plotter:
@@ -25,14 +25,14 @@ class Plotter:
         self.cmap = plt.get_cmap("tab10")
         self.has_data = False
 
-    def tensorboard_plot(self,
-                         reader: TensorboardLogReader,
-                         tags: List[str],
-                         names: List[str],
-                         y_labels: Optional[List[str]] = None,
-                         alias: Optional[Dict[str, str]] = None,
-                         plot_avg_only: bool = False,
-                         smoothing: float = 0.6):
+    def from_reader(self,
+                    reader: LogReader,
+                    tags: List[str],
+                    names: List[str],
+                    y_labels: Optional[List[str]] = None,
+                    alias: Optional[Dict[str, str]] = None,
+                    plot_avg_only: bool = False,
+                    smoothing: float = 0.6):
         """
         Creates and saves the plots defined by the given tags.
 
@@ -45,22 +45,22 @@ class Plotter:
         y_labels = y_labels if y_labels is not None else names
         assert len(tags) == len(names) == len(y_labels), "There must be a name for each tag and vise versa!"
         if alias:
-            assert len(alias) == len(reader.tb_logs), "There must be an alias for every log directory!"
+            assert len(alias) == len(reader.logs), "There must be an alias for every log directory!"
         self.path.mkdir(exist_ok=True)
 
-        if len(reader.tb_logs) > 10:
-            self.cmap = plt.cm.get_cmap("hsv", len(reader.tb_logs) + 5)
+        if len(reader.logs) > 10:
+            self.cmap = plt.cm.get_cmap("hsv", len(reader.logs) + 5)
 
         logging.info("Creating plots.")
-        reader.read_tensorboard_data(tags)
+        values = reader.read_data(tags)
 
         logging.info("Saving plots to {}.".format(self.path))
 
         for tag, name, label in zip(tags, names, y_labels):
             self.prepare_plot("steps", label, name)
 
-            for i, log_dir in enumerate(reader.tb_logs):
-                step_data, value_data = reader.values[log_dir][tag]
+            for i, log_dir in enumerate(reader.logs):
+                step_data, value_data = values[log_dir][tag]
                 step_data, value_data = np.asarray(step_data), np.asarray(value_data)
                 legend_label = None
                 if alias:

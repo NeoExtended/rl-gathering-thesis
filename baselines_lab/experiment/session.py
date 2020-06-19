@@ -77,7 +77,7 @@ class Session(ABC):
             PLOT_NAMES.extend(self.config['meta']['plot'].get('names'))
         reader = TensorboardLogReader([log_dir])
         plotter = Plotter(log_dir, file_format=file_format)
-        plotter.tensorboard_plot(reader, PLOT_TAGS, PLOT_NAMES)
+        plotter.from_reader(reader, PLOT_TAGS, PLOT_NAMES)
 
 
 class ReplaySession(Session):
@@ -94,7 +94,7 @@ class ReplaySession(Session):
 
         self.env = create_environment(config=config,
                                       seed=self.config['meta']['seed'],
-                                      log_dir=None,
+                                      log_dir=data_path,
                                       video_path=data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 

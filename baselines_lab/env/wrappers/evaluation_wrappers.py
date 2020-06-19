@@ -2,10 +2,66 @@ import logging
 import os
 from collections import deque
 
+import yaml
 import gym
 from stable_baselines.common.vec_env import VecEnvWrapper
 
 from baselines_lab.utils import safe_mean, get_timestamp, config_util
+from baselines_lab.env.gym_maze.envs import MazeBase
+
+
+class ParticleInformationWrapper(gym.Wrapper):
+    EXT = "episode_information.yml"
+
+    def __init__(self, env, path, interval=1):
+        super(ParticleInformationWrapper, self).__init__(env)
+        if not path.endswith(ParticleInformationWrapper.EXT):
+            if os.path.isdir(path):
+                path = os.path.join(path, ParticleInformationWrapper.EXT)
+            else:
+                path = path + "." + ParticleInformationWrapper.EXT
+
+        self.path = path
+        self.maze_env = env.unwrapped  # type: MazeBase
+        self.last_eval = -interval
+        self.step_counter = 0
+        self.eval_interval = interval
+        self.episodes = []
+        self.total_distance = []
+        self.n_particles = []
+        self.eval_times = []
+
+    def step(self, action):
+        self.step_counter += 1
+        obs, rew, done, info = super().step(action)
+        self._evaluate()
+        return obs, rew, done, info
+
+    def _evaluate(self):
+        if self.step_counter - self.last_eval >= self.eval_interval:
+            self.last_eval = self.step_counter
+            self.eval_times.append(self.step_counter)
+            self.total_distance.append(int(self.maze_env.reward_generator.calculator.total_cost))
+            self.n_particles.append(len(self.maze_env.reward_generator.calculator.unique_particles))
+
+    def reset(self, **kwargs):
+        obs = super().reset(**kwargs)
+        if len(self.eval_times) > 0:
+            self.episodes.append({"x": self.eval_times,
+                                  "n_particles": self.n_particles,
+                                 "distance": self.total_distance})
+        self.step_counter = 0
+        self.last_eval = -self.eval_interval
+        self.eval_times = []
+        self.n_particles = []
+        self.total_distance = []
+        return obs
+
+    def close(self):
+        file = open(self.path, "w")
+        yaml.dump(self.episodes, file, default_flow_style=True)
+        file.close()
+        super().close()
 
 
 class EvaluationWrapper(gym.Wrapper):
@@ -57,8 +113,8 @@ class VecEvaluationWrapper(VecEnvWrapper):
         return obs, rews, dones, infos
 
     def close(self):
-        VecEnvWrapper.close(self)
         self.aggregator.close()
+        super().close()
 
 
 class EpisodeInformationAggregator:

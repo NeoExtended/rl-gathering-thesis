@@ -18,7 +18,7 @@ class TrainingInformation(TensorboardLogReader):
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
-        self.read_tensorboard_data(tags, max_step=max_step)
+        self.read_data(tags, max_step=max_step)
         tag_values = self.values[self.log_dir]
 
         drop1 = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)

@@ -1,6 +1,7 @@
 import copy
 import importlib
 import logging
+import os
 
 import gym
 from stable_baselines.bench import Monitor
@@ -8,9 +9,10 @@ from stable_baselines.common.atari_wrappers import FrameStack, ScaledFloatFrame
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
 from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, CuriosityWrapper, VecGifRecorder, VecScaledFloatFrame, VecStepSave
+from baselines_lab.env.wrappers.evaluation_wrappers import ParticleInformationWrapper
 
 
-def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
+def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None, evaluation=False):
     """
     Helper function to multiprocess training and log the progress.
     :param env_id: (str) Name of the environment.
@@ -26,6 +28,9 @@ def make_env(env_id, env_kwargs, rank=0, seed=0, log_dir=None, wrappers=None):
         env = gym.make(env_id, **env_kwargs)
         env.seed(seed + rank)
         env.action_space.seed(seed + rank)
+
+        if log_dir and evaluation:
+            env = ParticleInformationWrapper(env, path=os.path.join(log_dir, str(rank)))
 
         if wrappers:
             for wrapper in wrappers:
@@ -102,12 +107,12 @@ def create_environment(config, seed, log_dir=None, video_path=None, evaluation=F
 
 def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, buffer_step_data):
     if n_envs == 1:
-        env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)])
+        env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers, evaluation=evaluation)])
     else:
         if multiprocessing:
-            env = SubprocVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
+            env = SubprocVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers, evaluation=evaluation) for i in range(n_envs)])
         else:
-            env = DummyVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers) for i in range(n_envs)])
+            env = DummyVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers, evaluation=evaluation) for i in range(n_envs)])
 
     if video_path:
         env = VecGifRecorder(env, video_path, record_obs=True)
@@ -158,7 +163,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
 
 
 def _create_standard_env(env_id, env_kwargs, seed, log_dir, wrappers, normalize, frame_stack, evaluation, scale):
-    env_maker = make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers)
+    env_maker = make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers, evaluation=evaluation)
     env = env_maker()
 
     if evaluation:

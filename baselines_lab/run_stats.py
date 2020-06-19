@@ -7,6 +7,7 @@ import yaml
 from pathlib import Path
 from utils.tables.table_generator import TableGenerator
 from utils.tensorboard import Plotter, TensorboardLogReader
+from utils.tensorboard.log_reader import EvaluationLogReader
 
 
 def parse_args(args):
@@ -41,17 +42,29 @@ def make_table(config, directories):
 def make_figure(config, directories):
     file_format = config.get("format", "pdf")
     output_dir = config.get("output", "./logs")
-    tags = config.get("tags", ["episode_length/ep_length_mean"])
-    names = config.get("names", ["Episode Length"])
-    if len(tags) != len(names):
-        raise ValueError("There must be a name for each tag and vice versa!")
+    source = config.get("source", "tensorboard")
+
     plot_avg_only = config.get("plot_avg_only", False)
     smoothing = config.get("smoothing", 0.9)
     alias = config.get("alias", None)
 
-    reader = TensorboardLogReader(directories)
+    if source == "tensorboard":
+        tags = config.get("tags", ["episode_length/ep_length_mean"])
+        names = config.get("names", ["Episode Length"])
+        if len(tags) != len(names):
+            raise ValueError("There must be a name for each tag and vice versa!")
+
+        reader = TensorboardLogReader(directories)
+
+    elif source == "evaluation":
+        tags = config.get("tags", ["distance", "n_particles"])
+        names = config.get("names", ["Total Distance", "Unique Particles"])
+        reader = EvaluationLogReader(directories)
+    else:
+        raise ValueError("Unknown source {}".format(source))
+
     plot = Plotter(output_dir, file_format=file_format)
-    plot.tensorboard_plot(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
+    plot.from_reader(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
 
 
 def main(args=None):
