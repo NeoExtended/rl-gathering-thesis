@@ -123,8 +123,19 @@ class EvaluationLogReader(LogReader):
                     steps = []
                     data = []
                     for episode in values:
-                        steps.append(episode["x"])
-                        data.append(episode[tag])
+                        if max_step == None:
+                            steps.append(episode["x"])
+                            data.append(episode[tag])
+                        else:
+                            step = []
+                            value = []
+                            for s, v in zip(episode["x"], episode[tag]):
+                                if s > max_step:
+                                    break
+                                step.append(s)
+                                value.append(v)
+                            steps.append(step)
+                            data.append(value)
                     if tag not in tag_values:
                         tag_values[tag] = (list(), list())
                     tag_values[tag][0].extend(steps)

@@ -6,7 +6,7 @@ class Runner:
     """
     Executes the basic agent - environment interaction loop.
     :param env: (gym.Env or VecEnv) The environment for the agent
-    :param agent: The agent to make predictions from observations.
+    :param agent: The agent to make predictions from observations. If None, random actions will be generated.
     :param render: (bool) Weather or not to render the environment during execution.
     :param deterministic: (bool) Weather or not the agent should make deterministic predictions.
     :param close_env: (bool) Weather or not the environment should be closed after a call to run().
@@ -34,7 +34,10 @@ class Runner:
         obs = self.env.reset()
 
         while self.episode_counter < n_episodes:
-            action, _states = self.agent.predict(obs, deterministic=self.deterministic)
+            if self.agent:
+                action, _states = self.agent.predict(obs, deterministic=self.deterministic)
+            else:
+                action = [self.env.action_space.sample() for i in range(self.env.unwrapped.num_envs)]
             obs, rewards, dones, info = self.env.step(action)
             if self.render:
                 self.env.render(mode='human')

@@ -32,7 +32,8 @@ class Plotter:
                     y_labels: Optional[List[str]] = None,
                     alias: Optional[Dict[str, str]] = None,
                     plot_avg_only: bool = False,
-                    smoothing: float = 0.6):
+                    smoothing: float = 0.6,
+                    max_step: Optional[int] = None):
         """
         Creates and saves the plots defined by the given tags.
 
@@ -52,7 +53,7 @@ class Plotter:
             self.cmap = plt.cm.get_cmap("hsv", len(reader.logs) + 5)
 
         logging.info("Creating plots.")
-        values = reader.read_data(tags)
+        values = reader.read_data(tags, max_step=max_step)
 
         logging.info("Saving plots to {}.".format(self.path))
 
@@ -77,7 +78,7 @@ class Plotter:
 
     def add_plot(self, x: np.ndarray, y: np.ndarray, color, label=None, plot_avg_only: bool = False, smoothing: float = 0.6):
         self.has_data = True
-        if len(x.shape) > 1:
+        if len(x.shape) > 1 or x.dtype == np.object:
             # Check if all rows in step data are equal. If not interpolate.
             if x.dtype == np.object or not (x == x[0]).all():
                 x, y = interpolate(x, y)
@@ -88,15 +89,19 @@ class Plotter:
                 for idx, run in enumerate(arr):
                     arr[idx] = self._smooth(arr[idx], weight=smoothing)
             mu = np.mean(arr, axis=0)
-            std = np.std(arr, axis=0)
+            min = np.min(arr, axis=0)
+            max = np.max(arr, axis=0)
+            if smoothing > 0:
+                min = self._smooth(min, weight=0.2)
+                max = self._smooth(max, weight=0.2)
 
-            self._make_multi_plot(x[0], mu, std, color, avg_only=plot_avg_only, label=label)
+            self._make_multi_plot(x[0], min, max, mu, color, avg_only=plot_avg_only, label=label)
         else:
             self._make_plot(x, y, color, smoothing=smoothing, label=label)
 
-    def _make_multi_plot(self, x, mu, std, color, label=None, avg_only=False):
+    def _make_multi_plot(self, x, min, max, mu, color, label=None, avg_only=False):
         if not avg_only:
-            plt.fill_between(x, mu + std, mu - std, facecolor=color, alpha=0.2)
+            plt.fill_between(x, max, min, facecolor=color, alpha=0.2)
         plt.plot(x, mu, color=color, linewidth=1.0, label=label)
 
     def _make_plot(self, x, y, color, label=None, smoothing=0.0):

@@ -18,6 +18,7 @@ class SimpleMazeCnnPolicy(ActorCriticPolicy):
             pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512, init_scale=np.sqrt(2)))
 
             value_fn = tf_layers.linear(vf_latent, 'vf', 1)
+            #value_fn = tf.layers.dense(vf_latent, 1, name="vf")
 
             self._proba_distribution, self._policy, self.q_value = \
                 self.pdtype.proba_distribution_from_latent(pi_latent, vf_latent, init_scale=0.01)

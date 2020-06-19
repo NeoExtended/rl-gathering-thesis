@@ -98,7 +98,10 @@ class ReplaySession(Session):
                                       video_path=data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 
-        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        if not args.random_agent:
+            self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        else:
+            self.agent = None
 
         obs = self.env.reset()
 

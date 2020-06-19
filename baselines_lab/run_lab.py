@@ -48,6 +48,9 @@ def parse_args(args):
     enjoy_parser.add_argument("--plot",
                               help="Weather or not to plot tensorboard data.",
                               action="store_true")
+    enjoy_parser.add_argument("--random-agent",
+                              help="Weather or not to use a random agent",
+                              action="store_true")
 
     train_parser = subparsers.add_parser("train")
     train_parser.add_argument("--trial",

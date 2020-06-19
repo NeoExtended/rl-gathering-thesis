@@ -47,6 +47,7 @@ def make_figure(config, directories):
     plot_avg_only = config.get("plot_avg_only", False)
     smoothing = config.get("smoothing", 0.9)
     alias = config.get("alias", None)
+    max_step = config.get("max_step", None)
 
     if source == "tensorboard":
         tags = config.get("tags", ["episode_length/ep_length_mean"])
@@ -64,7 +65,7 @@ def make_figure(config, directories):
         raise ValueError("Unknown source {}".format(source))
 
     plot = Plotter(output_dir, file_format=file_format)
-    plot.from_reader(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias)
+    plot.from_reader(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias, max_step=max_step)
 
 
 def main(args=None):
