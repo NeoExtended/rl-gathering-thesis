@@ -1,0 +1,15 @@
+runs:
+  - C:\Users\Matthias\PycharmProjects\baselines-lab\baselines_lab\logs\MazeTest\2020_06_19_122038
+  - C:\Users\Matthias\PycharmProjects\baselines-lab\baselines_lab\logs\MazeTest\Random_Agent
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_171043
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_09_005606
+
+jobs:
+  - type: figure
+    source: evaluation
+    max_step: 1000
+    alias:
+      "2020_06_19_122038": "4500 Steps Train"
+      "Random_Agent": "Random Agent"
+      "2020_06_08_171043": "Baseline"
+      "2020_06_09_005606": "RND"

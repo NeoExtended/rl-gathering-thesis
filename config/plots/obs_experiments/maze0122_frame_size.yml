@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Obs_Experiments\Size\Maze0122
+
+jobs:
+  - type: table
+    headers: observation_size
+    results:
+      time: true
+    output: "../config/plots/obs_experiments/Maze0122_obs_size.tex"

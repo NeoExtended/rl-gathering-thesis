@@ -1,0 +1,19 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_05_171325
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\discrete\2020_06_06_210455
+
+jobs:
+  - type: figure
+    alias:
+      "2020_06_05_171325": "Corridor - CR 16"
+      "2020_06_06_210455": "Corridor - DR 12"
+    plot_avg_only: true
+    smoothing: 0.8
+    tags:
+      - "curiosity/ep_ext_reward_mean"
+      - "curiosity/ep_int_reward_mean"
+      - "episode_length/ep_length_mean"
+    names:
+      - "Extrinsic Reward"
+      - "Intrinsic Reward"
+      - "Episode Length"

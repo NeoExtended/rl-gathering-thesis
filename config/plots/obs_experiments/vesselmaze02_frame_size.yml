@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Obs_Experiments\Size\VesselMaze02
+
+jobs:
+  - type: table
+    headers: observation_size
+    results:
+      time: true
+    output: "../config/plots/obs_experiments/VesselMaze02_obs_size.tex"
