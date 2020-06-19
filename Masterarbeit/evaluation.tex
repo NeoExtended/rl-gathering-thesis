@@ -357,7 +357,56 @@ In contrast to the discrete reward variations, all continuous reward configurati
 The reward experiments also showed, that deviations between repeated trials are very small, but increase with instance size. This can be observed, by comparing the best and average result among different trials over our three test instances.
 
 \section{Observations} \label{sec:EvalObs}
-Observations
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & (168, 168) & 356.47 & 356.47 & \textbf{6.22M} & 17:49:36h \\
+            2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
+            3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
+            4 & (24, 24) & 500.00 & 500.00 & 12M & \textbf{2:54:06h} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Maze0122}
+\end{table}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
+            2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
+            3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
+            4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
+            5 & (12, 12) & 500.00 & 500.00 & 1.41M & \textbf{0:15:19h} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Maze0318}
+\end{table}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
+            2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+            3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
+            4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
+            5 & (12, 12) & 494.75 & 495.42 & 6M & \textbf{0:31:24h} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{VesselMaze02}
+\end{table}
+
 \section{RL Algorithms} \label{sec:EvalRLAlgorithms}
 RL Algorithms
 \section{Hyperparameters} \label{sec:EvalParameters}
