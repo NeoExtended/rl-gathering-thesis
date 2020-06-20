@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Union
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -9,6 +9,8 @@ import numpy as np
 
 # logging.getLogger('matplotlib.font_manager').disabled = True
 from baselines_lab.utils.tensorboard.log_reader import TensorboardLogReader, interpolate, LogReader
+
+
 
 
 class Plotter:
@@ -33,7 +35,8 @@ class Plotter:
                     alias: Optional[Dict[str, str]] = None,
                     plot_avg_only: bool = False,
                     smoothing: float = 0.6,
-                    max_step: Optional[int] = None):
+                    max_step: Optional[int] = None,
+                    trial: Optional[Union[int, List[int]]] = None):
         """
         Creates and saves the plots defined by the given tags.
 
@@ -68,6 +71,11 @@ class Plotter:
                     legend_label = alias[os.path.basename(log_dir)]
                 if len(step_data[0]) == 0:
                     continue
+                if trial is not None:
+                    if isinstance(trial, list):
+                        step_data, value_data = np.asarray(step_data[trial[i]]), np.asarray(value_data[trial[i]])
+                    else:
+                        step_data, value_data = np.asarray(step_data[trial]), np.asarray(value_data[trial])
 
                 self.add_plot(step_data, value_data, self.cmap(i), legend_label, plot_avg_only, smoothing)
 

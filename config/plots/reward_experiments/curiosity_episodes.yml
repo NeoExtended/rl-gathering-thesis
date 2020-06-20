@@ -7,6 +7,7 @@ jobs:
     source: evaluation
     max_step: 2000
     smoothing: 0.0
+    trial: 1
     alias:
       "2020_06_05_211401": "CR 11"
       "2020_06_05_171325": "CR 16"
