@@ -215,7 +215,8 @@ class HyperparameterOptimizer:
             except:
                 # Random hyperparams may be invalid
                 logging.debug("Something went wrong - stopping trial.")
-                raise
+                del model
+                raise optuna.exceptions.TrialPruned()
             del model
 
             if evaluation_callback.best_mean_reward() > self.current_best:
