@@ -212,9 +212,9 @@ class HyperparameterOptimizer:
                 logging.debug("Training model...")
                 model.learn(trial_config['search']['n_timesteps'],
                             callback=[evaluation_callback, self.logger])
-            except:
+            except Exception as ex:
                 # Random hyperparams may be invalid
-                logging.debug("Something went wrong - stopping trial.")
+                logging.warning("Something went wrong - stopping trial. {}".format(ex))
                 del model
                 raise optuna.exceptions.TrialPruned()
             del model
