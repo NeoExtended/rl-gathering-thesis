@@ -5,6 +5,7 @@ from stable_baselines.common.policies import ActorCriticPolicy, mlp_extractor
 from baselines_lab.utils.tf_utils import build_cnn, build_dynamic_cnn
 import numpy as np
 
+
 class SimpleMazeCnnPolicy(ActorCriticPolicy):
     """
     Simple CNN policy with Leaky RELU activations.
