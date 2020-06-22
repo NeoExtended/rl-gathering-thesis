@@ -122,7 +122,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
 
     # Add normalization wrapper for all algorithms except dqn here to save computations before frame stack
     if normalize and "dqn" not in algorithm_name:
-        _add_normalization_wrapper(env, n_envs, normalize)
+        env = _add_normalization_wrapper(env, n_envs, normalize)
 
     if curiosity:
         if isinstance(curiosity, bool):
@@ -148,7 +148,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
 
     # Add normalization wrapper here to include frame stack when training with dqn.
     if normalize and "dqn" in algorithm_name:
-        _add_normalization_wrapper(env, n_envs, normalize)
+        env = _add_normalization_wrapper(env, n_envs, normalize)
 
     if buffer_step_data:
         env = VecStepSave(env)
