@@ -180,6 +180,9 @@ class TrainSession(Session):
         if n_trials == 1:
             self._setup_session()
             self._run_experiment()
+            del self.env
+            del self.agent
+            del self.saver
         else:
             for i in range(n_trials):
                 trial_dir = os.path.join(self.log, "trial_{}".format(i))
