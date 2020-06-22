@@ -102,10 +102,10 @@ def create_environment(config, seed, log_dir=None, video_path=None, evaluation=F
         else:
             raise ValueError("Got invalid wrapper with value {}".format(str(wrapper)))
 
-    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, record_images)
+    return _create_vectorized_env(env_id, config, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, record_images, alg_config['name'])
 
 
-def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, buffer_step_data):
+def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, log_dir, wrappers, normalize, frame_stack, video_path, evaluation, scale, curiosity, buffer_step_data, algorithm_name):
     if n_envs == 1:
         env = DummyVecEnv([make_env(env_id, env_kwargs, 0, seed, log_dir, wrappers, evaluation=evaluation)])
     else:
@@ -120,19 +120,9 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
     if evaluation:
         env = VecEvaluationWrapper(env)
 
-    if normalize:
-        if isinstance(normalize, bool):
-            env = VecNormalize(env)
-        elif isinstance(normalize, dict):
-            if 'trained_agent' in normalize:
-                path = normalize.pop('trained_agent')
-                env = VecNormalize.load(path, env)
-                env.training = normalize.pop('training', True)
-            elif normalize.pop('precompute', False):
-                samples = normalize.pop('samples', 10000)
-                env = _precompute_normalization(env, n_envs, samples, normalize)
-            else:
-                env = VecNormalize(env, **normalize)
+    # Add normalization wrapper for all algorithms except dqn here to save computations before frame stack
+    if normalize and "dqn" not in algorithm_name:
+        _add_normalization_wrapper(env, n_envs, normalize)
 
     if curiosity:
         if isinstance(curiosity, bool):
@@ -156,9 +146,29 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
     if frame_stack:
         env = VecFrameStack(env, **frame_stack)
 
+    # Add normalization wrapper here to include frame stack when training with dqn.
+    if normalize and "dqn" in algorithm_name:
+        _add_normalization_wrapper(env, n_envs, normalize)
+
     if buffer_step_data:
         env = VecStepSave(env)
 
+    return env
+
+
+def _add_normalization_wrapper(env, n_envs, normalize):
+    if isinstance(normalize, bool):
+        env = VecNormalize(env)
+    elif isinstance(normalize, dict):
+        if 'trained_agent' in normalize:
+            path = normalize.pop('trained_agent')
+            env = VecNormalize.load(path, env)
+            env.training = normalize.pop('training', True)
+        elif normalize.pop('precompute', False):
+            samples = normalize.pop('samples', 10000)
+            env = _precompute_normalization(env, n_envs, samples, normalize)
+        else:
+            env = VecNormalize(env, **normalize)
     return env
 
 
