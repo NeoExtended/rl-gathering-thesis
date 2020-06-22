@@ -153,12 +153,12 @@ class DQNSampler(Sampler):
                       'buffer_size': ('categorical', [250000, 500000, 1000000, 1500000]),
                       'train_freq': ('categorical', [2, 4, 8, 16]),
                       'batch_size': ('categorical', [8, 16, 32, 64]),
-                      #'target_network_update_freq': ('categorical', [16000, 32000, 64000]),
+                      'target_network_update_freq': ('categorical', [500, 1000, 2000, 4000, 8000, 16000]),
                       'exploration_fraction': ('categorical', [0.1, 0.2, 0.3, 0.4, 0.5]),
                       'exploration_final_eps': ('categorical', [0.01, 0.02, 0.04, 0.07, 0.1]),
-                      'prioritized_replay_alpha': ('uniform', (0.2, 0.8)),
-                      'prioritized_replay_beta0': ('uniform', (0.2, 0.8)),
-                      'learning_starts': ('categorical', [20000, 40000, 80000, 160000])}
+                      #'prioritized_replay_alpha': ('uniform', (0.2, 0.8)),
+                      #'prioritized_replay_beta0': ('uniform', (0.2, 0.8)),
+                      'learning_starts': ('categorical', [1000, 2000, 4000, 8000, 16000])}
         super().__init__(config, parameters)
 
     def transform_samples(self, alg_sample, env_sample):
