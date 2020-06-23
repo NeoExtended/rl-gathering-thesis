@@ -1,13 +1,9 @@
 algorithm:
   cliprange: 0.2
-  cliprange_vf: null
   ent_coef: 1.0e-07
   gamma: 0.98
   lam: 0.99
-  learning_rate:
-    type: "linear"
-    initial_value: 0.0025
-    final_value: 0.0001
+  learning_rate: 0.0005
   n_steps: 512
   name: ppo2
   nminibatches: 16
