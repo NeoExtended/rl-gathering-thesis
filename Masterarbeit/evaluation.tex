@@ -147,6 +147,7 @@ Throughout this section we will provide a number of tables, which use abbreviati
 \end{table}
 
 
+\subsection{Test Results} \label{sec:RewardTestResults}
 
 \paragraph{Corridor Environemnt.}
 We begin with our easy instance Corridor. In our tests, we use the basic settings from Section \ref{sec:TestProcedure} and train for 3 million steps per trial. Table \ref{tab:Maze0318/Reward/Discrete} contains the results for discrete rewards and Table \ref{tab:Maze0318/Reward/Continuous} contains the results for continuous rewards.
@@ -352,7 +353,36 @@ In contrast to the discrete reward variations, all continuous reward configurati
     \caption[Evaluation of Continuous Reward with the Brain Environment]{Evaluation of continuous rewards with the brain environment.} \label{tab:Maze0122/Reward/Continuous}
 \end{table}
 
-\paragraph{Conclusion.} When deciding for a reward for our further experiments, we have to keep in mind, that every extra computation will be executed for each individual training step. The more reward components we use, the longer training will take. When comparing the results on the brain environment for continuous reward, we saw that the addition of gathering reward just slightly improves the average end result. If we look at the wall-clock time, trials using the gathering reward took 4:50h to complete, while trials using only the continuous reward took 4:20h. This means that with gathering reward, we saw an increase of about 11.5\% more time. Since discrete rewards only scale well with additional reward components we always have the same problem here. We therefore will use continuous internally normalized reward for all further experiments.
+
+\subsection{Analysis}
+While it is easy to understand that dense rewards provide more information to the agent and thus produced superior results other aspects are not as clear. In this section we want to analyze the learned behavior in different reward settings to get a better understanding why certain configurations work better than others.
+
+\paragraph{Curiosity.} Intrinsic reward has been the key to success for previous work, while our experiments showed a negative influence on training performance. To understand this, we analyzed how episodes are solved by agents trained with and without curiosity. In Figure \ref{fig:curiosity_ep_analysis} we show different metrics taken at each step over the course of a single episode on the corridor environment. Both agents were trained using continuous reward, using the settings from Experiment 11 (without curiosity) and Experiment 16 (with curiosity). 
+
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/episode_analysis/curiosity_total_distance.pdf} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/episode_analysis/curiosity_max_distance.pdf} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/rewards/episode_analysis/curiosity_unique_particles.pdf} \\
+        \end{tabular}
+    \end{center}
+    \caption[Episode metrics on the Corridor Environment]{Metrics for a single example episode on the corridor instance. The steps are given without the MaxAndSkip wrapper and therefore in comparison 4 times larger. The blue line shows an agent trained with curiosity (see Experiment 16) and the orange line an agent trained without curiosity (see Experiment 11). The agent trained without curiosity is able to end the episode after about 250 steps, while the agent trained with curiosity does not end the episode during the 2000 steps time limit.} \label{fig:curiosity_ep_analysis}
+\end{figure}
+
+
+By looking at Figure \ref{fig:curiosity_ep_analysis} we can see, that both agents are able to reduce the total distance to the goal position very fast at the beginning of the episode. While the agent trained without curiosity finishes the episode after about 250 steps, the agent trained with curiosity decides to continue the episode by moving the particles back and forth close to the goal position. One could argue, that the agent might have to deal with a single particle that was left behind in the maze earlier, but this is not the case. We can see this by looking at the maximum distance any particle is away from the goal position. The particle which is the farthest away from the goal is closer than 20 pixels before 500 steps and since the corridor environment only contains straight corridors, we can argue, that this particle cannot be stuck behind any obstacle. 
+
+But why has the agent learned to not finish the episode when training with curiosity? We found, that there is a number of reasons why curiosity reward can be maximized by not finishing the episode. Let us begin with the easiest one: In Section \ref{sec:blRND} we showed, that an agent trained purely with curiosity learns to maximize episode lengths, since it is able to explore more states during longer episodes, resulting in more intrinsic reward. The same happens in our particle environment where short episodes result in less intrinsic reward. Curiosity therefore works against our goal of achieving short episodes. 
+
+Another problem with curiosity comes from the nature of how the observations are generated in our environment: Since particles are directly shown in the observation and there are a lot of particles at the same time, the agent has control over a decent number of its own observation inputs. Since the agent is able to rapidly move the particles to appear at different positions, it is able to generate a massive amount of environment states and therefore observations similar to input noise. This situation is directly related to the \textit{noisy tv problem} described by Burda et al. \cite{burda2018large}. We can directly see this behavior in Figure \ref{fig:curiosity_ep_analysis}, where the agent has learned to increase the number of states, by gradually moving the particles to and away from the goal position, while slowly reducing the number of unique particles. Unfortunately this problem is not easy to fix. Implementing a large goal reward, may increase the number of episodes where the agent actually brings all particles to the goal, but the agent can still finish the episode at the last possible moment. Increasing the time penalty was found to help to some extend during our initial experiments, but requires very careful fine-tuning for each environment and does therefore also not fix the underlying problem.
+
+\paragraph{Strategies.}
+
+
+
+\subsection{Conclusion}
+When deciding for a reward for our further experiments, we have to keep in mind, that every extra computation will be executed for each individual training step. The more reward components we use, the longer training will take. When comparing the results on the brain environment for continuous reward, we saw that the addition of gathering reward just slightly improves the average end result. If we look at the wall-clock time, trials using the gathering reward took 4:50h to complete, while trials using only the continuous reward took 4:20h. This means that with gathering reward, we saw an increase of about 11.5\% more time. Since discrete rewards only scale well with additional reward components we always have the same problem here. We therefore will use continuous internally normalized reward for all further experiments.
 
 The reward experiments also showed, that deviations between repeated trials are very small, but increase with instance size. This can be observed, by comparing the best and average result among different trials over our three test instances.
 
