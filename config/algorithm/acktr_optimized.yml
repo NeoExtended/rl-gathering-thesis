@@ -1,0 +1,16 @@
+algorithm:
+  async_eigen_decomp: true
+  ent_coef: 0.01
+  gae_lambda: 0.99
+  gamma: 0.99
+  learning_rate: 0.2
+  lr_schedule: "constant"
+  n_cpu_tf_sess: null
+  n_steps: 32
+  name: "acktr"
+  policy:
+    name: SimpleMazeCnnPolicy
+    scale: false
+  tensorboard_log: true
+  verbose: 1
+  vf_coef: 0.25

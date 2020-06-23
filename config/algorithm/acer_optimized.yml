@@ -1,0 +1,16 @@
+algorithm:
+  buffer_size: 5000
+  ent_coef: 1.0e-4
+  gamma: 0.98
+  learning_rate: 0.0007
+  lr_schedule: "linear"
+  n_steps: 16
+  q_coef: 0.6
+  replay_ratio: 4
+  replay_start: 1000
+  name: "acer"
+  policy:
+    name: SimpleMazeCnnPolicy
+    scale: false
+  tensorboard_log: true
+  verbose: 1

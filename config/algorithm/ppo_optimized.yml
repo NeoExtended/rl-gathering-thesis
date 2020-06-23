@@ -1,18 +1,19 @@
 algorithm:
-  cliprange: 0.05
+  cliprange: 0.2
   cliprange_vf: null
-  ent_coef: 1.0e-05
+  ent_coef: 1.0e-07
   gamma: 0.98
-  lam: 0.95
+  lam: 0.99
   learning_rate:
     type: "linear"
     initial_value: 0.0025
     final_value: 0.0001
-  n_steps: 128
+  n_steps: 512
   name: ppo2
-  nminibatches: 4
-  noptepochs: 16
+  nminibatches: 16
+  noptepochs: 12
   policy:
     name: SimpleMazeCnnPolicy
+    scale: false
   tensorboard_log: true
-  verbose: 10
+  verbose: 1
