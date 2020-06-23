@@ -59,8 +59,8 @@ def make_figure(config, directories):
         reader = TensorboardLogReader(directories)
 
     elif source == "evaluation":
-        tags = config.get("tags", ["distance", "n_particles"])
-        names = config.get("names", ["Total Distance", "Unique Particles"])
+        tags = config.get("tags", ["distance", "n_particles", "max_distance"])
+        names = config.get("names", ["Total Distance", "Unique Particles", "Maximum Distance"])
         reader = EvaluationLogReader(directories)
     else:
         raise ValueError("Unknown source {}".format(source))

@@ -61,7 +61,7 @@ class Plotter:
         logging.info("Saving plots to {}.".format(self.path))
 
         for tag, name, label in zip(tags, names, y_labels):
-            self.prepare_plot("steps", label, name)
+            self.prepare_plot("Steps", label, name)
 
             for i, log_dir in enumerate(reader.logs):
                 step_data, value_data = values[log_dir][tag]

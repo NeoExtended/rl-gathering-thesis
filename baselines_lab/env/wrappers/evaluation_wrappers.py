@@ -29,6 +29,7 @@ class ParticleInformationWrapper(gym.Wrapper):
         self.episodes = []
         self.total_distance = []
         self.n_particles = []
+        self.max_distance = []
         self.eval_times = []
 
     def step(self, action):
@@ -43,18 +44,21 @@ class ParticleInformationWrapper(gym.Wrapper):
             self.eval_times.append(self.step_counter)
             self.total_distance.append(int(self.maze_env.reward_generator.calculator.total_cost))
             self.n_particles.append(len(self.maze_env.reward_generator.calculator.unique_particles))
+            self.max_distance.append(int(self.maze_env.reward_generator.calculator.max_cost))
 
     def reset(self, **kwargs):
         obs = super().reset(**kwargs)
         if len(self.eval_times) > 0:
             self.episodes.append({"x": self.eval_times,
                                   "n_particles": self.n_particles,
-                                 "distance": self.total_distance})
+                                 "distance": self.total_distance,
+                                  "max_distance": self.max_distance})
         self.step_counter = 0
         self.last_eval = -self.eval_interval
         self.eval_times = []
         self.n_particles = []
         self.total_distance = []
+        self.max_distance = []
         return obs
 
     def close(self):
