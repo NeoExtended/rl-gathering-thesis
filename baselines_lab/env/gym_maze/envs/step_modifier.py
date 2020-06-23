@@ -11,7 +11,7 @@ class StepModifier(ABC):
         self.action_map = action_map
         self.np_random = np.random.random.__self__
 
-    def seed(self, np_random: np.random.generator):
+    def seed(self, np_random: np.random.Generator):
         self.np_random = np_random
 
     def reset(self, locations: np.ndarray, maze: np.ndarray, freespace: np.ndarray):
