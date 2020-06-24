@@ -98,11 +98,8 @@ class ReplaySession(Session):
                                       video_path=data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 
-        if not args.random_agent:
-            self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
-        else:
-            self.agent = None
-
+        self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
+        other_agents = self._setup_additional_agents(config, args)
         obs = self.env.reset()
 
         self.deterministic = not args.stochastic
@@ -117,10 +114,21 @@ class ReplaySession(Session):
             # Render about 4 complete episodes per env in enjoy mode without evaluation.
             self.num_episodes = self.config['env']['n_envs'] * 4
 
-        self.runner = Runner(self.env, self.agent, deterministic=self.deterministic)
+        self.runner = Runner(self.env, self.agent, deterministic=self.deterministic, other_agents=other_agents, random=args.random_agent)
 
         if args.plot:
             self._plot(config['meta']['session_dir'])
+
+    def _setup_additional_agents(self, config, args):
+        other_agents = None
+        if config.get("enjoy", None):
+            if config['enjoy'].get("agreement", None):
+                other_agents = []
+                for agent in config['enjoy']['agreement']:
+                    cfg = copy.deepcopy(config)
+                    config_util.set_checkpoints(cfg, agent, args.type, args.trial)
+                    other_agents.append(create_model(cfg['algorithm'], self.env, seed=self.config['meta']['seed']))
+        return other_agents
 
     def _setup_video_recorder(self, video_path):
         if distutils.spawn.find_executable("avconv") or distutils.spawn.find_executable("ffmpeg"):
