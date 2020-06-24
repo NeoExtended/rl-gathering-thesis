@@ -12,7 +12,7 @@ import tensorflow as tf
 IMAGES_PATH = ".."
 
 
-def read_summary_values(file, tags, max_step=None):
+def read_summary_values(file, tags, max_step=None, step_type="step"):
     steps = [list() for tag in tags]
     values = [list() for tag in tags]
     begin = None
@@ -27,7 +27,11 @@ def read_summary_values(file, tags, max_step=None):
         for value in summary.summary.value:
             for i, tag in enumerate(tags):
                 if tag in value.tag:
-                    steps[i].append(summary.step)
+                    if step_type == "step":
+                        steps[i].append(summary.step)
+                    elif step_type == "time":
+                        minutes = (summary.wall_time - begin) / 60
+                        steps[i].append(minutes)
                     values[i].append(value.simple_value)
     delta = end - begin
     return {tag: (step, val) for tag, step, val in zip(tags, steps, values)}, delta
@@ -56,7 +60,7 @@ class LogReader(ABC):
         self.values = None
 
     @abstractmethod
-    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
+    def read_data(self, tags: List[str], max_step: Optional[int] = None, step_type: str = "step") -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
         """
         Reads data from the log.
 
@@ -80,7 +84,7 @@ class TensorboardLogReader(LogReader):
 
         self.deltas = None
 
-    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
+    def read_data(self, tags: List[str], max_step: Optional[int] = None, step_type: str = "step") -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
         self.values = {}
         self.deltas = {}
         for dir in self.logs:
@@ -88,7 +92,7 @@ class TensorboardLogReader(LogReader):
             deltas = []
             for log_file in self.logs[dir]:
                 logging.info("Reading tensorboard logs from {}. This may take a while...".format(log_file))
-                data, delta = read_summary_values(str(log_file), tags, max_step)
+                data, delta = read_summary_values(str(log_file), tags, max_step, step_type)
                 deltas.append(delta)
                 for tag in data:
                     if tag not in tag_values:
@@ -109,7 +113,7 @@ class EvaluationLogReader(LogReader):
     def __init__(self, log_dirs: List[str]) -> None:
         super(EvaluationLogReader, self).__init__(log_dirs, "**/*.episode_information.yml")
 
-    def read_data(self, tags: List[str], max_step: Optional[int] = None) -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
+    def read_data(self, tags: List[str], max_step: Optional[int] = None, step_type: str = "step") -> Dict[str, Dict[str, Tuple[List[int], List[Any]]]]:
         self.values = {}
 
         for dir in self.logs:

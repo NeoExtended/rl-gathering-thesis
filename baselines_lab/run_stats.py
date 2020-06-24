@@ -49,6 +49,12 @@ def make_figure(config, directories):
     alias = config.get("alias", None)
     max_step = config.get("max_step", None)
     trial = config.get("trial", None)
+    step_type = config.get("step_type", "step")
+
+    if step_type == "step":
+        x_label = "Steps"
+    else:
+        x_label = "Time (in minutes)"
 
     if source == "tensorboard":
         tags = config.get("tags", ["episode_length/ep_length_mean"])
@@ -66,7 +72,8 @@ def make_figure(config, directories):
         raise ValueError("Unknown source {}".format(source))
 
     plot = Plotter(output_dir, file_format=file_format)
-    plot.from_reader(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias, max_step=max_step, trial=trial)
+    plot.from_reader(reader, tags=tags, names=names, plot_avg_only=plot_avg_only, smoothing=smoothing, alias=alias,
+                     max_step=max_step, trial=trial, step_type=step_type, x_label=x_label)
 
 
 def main(args=None):

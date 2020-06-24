@@ -32,11 +32,13 @@ class Plotter:
                     tags: List[str],
                     names: List[str],
                     y_labels: Optional[List[str]] = None,
+                    x_label: str = "Steps",
                     alias: Optional[Dict[str, str]] = None,
                     plot_avg_only: bool = False,
                     smoothing: float = 0.6,
                     max_step: Optional[int] = None,
-                    trial: Optional[Union[int, List[int]]] = None):
+                    trial: Optional[Union[int, List[int]]] = None,
+                    step_type: str = "step"):
         """
         Creates and saves the plots defined by the given tags.
 
@@ -45,6 +47,7 @@ class Plotter:
         :param plot_avg_only: (bool) Weather or not to only plot the average for runs with multiple trials, or additional std around.
         :param tags: (List[str]) Tags which correspond to summary tag names in the tensorboard logs
         :param names: (List[str]) Names for the tags. Will be used as ylabel in the plot and as file name.
+        :param step_type: (str) Type of the x-axis ("step" for steps and "time" for minutes)
         """
         y_labels = y_labels if y_labels is not None else names
         assert len(tags) == len(names) == len(y_labels), "There must be a name for each tag and vise versa!"
@@ -56,12 +59,12 @@ class Plotter:
             self.cmap = plt.cm.get_cmap("hsv", len(reader.logs) + 5)
 
         logging.info("Creating plots.")
-        values = reader.read_data(tags, max_step=max_step)
+        values = reader.read_data(tags, max_step=max_step, step_type=step_type)
 
         logging.info("Saving plots to {}.".format(self.path))
 
         for tag, name, label in zip(tags, names, y_labels):
-            self.prepare_plot("Steps", label, name)
+            self.prepare_plot(x_label, label, name)
 
             for i, log_dir in enumerate(reader.logs):
                 step_data, value_data = values[log_dir][tag]
