@@ -16,7 +16,7 @@ Our experiments involved several sources of randomness. To ensure consistent exe
 To determine the performance of a configuration, we look at the end result during training for the average and best trial. We also determine the step in which the average episode length becomes smaller by five percent in comparison to the environments' time limit. We call this moment the \textit{drop}, since performance usually suddenly increases when the agent is able to reach the goal for the first time. The drop can be used as an indicator for how fast the agent is able to find a first usable result, while the end-of-training episode length is an indicator for how good the best solution is the agent is able to find. 
 
 \paragraph{Initial Hyperparameters.}
-For our initial experiments we wanted to use general purpose hyperparameters for the PPO algorithm. We therefore used parameters similar to the parameters used in the RND paper \cite{burda2018exploration} (see Table \ref{tab:RNDParameters}) which showed to produce good results across all Atari environments. 
+For our initial experiments we wanted to use general purpose hyperparameters for the PPO algorithm. We therefore used parameters similar to the parameters used in the RND paper \cite{burda2018exploration} (see Table \ref{tab:PPOHyperparemeters}) which showed to produce good results across all Atari environments. 
 
 
 \begin{table} [ht]
@@ -38,7 +38,7 @@ For our initial experiments we wanted to use general purpose hyperparameters for
             \hline
         \end{tabular}
     \end{center}
-    \caption[Default Hyperparameters]{Default hyperparameters for PPO for the initial experiments.} \label{tab:RNDParameters}
+    \caption[Default Hyperparameters]{Default hyperparameters for PPO for the initial experiments.} \label{tab:PPOHyperparemeters}
 \end{table}
 
 We also used a common preprocessing pipeline for the observations which was also used in previous experiments \cite{huang2019}:
@@ -56,7 +56,7 @@ We also used a common preprocessing pipeline for the observations which was also
             \hline
         \end{tabular}
     \end{center}
-    \caption[Default Observation Preprocessing]{Default observation preprocessing for all environments.} \label{tab:RNDParameters}
+    \caption[Default Observation Preprocessing]{Default observation preprocessing for all environments.} \label{tab:RNDPreprocessing}
 \end{table}
 
 If not stated otherwise, we also normalized the observations by $x \mapsto x/255$. Observations for the RND curiosity module are normalized by $x \mapsto CLIP((x-\mu)/\sigma, [-5, 5])$ instead and no frame stacking is applied.
@@ -392,68 +392,141 @@ To verify this result we monitor the similarity between actions for a given obse
     \caption[Agent Action Similarity for Different Rewards]{Similarity of actions between different agents given in percent of equal actions for the same observation on the brain environment. Similarity is measured by first generating observations by replaying the agents and then comparing the actions different agents would have chosen in the same situation.} \label{tab:Maze0122/Reward/Similarity}
 \end{table}
 
-We included the results in terms of percent of equal actions for the same observations in Table \ref{tab:Maze0122/Reward/Similarity}. A surprising result is, that two agents trained with the \textit{same} reward only produce the same action for about 50\% of the observations. The most reasonable explanation is that we have a set with very similar actions (e.g. NE, N, NW) and there are many situations where either of these actions can be used. Different neural networks then evolved into using only one of them for a specific input and therefore produce very dissimilar results for the same observation, even when trained with the same reward. Keeping this baseline in mind, we can see, that agents trained with different rewards also differ in their percentage of equal actions. Most notably the both worst performing agents trained with discrete reward (DR 1 and DR 3). For all other agents, the differences are significantly smaller. We can therefore assume, that the learned strategies only differ slightly and the agents all evolved into learning an similar optimized strategy independent of the used reward. 
+We included the results in terms of percent of equal actions for the same observations in Table \ref{tab:Maze0122/Reward/Similarity}. A surprising result is, that two agents trained with the \textit{same} reward only produce the same action for about 50\% of the observations. The most reasonable explanation is that we have a set with very similar actions (e.g. NE, N, NW) and there are many situations where either of these actions can be used. Different neural networks then evolved into using only one of them for a specific input and therefore produce very dissimilar results for the same observation, even when trained with the same reward. Keeping this baseline in mind, we can see, that agents trained with different rewards also differ in their percentage of equal actions. Most notably the both worst performing agents trained with discrete reward (DR 1 and DR 3). For all other agents, the differences are significantly smaller. We can observe, that the agents using internally normalized (CR 2) and not internally normalized reward (CR 1) essentially learned the same strategy since they agree on even more observations than the two agents trained with DR 2. Adding gathering reward seems to lead to a slightly different strategy with between 2 and 5 percent of different action choices. 
+
+Overall the choices of all agents which also yield good performance are relatively close. We can therefore assume, that the learned strategies only differ slightly and the agents all evolved into learning an similar optimized strategy independent of the used reward. 
 
 \subsection{Conclusion} \label{sec:RewardConclusion}
-When deciding for a reward for our further experiments, we have to keep in mind, that every extra computation will be executed for each individual training step. The more reward components we use, the longer training will take. When comparing the results on the brain environment for continuous reward, we saw that the addition of gathering reward just slightly improves the average end result. If we look at the wall-clock time, trials using the gathering reward took an average of 4:51h to complete, while trials using only the continuous reward took 4:22h on average. This means that with gathering reward, we saw an increase of about 11\% more time. While additional components might provide benefits for special environments (see Section \ref{sec:EvalRandomness}) they do not provide significant improvements for our general case. Depending on the environment size, multiple rewards can be used to achieve good performance, but only a few scale well into larger instances. We therefore will use continuous internally normalized reward for all further experiments.
+When deciding for a reward for our further experiments, we have to keep in mind, that every extra computation will be executed for each individual training step. The more reward components we use, the longer training will take. When comparing the results on the brain environment for continuous reward, we saw that the addition of gathering reward just slightly improves the average end result. If we look at the wall-clock time, a single trial on the brain environment using the gathering reward took an average of 4:54h to complete, while a trial using only the continuous reward took 4:27h on average. This means that with gathering reward, we saw an increase of about 10\% more time. While additional components might provide benefits for special environments (see Section \ref{sec:EvalRandomness}) they do not provide significant improvements for our general case. Depending on the environment size, multiple rewards can be used to achieve good performance, but only a few scale well into larger instances. We therefore will use continuous internally normalized reward for all further experiments.
 
 \section{RL Algorithms} \label{sec:EvalRLAlgorithms}
-RL Algorithms, Hyperparameter optimization, etc
+In this section we want to evaluate how different RL algorithms perform when solving maze environments. We presented a number of algorithms in Chapter \ref{chp: RLOverview} and want to test some of the most recent approaches including DQN (see Section \ref{ssec:DeepQLearning}), PPO (see Section \ref{ssec:PPO}), ACER and ACKTR (see Section \ref{ssec:AlternativeCombinedMethods}). Since most RL algorithms are very sensitive to their hyperparameters we used our automated hyperparametersearch to find a good starting point. We then used manual fine-tuning to get an optimal configuration for each algorithm. Interestingly, our chosen hyperparameters are very similar to the parameters chosen in the initial papers for the Atari game suite. The parameters for DQN, ACER and ACKTR can be found in Table TODO. For PPO, we found that the parameters we choose during our initial experiments were already suited to yield near-optimal results and we will therefore use the parameters given in Table \ref{tab:PPOHyperparemeters}. We found that increasing the number of parallel environments did not further improve performance. Increasing the number of optimization epochs could yield faster initial results, but is very time-consuming. Decreasing the number of steps also has a positive initial effect, but worsens the final result.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \begin{tabular}{|l|c|}
+                \hline
+                \multicolumn{1}{|c|}{Hyperparameter} & Value \\
+                \hline
+                Rollout Length & 16 \\
+                Buffer Size & 5000 \\
+                Entropy Coefficient & 0.0001 \\
+                $\gamma$ & 0.98 \\
+                Learning Rate & 0.0007 \\
+                Learning Rate Schedule & Linear \\
+                Optimization Algorithm & RMSProp \cite{tieleman2012lecture} \\
+                Q Coefficient & 0.6 \\
+                Replay Ratio & 4 \\
+                Replay Start & 1000 \\
+                \hline
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (a) Hyperparameters for ACER} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{|l|c|}
+                \hline
+                \multicolumn{1}{|c|}{Hyperparameter} & Value \\
+                \hline
+                Rollout Length & 32 \\
+                Entropy Coefficient & 0.01 \\
+                $\gamma$ & 0.99 \\
+                $\lambda$ & 0.99 \\
+                Learning Rate & 0.2 \\
+                Value Function Coefficient & 0.25 \\
+                \hline
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (b) Hyperparameters for ACKTR} \\
+    
+        \end{tabular}
+    \end{center}
+    \caption[Hyperparameters]{Hyperparameters used for different RL Algorithms.}
+\end{table}
+
 
 \paragraph{Result Variation}
 Variation
 
 \section{Observations} \label{sec:EvalObs}
-\begin{table}[htp]
-    \begin{center}
-        \begin{tabular}{rcrrrr}
-            \toprule
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-            \midrule
-            1 & (168, 168) & 356.47 & 356.47 & \textbf{6.22M} & 17:49:36h \\
-            2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
-            3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
-            4 & (24, 24) & 500.00 & 500.00 & 12M & \textbf{2:54:06h} \\
-            \bottomrule
-        \end{tabular}
-    \end{center}
-    \caption{Maze0122}
-\end{table}
+Until now, we always trained our agents with the same observation size independent of the instance size. Surprisingly, we had no problems to train the agent, even on our largest instance which is over 10 times larger than our smallest instance. In this section we want to analyze how different input sizes affect learning on the same instance. 
+
+Since observation since does not seem to matter to much in terms of performance, we were curious, if the agent would be able to solve an instance without any input at all. This means that the agent only receives a single input in form of a step counter. This counter gets increased by 1 after each agent-environment interaction. Since the goal is static, the agent should be able to remember a sequence of movements which brings all (or most) particles to the goal position. Since we only have a single input, we have to change the network architecture for these experiments. All experiments which work with input size 1 use a fully connected network with three layers. The first two layers are shared between the actor and the critic and contain 512 and 1024 neurons respectively. The network then diverges and contains another fully connected layer with 256 neurons for each the actor and the critic.
+
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{rcrrrr}
-            \toprule
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-            \midrule
-            1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
-            2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
-            3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
-            4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
-            5 & (12, 12) & 500.00 & 500.00 & 1.41M & \textbf{0:15:19h} \\
-            \bottomrule
+        \begin{tabular}{c}
+
+
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
+                2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
+                3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
+                4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
+                5 & (12, 12) & 500.00 & 500.00 & 1.41M & 0:15:19h \\
+                6 & (-, -) & 307.50 & 307.51 & 251k & \textbf{0:11:06h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (a) Results for the Corridor instance} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
+                2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+                3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
+                4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
+                5 & (12, 12) & 494.75 & 495.42 & 6M & 0:31:24h \\
+                6 & (-, -) & 500.00 & 500.00 & 6M & \textbf{0:22:28h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (b) Results for the Vessel Instance} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & (168, 168) & 356.47 & 356.47 & \textbf{6.22M} & 17:49:36h \\
+                2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
+                3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
+                4 & (24, 24) & 500.00 & 500.00 & 12M & 2:54:06h \\
+                5 & (-, -) & 500.00 & 500.00 & 12M & \textbf{0:49:34h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (c) Results for the Brain instance. We excluded results without} \\
+            {\small any downsizing due to the massive increase in training time.} \\
+            %\addlinespace[0.25cm]
         \end{tabular}
+        
     \end{center}
-    \caption{Maze0318}
+    \caption[Training Results for Different Observation Sizes]{Training results with different observation sizes. (-, -) denotes only a single observation in the form of a step counter.} \label{tab:ObsSize}
 \end{table}
 
-\begin{table}[htp]
+Similar to before, we executed the experiments on our three standard instances. We use a wrapper to scale down the input and successively halve the frame size in both dimensions. We then round the size to match the neural network cnn architecture. For the smallest frame sizes $(24 \times 24)$ and $(12 \times 12)$ we have to remove the first convolutional layer of our network to work correctly. Otherwise the network is the same independent of the input.
+
+\begin{figure}[htp]
     \begin{center}
-        \begin{tabular}{rcrrrr}
-            \toprule
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-            \midrule
-            1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
-            2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
-            3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
-            4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
-            5 & (12, 12) & 494.75 & 495.42 & 6M & \textbf{0:31:24h} \\
-            \bottomrule
-        \end{tabular}
+        \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/observations/maze0318_ep_len_time.pdf}
     \end{center}
-    \caption{VesselMaze02}
-\end{table}
+    \caption[Episode Length on the Corridor Environment using Different Observation Sizes]{Average episode length during training with different observation sizes on the corridor environment. The x-axis shows wall-clock time instead of steps to show effective performance.} \label{fig:ObsSize/Maze0318/EpLen}
+\end{figure}
 
+
+The results of our experiments can be found in Table \ref{tab:ObsSize}. We begin by looking at the results from the Corridor instance in Table \ref{tab:ObsSize} (a). We can see, that the agent is able to tolerate much lower observation sizes than 84 by 84. Even at a frame size of 24 by 24 (which is only about 8\% of the original input information) the agent is still able to solve the environment with only slightly worse performance. Interestingly the smaller frame size of 12 by 12 pixels is not sufficient to train the agent, while only a step counter (no observation at all) is sufficient. We that suspect that strong downscaling leads to many similar or even equal environment states even when particles are at very different locations, while the step counter input provides a clear distinction between states and therefore works better. Different frame sizes do not only affect the performance of the learned strategy, but also vastly affects the needed wall-clock time. Figure \ref{fig:ObsSize/Maze0318/EpLen} shows the performance of the agents trained with different observation sizes in relation to real-time. The time does not change linearly between the different frame sizes, because it is directly related to hardware-related limitations, but still increases with larger observation sizes.
+
+
+
+
+\section{Network Architecture}
+Network Sizes and Activation Functions.
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
 Extended Environment Models
