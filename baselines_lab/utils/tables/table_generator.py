@@ -177,12 +177,20 @@ class ObservationSizeTableGenerator(TableGenerator):
         wrappers = config['env']['wrappers']
         found_wrapper = False
         for wrapper in wrappers:
-            if 'WarpGrayscaleFrame' in list(wrapper.keys())[0]:
-                data['Frame Size'] = "({width}, {height})".format(**wrapper['env.wrappers.WarpGrayscaleFrame'])
-                found_wrapper = True
-            elif 'NoObsWrapper' in list(wrapper.keys())[0]:
-                data['Frame Size'] = "-"
-                found_wrapper = True
+            if isinstance(wrapper, dict):
+                if 'WarpGrayscaleFrame' in list(wrapper.keys())[0]:
+                    data['Frame Size'] = "({width}, {height})".format(**wrapper['env.wrappers.WarpGrayscaleFrame'])
+                    found_wrapper = True
+                elif 'NoObsWrapper' in list(wrapper.keys())[0]:
+                    data['Frame Size'] = "-"
+                    found_wrapper = True
+            else:
+                if 'WarpGrayscaleFrame' in wrapper:
+                    data['Frame Size'] = "(84, 84)"
+                    found_wrapper = True
+                elif 'NoObsWrapper' in wrapper:
+                    data['Frame Size'] = "-"
+                    found_wrapper = True
 
         if not found_wrapper:
             if 'Maze0318' in config['env']['name']:
