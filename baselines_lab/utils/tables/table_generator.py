@@ -26,7 +26,7 @@ class TableGenerator(ABC):
     Used to create latex tables for the thesis. Not really a part of the rest of the lab.
     """
 
-    def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False):
+    def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False, std: bool = False):
         self.files = files
         self.best = best
         self.avg = avg
@@ -34,6 +34,7 @@ class TableGenerator(ABC):
         self.run_id = run_id
         self.value_start = 0
         self.time = time
+        self.std = std
 
     def make_table(self, output: str, drop_level: float = 0.05, max_step:Optional[int] = None, format: str = "tex"):
         rows = []
@@ -41,21 +42,23 @@ class TableGenerator(ABC):
             config = config_util.read_config(str(file.joinpath("config.yml")))
             row = self._process_config(config)
             info = TrainingInformation(str(file))
-            drop_train, drop_test, average, min, time = info.log_key_points(drop_level=drop_level, max_step=max_step)
+            info.log_key_points(drop_level=drop_level, max_step=max_step)
 
             if self.best:
-                row["Best"] = min
+                row["Best"] = info.min
             if self.avg:
-                row["Avg"] = average
+                row["Avg"] = info.avg
             if self.drop:
                 if config["env"].get("dynamic_episode_length", False):
-                    row["Drop"] = int(drop_test)
+                    row["Drop"] = int(info.drop_test)
                 else:
-                    row["Drop"] = int(drop_train)
+                    row["Drop"] = int(info.drop_train)
             if self.run_id:
                 row["Run"] = file.name
             if self.time:
-                row["Time"] = time
+                row["Time"] = info.time_delta
+            if self.std:
+                row["Std"] = info.std
 
             rows.append(row)
 
@@ -87,6 +90,9 @@ class TableGenerator(ABC):
         if self.drop:
             table_format.append("r")
             fieldnames.append("Drop")
+        if self.std:
+            table_format.append("r")
+            fieldnames.append("Std")
         if self.run_id:
             sort_start = 1
             table_format.insert(0, "r")
@@ -94,6 +100,7 @@ class TableGenerator(ABC):
         if self.time:
             table_format.append("r")
             fieldnames.append("Time")
+
         return sort_start, fieldnames, table_format
 
     @abstractmethod

@@ -15,30 +15,37 @@ class TrainingInformation(TensorboardLogReader):
     def __init__(self, log_dir: str) -> None:
         super(TrainingInformation, self).__init__([log_dir])
         self.log_dir = log_dir
+        self.avg = None
+        self.min = None
+        self.time_delta = None
+        self.std = None
+        self.drop_train = None
+        self.drop_test = None
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
         self.read_data(tags, max_step=max_step)
         tag_values = self.values[self.log_dir]
 
-        drop1 = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
-        drop2 = self._get_drop(tag_values.get("episode_length/eval_ep_length_mean"), drop_level=drop_level)
+        self.drop_train = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
+        self.drop_test = self._get_drop(tag_values.get("episode_length/eval_ep_length_mean"), drop_level=drop_level)
         step_data, value_data = tag_values.get("episode_length/eval_ep_length_mean")
         step_data, value_data = np.asarray(step_data), np.asarray(value_data)
         # Check if all rows in step data are equal. If not interpolate.
         if step_data.dtype == np.object or not (step_data == step_data[0]).all():
             step_data, value_data = interpolate(step_data, value_data)
-        avg = np.mean(value_data, axis=0)[-1]
-        min = np.min(value_data, axis=0)[-1]
-        delta = np.average(self.deltas[self.log_dir])
+        self.avg = np.mean(value_data, axis=0)[-1]
+        self.min = np.min(value_data, axis=0)[-1]
+        self.time_delta = np.average(self.deltas[self.log_dir])
+        self.std = np.std(value_data, axis=0)[-1]
 
         logging.info(str(self.log_dir))
-        logging.info("Drop Train: {}".format(drop1))
-        logging.info("Drop Test: {}".format(drop2))
-        logging.info("Avg: {}".format(avg))
-        logging.info("Min: {}".format(min))
-        logging.info("Time: {}".format(delta))
-        return drop1, drop2, avg, min, delta
+        logging.info("Drop Train: {}".format(self.drop_train))
+        logging.info("Drop Test: {}".format(self.drop_test))
+        logging.info("Avg: {}".format(self.avg))
+        logging.info("Min: {}".format(self.min))
+        logging.info("Time: {}".format(self.time_delta))
+        logging.info("Deviation: {}".format(self.std))
 
     def _get_drop(self, drop_data, drop_level=0.05, drop_min=100000) -> int:
         step_data, value_data = drop_data
