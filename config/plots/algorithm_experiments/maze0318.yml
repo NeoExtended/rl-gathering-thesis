@@ -1,0 +1,16 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\Maze0318
+
+jobs:
+#  - type: table
+#    headers: algorithm
+#    results:
+#      time: true
+#    output: "../config/plots/algorithm_experiments/Maze0318_algorithms.tex"
+  - type: figure
+#    plot_avg_only: true
+    alias:
+      "2020_06_23_224340": ACER
+      "2020_06_25_091158": ACKTR
+      Baseline: PPO
+    output: "../config/plots/algorithm_experiments/"

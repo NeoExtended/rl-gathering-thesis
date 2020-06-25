@@ -1,0 +1,22 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\continuous\2020_06_11_160259
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\continuous\2020_06_09_192806
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\continuous\2020_06_11_120743
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\discrete\2020_06_13_220343
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\discrete\2020_06_12_053811
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\discrete\2020_06_10_090102
+
+jobs:
+  - type: figure
+    source: evaluation
+    max_step: 2000
+    smoothing: 0.0
+#    trial: 0
+    plot_avg_only: true
+    alias:
+      "2020_06_09_192806": "CR 2"
+      "2020_06_11_120743": "CR 3"
+      "2020_06_11_160259": "CR 1"
+      "2020_06_10_090102": "DR 3"
+      "2020_06_12_053811": "DR 2"
+      "2020_06_13_220343": "DR 1"
