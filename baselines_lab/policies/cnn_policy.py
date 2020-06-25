@@ -55,7 +55,7 @@ class GeneralCnnPolicy(ActorCriticPolicy):
         super(GeneralCnnPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=scale)
 
         if extractor_arch is None:
-            extractor_arch = [(32, 8, 4), (64, 4, 2), (64, 3, 1)]
+            extractor_arch = [('conv', 32, 8, 4), ('conv', 64, 4, 2), ('conv', 64, 3, 1)]
 
         if mlp_arch is None:
             mlp_arch = [512]
