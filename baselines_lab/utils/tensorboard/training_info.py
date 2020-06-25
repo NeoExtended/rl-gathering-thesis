@@ -37,7 +37,7 @@ class TrainingInformation(TensorboardLogReader):
         self.avg = np.mean(value_data, axis=0)[-1]
         self.min = np.min(value_data, axis=0)[-1]
         self.time_delta = np.average(self.deltas[self.log_dir])
-        self.std = np.std(value_data, axis=0)[-1]
+        self.std = np.mean(np.std(value_data, axis=0))
 
         logging.info(str(self.log_dir))
         logging.info("Drop Train: {}".format(self.drop_train))
