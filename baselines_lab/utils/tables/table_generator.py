@@ -167,8 +167,19 @@ class TableGenerator(ABC):
             return RewardTableGenerator(**kwargs)
         elif type == "observation_size":
             return ObservationSizeTableGenerator(**kwargs)
+        elif type == "algorithm":
+            return RLAlgorithmTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
+
+
+class RLAlgorithmTableGenerator(TableGenerator):
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        name = config['algorithm']['name']
+        return {'Algorithm': name.upper()}
+
+    def _get_fieldnames(self) -> List[str]:
+        return ['Algorithm']
 
 
 class ObservationSizeTableGenerator(TableGenerator):
