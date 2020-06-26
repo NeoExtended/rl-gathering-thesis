@@ -26,7 +26,8 @@ class TableGenerator(ABC):
     Used to create latex tables for the thesis. Not really a part of the rest of the lab.
     """
 
-    def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False, std: bool = False):
+    def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
+                 std: bool = False, var: bool = False):
         self.files = files
         self.best = best
         self.avg = avg
@@ -35,6 +36,7 @@ class TableGenerator(ABC):
         self.value_start = 0
         self.time = time
         self.std = std
+        self.var = var
 
     def make_table(self, output: str, drop_level: float = 0.05, max_step:Optional[int] = None, format: str = "tex"):
         rows = []
@@ -59,6 +61,8 @@ class TableGenerator(ABC):
                 row["Time"] = info.time_delta
             if self.std:
                 row["Std"] = info.std
+            if self.var:
+                row["Var"] = info.var
 
             rows.append(row)
 
@@ -93,6 +97,9 @@ class TableGenerator(ABC):
         if self.std:
             table_format.append("r")
             fieldnames.append("Std")
+        if self.var:
+            table_format.append("r")
+            fieldnames.append("Var")
         if self.run_id:
             sort_start = 1
             table_format.insert(0, "r")

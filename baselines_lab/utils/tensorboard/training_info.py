@@ -19,6 +19,7 @@ class TrainingInformation(TensorboardLogReader):
         self.min = None
         self.time_delta = None
         self.std = None
+        self.var = None
         self.drop_train = None
         self.drop_test = None
 
@@ -38,6 +39,7 @@ class TrainingInformation(TensorboardLogReader):
         self.min = np.min(value_data, axis=0)[-1]
         self.time_delta = np.average(self.deltas[self.log_dir])
         self.std = np.mean(np.std(value_data, axis=0))
+        self.var = np.mean(np.var(value_data, axis=0))
 
         logging.info(str(self.log_dir))
         logging.info("Drop Train: {}".format(self.drop_train))
@@ -46,6 +48,7 @@ class TrainingInformation(TensorboardLogReader):
         logging.info("Min: {}".format(self.min))
         logging.info("Time: {}".format(self.time_delta))
         logging.info("Deviation: {}".format(self.std))
+        logging.info("Variance: {}".format(self.var))
 
     def _get_drop(self, drop_data, drop_level=0.05, drop_min=100000) -> int:
         step_data, value_data = drop_data
