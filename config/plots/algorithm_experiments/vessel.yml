@@ -1,5 +1,8 @@
 runs:
-  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\VesselMaze02
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\VesselMaze02\2020_06_23_120246
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\VesselMaze02\2020_06_23_163647
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\VesselMaze02\Baseline
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\VesselMaze02\2020_06_24_222620
 
 jobs:
   - type: table
