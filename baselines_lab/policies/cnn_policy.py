@@ -1,8 +1,9 @@
 import tensorflow as tf
-from stable_baselines.common import tf_layers
-from stable_baselines.common.policies import ActorCriticPolicy, mlp_extractor
 
-from baselines_lab.utils.tf_utils import build_cnn, build_dynamic_cnn
+from stable_baselines.common.policies import ActorCriticPolicy
+
+from baselines_lab.utils.tf_utils import build_cnn, build_dynamic_cnn, mlp_extractor, lecun_normal
+from baselines_lab.utils import tf_layers
 import numpy as np
 
 
@@ -16,7 +17,7 @@ class SimpleMazeCnnPolicy(ActorCriticPolicy):
         with tf.variable_scope("model", reuse=reuse):
             activ = tf.nn.leaky_relu
             extracted_features = build_cnn(self.processed_obs, **kwargs)
-            pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512, init_scale=np.sqrt(2)))
+            pi_latent = vf_latent = activ(tf_layers.linear(extracted_features, "fc_1", 512, initializer=tf_layers.ortho_init(np.sqrt(2))))
 
             value_fn = tf_layers.linear(vf_latent, 'vf', 1)
             #value_fn = tf.layers.dense(vf_latent, 1, name="vf")
@@ -51,8 +52,20 @@ class GeneralCnnPolicy(ActorCriticPolicy):
                     'vf' to define individual networks.
     """
     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, scale=True, extractor_arch=None, mlp_arch=None,
-                 extractor_act=tf.nn.leaky_relu, mlp_act=tf.nn.leaky_relu, **kwargs):
+                 extractor_act=tf.nn.leaky_relu, mlp_act=tf.nn.leaky_relu, initializer=tf_layers.ortho_init(np.sqrt(2)), **kwargs):
         super(GeneralCnnPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=scale)
+
+        if isinstance(extractor_act,str):
+            extractor_act = tf.keras.activations.deserialize(extractor_act)
+
+        if isinstance(mlp_act, str):
+            mlp_act = tf.keras.activations.deserialize(mlp_act)
+
+        if isinstance(initializer, str):
+            if initializer == "lecun_normal":
+                initializer = tf.keras.initializers.VarianceScaling(scale=1., mode="fan_in", distribution="truncated_normal", seed=None)
+            else:
+                initializer = tf.keras.initializers.deserialize(initializer)
 
         if extractor_arch is None:
             extractor_arch = [('conv', 32, 8, 4), ('conv', 64, 4, 2), ('conv', 64, 3, 1)]
@@ -61,8 +74,8 @@ class GeneralCnnPolicy(ActorCriticPolicy):
             mlp_arch = [512]
 
         with tf.variable_scope("model", reuse=reuse):
-            extracted_features = build_dynamic_cnn(self.processed_obs, extractor_arch, extractor_act, **kwargs)
-            pi_latent, vf_latent = mlp_extractor(extracted_features, mlp_arch, mlp_act)
+            extracted_features = build_dynamic_cnn(self.processed_obs, extractor_arch, extractor_act, initializer=initializer, **kwargs)
+            pi_latent, vf_latent = mlp_extractor(extracted_features, mlp_arch, mlp_act, initializer=initializer)
 
             value_fn = tf_layers.linear(vf_latent, 'vf', 1)
 
