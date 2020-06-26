@@ -109,6 +109,14 @@ register(id="Maze0518Continuous-v2",
                  'goal_range': 10,
                  'reward_generator': "continuous"})
 
+register(id="RandomMazeContinuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': BufferedRRTGenerator,
+                 'goal': None,
+                 'goal_range': 10,
+                 'reward_generator': "continuous"})
+
 register(id="RandomMazeDiscrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
