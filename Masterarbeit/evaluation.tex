@@ -400,50 +400,150 @@ Overall the choices of all agents which also yield good performance are relative
 When deciding for a reward for our further experiments, we have to keep in mind, that every extra computation will be executed for each individual training step. The more reward components we use, the longer training will take. When comparing the results on the brain environment for continuous reward, we saw that the addition of gathering reward just slightly improves the average end result. If we look at the wall-clock time, a single trial on the brain environment using the gathering reward took an average of 4:54h to complete, while a trial using only the continuous reward took 4:27h on average. This means that with gathering reward, we saw an increase of about 10\% more time. While additional components might provide benefits for special environments (see Section \ref{sec:EvalRandomness}) they do not provide significant improvements for our general case. Depending on the environment size, multiple rewards can be used to achieve good performance, but only a few scale well into larger instances. We therefore will use continuous internally normalized reward for all further experiments.
 
 \section{RL Algorithms} \label{sec:EvalRLAlgorithms}
-In this section we want to evaluate how different RL algorithms perform when solving maze environments. We presented a number of algorithms in Chapter \ref{chp: RLOverview} and want to test some of the most recent approaches including DQN (see Section \ref{ssec:DeepQLearning}), PPO (see Section \ref{ssec:PPO}), ACER and ACKTR (see Section \ref{ssec:AlternativeCombinedMethods}). Since most RL algorithms are very sensitive to their hyperparameters we used our automated hyperparametersearch to find a good starting point. We then used manual fine-tuning to get an optimal configuration for each algorithm. Interestingly, our chosen hyperparameters are very similar to the parameters chosen in the initial papers for the Atari game suite. The parameters for DQN, ACER and ACKTR can be found in Table TODO. For PPO, we found that the parameters we choose during our initial experiments were already suited to yield near-optimal results and we will therefore use the parameters given in Table \ref{tab:PPOHyperparemeters}. We found that increasing the number of parallel environments did not further improve performance. Increasing the number of optimization epochs could yield faster initial results, but is very time-consuming. Decreasing the number of steps also has a positive initial effect, but worsens the final result.
+In this section we want to evaluate how different RL algorithms perform when solving maze environments. We presented a number of algorithms in Chapter \ref{chp: RLOverview} and want to test some of the most recent approaches including DQN (see Section \ref{ssec:DeepQLearning}), PPO (see Section \ref{ssec:PPO}), ACER and ACKTR (see Section \ref{ssec:AlternativeCombinedMethods}). Since the performance of most RL algorithms is very sensitive to the chosen hyperparameters, we optimized the parameters for each individual algorithm on the Vessel instance. This optimization included a wide range of parameters which were preselected using our automated hyperparametersearch system. We then used manual fine-tuning to get an optimal configuration for each algorithm. 
+
+The parameters we selected for DQN, ACER and ACKTR can be found in Table \ref{tab:RLHyperparameters}. For PPO, we found that the parameters we choose during our initial experiments were already suited to yield good results and we will therefore use the parameters given in Table \ref{tab:PPOHyperparemeters}. PPO was also found to work with a wide range of parameters, e.g. increasing the number of optimization epochs could yield faster initial results, but is very time-consuming. We also tried to increase the number of parallel environments, but found that this does not further improve performance.  Decreasing the number of steps also has a positive initial effect, but worsens the final result.
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{c}
-            \begin{tabular}{|l|c|}
-                \hline
-                \multicolumn{1}{|c|}{Hyperparameter} & Value \\
-                \hline
-                Rollout Length & 16 \\
-                Buffer Size & 5000 \\
-                Entropy Coefficient & 0.0001 \\
-                $\gamma$ & 0.98 \\
-                Learning Rate & 0.0007 \\
-                Learning Rate Schedule & Linear \\
-                Optimization Algorithm & RMSProp \cite{tieleman2012lecture} \\
-                Q Coefficient & 0.6 \\
-                Replay Ratio & 4 \\
-                Replay Start & 1000 \\
-                \hline
-            \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (a) Hyperparameters for ACER} \\
-            \addlinespace[0.5cm]
-            \begin{tabular}{|l|c|}
-                \hline
-                \multicolumn{1}{|c|}{Hyperparameter} & Value \\
-                \hline
-                Rollout Length & 32 \\
-                Entropy Coefficient & 0.01 \\
-                $\gamma$ & 0.99 \\
-                $\lambda$ & 0.99 \\
-                Learning Rate & 0.2 \\
-                Value Function Coefficient & 0.25 \\
-                \hline
-            \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (b) Hyperparameters for ACKTR} \\
+        \begin{threeparttable}
+            \begin{tabular}{c}
+                \begin{tabular}{|m{6cm}|R{2.5cm}|}
+                    \hline
+                    \multicolumn{1}{|c|}{Hyperparameter} & \multicolumn{1}{c|}{Value} \\
+                    \hline
+                    Rollout Length & 16 \\
+                    Buffer Size & 5000 \\
+                    Entropy Coefficient & 0.0001 \\
+                    $\gamma$ & 0.98 \\
+                    Learning Rate & 0.0007 \\
+                    Learning Rate Schedule & Linear \\
+                    Optimization Algorithm & RMSProp \cite{tieleman2012lecture} \\
+                    Q Coefficient & 0.6 \\
+                    Replay Ratio & 4 \\
+                    Replay Start & 1000 \\
+                    \hline
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (a) Hyperparameters for ACER} \\
+                \addlinespace[0.5cm]
+                \begin{tabular}{|m{6cm}|R{2.5cm}|}
+                    \hline
+                    \multicolumn{1}{|c|}{Hyperparameter} & \multicolumn{1}{c|}{Value} \\
+                    \hline
+                    Rollout Length & 32 \\
+                    Entropy Coefficient & 0.01 \\
+                    $\gamma$ & 0.99 \\
+                    $\lambda$ & 0.99 \\
+                    Learning Rate & 0.2 \\
+                    Value Function Coefficient & 0.25 \\
+                    \hline
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (b) Hyperparameters for ACKTR} \\
+                \addlinespace[0.5cm]
+                \begin{tabular}{|m{6cm}|R{2.5cm}|}
+                    \hline
+                    \multicolumn{1}{|c|}{Hyperparameter} & \multicolumn{1}{c|}{Value} \\
+                    \hline
+                    Learning Rate & 0.0005 \\
+                    Learning Starts & 1000 \\
+                    Target Network Update Frequency & 1000 \\
+                    Train Frequency & 4 \\
+                    Exploration Fraction & 0.5 \\
+                    Exploration Final Epsilon & 0.05 \\
+                    Buffer Size & 150000 \\
+                    Prioritized Replay $\alpha$ & 0.6 \\
+                    Prioritized Replay $\beta$ & 0.4 \\
+                    \hline
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (c) Hyperparameters for DQN\tnote{1} \ \tnote{2}} \\
     
-        \end{tabular}
+            \end{tabular}
+            \begin{tablenotes} \footnotesize
+                \item[1] The DQN implementation of stable-baselines uses Double DQN and Dueling DQN.
+                \item[2] We removed frame stacking and observation normalization for DQN as we found that it worsens results.
+            \end{tablenotes}
+        \end{threeparttable}
+        
     \end{center}
-    \caption[Hyperparameters]{Hyperparameters used for different RL Algorithms.}
+    \caption[Hyperparameters]{Hyperparameters used for different RL Algorithms.} \label{tab:RLHyperparameters}
 \end{table}
 
+\subsection{Results}
+
+Similar to previous experiments we tested the RL algorithms on our three test instances. The results for the Corridor instance can be found in Table \ref{tab:AlgorithmEval/Maze0318}, the results for the Vessel instance in Table \ref{tab:AlgorithmEval/VesselMaze02} and the results for the Brain instance in Table \ref{tab:AlgorithmEval/Maze0122}. Looking at the data, we can see, that three of our four algorithms performed well during the tests, namely ACER, ACKTR and PPO. DQN failed to deliver results even for the smallest instance and also took very long for each trial.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & PPO & 61.81 & 71.28 & 147k & 0:40:36h \\
+            2 & DQN & 500.00 & 500.00 & 381k & 3:08:00h \\
+            3 & ACKTR & 63.38 & 70.73 & 424k & \textbf{0:32:49h} \\
+            4 & ACER & \textbf{55.84} & \textbf{68.83} & \textbf{100k} & 0:41:40h \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Evaluation of RL Algorithms on the Corridor Instance]{Evaluation results for different RL algorithms on the Corridor instance. We can see that ACER produced the best end results while also providing a fast initial improvement. In terms of wall-clock time, ACKTR provided the fastest results. DQN failed to solve the instance during our model evaluation episodes, but was able to solve some episodes during training (therefore the drop is below 3M).} \label{tab:AlgorithmEval/Maze0318}
+\end{table}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & PPO & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+            2 & DQN & 500.00 & 500.00 & 6M & 5:40:24h \\
+            3 & ACKTR & 103.88 & 109.20 & 759k & \textbf{0:51:54h} \\
+            4 & ACER & 111.72 & 117.50 & \textbf{182k} & 1:12:57h \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Evaluation of RL Algorithms on the Vessel Instance]{Evaluation results for different RL algorithms on the Vessel instance. PPO is able to train the best performing agent, while ACKTR produces the fastest training times and ACER provides the fastest initial improvement. DQN again fails to deliver usable results.} \label{tab:AlgorithmEval/VesselMaze02}
+\end{table}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} &  \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & PPO & \textbf{308.31} & \textbf{333.53} & \textbf{7.34M} & \textbf{4:28:39h} \\
+            2 & ACKTR & 341.78 & 367.42 & 9.12M & 4:32:15h \\
+            3 & ACER & 500.00 & 500.00 & 12M & 4:51:40h \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Evaluation results for different RL algorithms on the Brain instance. PPO delivers the best results in all categories (bold), delivering the best results in the shortest time. ACER fails to solve larger instances and may need more time or specific fine-tuning.} \label{tab:AlgorithmEval/Maze0122}
+\end{table}
+
+When comparing the other algorithms, we an see, that they all show certain strengths and weaknesses. ACER is able to provide very good results on the small Corridor instance, while also being the fastest in terms of initial improvement on both the Corridor and the Vessel instance. However ACER fails to solve the larger and more complex Brain instance during 12 million steps of training. ACKTR only provides average end results, while the algorithm is surprisingly fast in terms of wall-clock time. PPO shows to have the best overall performance, delivering the best results on the Vessel and Brain instance while still maintaining a reasonably good performance in terms of speed.   
+
+\subsection{Analysis}
+A surprising result for our experiments is that DQN was not able to solve even the easiest instance Corridor. Looking at the average episode length during training (see Figure \ref{fig:Algorithm/Ep_Length}) we see, that DQN was able to solve the environment at multiple points during training, but suffered from multiple training collapses. Interestingly the network trained with DQN was not able to solve the environment at test time during training. This means, that the DQN agent always relied on certain randomness coming from the epsilon-greedy strategy to randomly solve the maze. Because there exist a lot more DQN extensions which especially improve exploration, we suggest that a more powerful implementation of DQN might yield better results in the future.
+
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/algorithms/maze0318_episode_length.pdf} \\
+            {\small (a) Episode length of different RL algorithms on the Corridor instance} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/algorithms/vesselmaze02_episode_length.pdf} \\
+            {\small (b) Episode length of different RL algorithms on the Vessel instance} \\
+            \includegraphics[clip, width=0.75\columnwidth]{figures/evaluation/algorithms/maze0122_episode_length.pdf} \\
+            {\small (c) Episode length of different RL algorithms on the Brain instance} \\
+        \end{tabular}
+    \end{center}
+    \caption[Episode Length During Training on the Test Environment]{Average episode length during training on our three test environments. We can see, that DQN is able to solve the easier instances at some point, but later suffers from training collapses. ACER is able to make very fast progress on Corridor and Vessel, but fails to solve Brain. PPO and ACKTR both solve all instances, with PPO delivering superior results in a smaller number of steps.} \label{fig:Algorithm/Ep_Length}
+\end{figure}
+
+\paragraph{Training Progress}
+Looking at Figure \ref{fig:Algorithm/Ep_Length} we can see the average episode length during training. 
+Progress during training, explenation for ACKTR curves.
 
 \paragraph{Result Variation}
 Variation
@@ -451,61 +551,64 @@ Variation
 \section{Observations} \label{sec:EvalObs}
 Until now, we always trained our agents with the same observation size independent of the instance size. Surprisingly, we had no problems to train the agent, even on our largest instance which is over 10 times larger than our smallest instance. In this section we want to analyze how different input sizes affect learning on the same instance. 
 
-Since observation since does not seem to matter to much in terms of performance, we were curious, if the agent would be able to solve an instance without any input at all. This means that the agent only receives a single input in form of a step counter. This counter gets increased by 1 after each agent-environment interaction. Since the goal is static, the agent should be able to remember a sequence of movements which brings all (or most) particles to the goal position. Since we only have a single input, we have to change the network architecture for these experiments. All experiments which work with input size 1 use a fully connected network with three layers. The first two layers are shared between the actor and the critic and contain 512 and 1024 neurons respectively. The network then diverges and contains another fully connected layer with 256 neurons for each the actor and the critic.
+Because observation size does not seem to matter to much in terms of performance, we were curious, if the agent would be able to solve an instance without any input at all. This means that the agent only receives a single input in form of a step counter. This counter gets increased by 1 after each agent-environment interaction. Since the goal is static, the agent should be able to remember a sequence of movements which brings all (or most) particles to the goal position. Since we only have a single input, we have to change the network architecture for these experiments. All experiments which work with input size 1 use a fully connected network with three layers. The first two layers are shared between the actor and the critic and contain 512 and 1024 neurons respectively. The network then diverges and contains another fully connected layer with 256 neurons for each the actor and the critic.
 
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{c}
-
-
-            \begin{tabular}{rcrrrr}
-                \toprule
-                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-                \midrule
-                1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
-                2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
-                3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
-                4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
-                5 & (12, 12) & 500.00 & 500.00 & 1.41M & 0:15:19h \\
-                6 & (-, -) & 307.50 & 307.51 & 251k & \textbf{0:11:06h} \\
-                \bottomrule
-            \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (a) Results for the Corridor instance} \\
-            \addlinespace[0.5cm]
-            \begin{tabular}{rcrrrr}
-                \toprule
-                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-                \midrule
-                1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
-                2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
-                3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
-                4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
-                5 & (12, 12) & 494.75 & 495.42 & 6M & 0:31:24h \\
-                6 & (-, -) & 500.00 & 500.00 & 6M & \textbf{0:22:28h} \\
-                \bottomrule
-            \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (b) Results for the Vessel Instance} \\
-            \addlinespace[0.5cm]
-            \begin{tabular}{rcrrrr}
-                \toprule
-                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-                \midrule
-                1 & (168, 168) & 356.47 & 356.47 & \textbf{6.22M} & 17:49:36h \\
-                2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
-                3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
-                4 & (24, 24) & 500.00 & 500.00 & 12M & 2:54:06h \\
-                5 & (-, -) & 500.00 & 500.00 & 12M & \textbf{0:49:34h} \\
-                \bottomrule
-            \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (c) Results for the Brain instance. We excluded results without} \\
-            {\small any downsizing due to the massive increase in training time.} \\
-            %\addlinespace[0.25cm]
-        \end{tabular}
-        
+        \begin{threeparttable}
+            \begin{tabular}{c}
+                \begin{tabular}{rcrrrr}
+                    \toprule
+                    \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                    \midrule
+                    1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
+                    2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
+                    3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
+                    4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
+                    5 & (12, 12) & 500.00 & 500.00 & 1.41M & 0:15:19h \\
+                    6 & (-, -) & 307.50 & 307.51 & 251k & \textbf{0:11:06h} \\
+                    \bottomrule
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (a) Results for the Corridor instance} \\
+                \addlinespace[0.5cm]
+                \begin{tabular}{rcrrrr}
+                    \toprule
+                    \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                    \midrule
+                    1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
+                    2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+                    3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
+                    4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
+                    5 & (12, 12) & 494.75 & 495.42 & 6M & 0:31:24h \\
+                    6 & (-, -) & 500.00 & 500.00 & 6M & \textbf{0:22:28h} \\
+                    \bottomrule
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (b) Results for the Vessel Instance} \\
+                \addlinespace[0.5cm]
+                \begin{tabular}{rcrrrr}
+                    \toprule
+                    \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                    \midrule
+                    1\tnote{1} & (168, 168) & 356.47 & 356.47\tnote{1} & \textbf{6.22M} & 17:49:36h \\
+                    2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
+                    3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
+                    4 & (24, 24) & 500.00 & 500.00 & 12M & 2:54:06h \\
+                    5 & (-, -) & 500.00 & 500.00 & 12M & \textbf{0:49:34h} \\
+                    \bottomrule
+                \end{tabular} \\
+                \addlinespace[0.15cm]
+                {\small (c) Results for the Brain instance. We excluded results without} \\
+                {\small any downsizing due to the massive increase in training time.} \\
+                %\addlinespace[0.25cm]
+            \end{tabular}
+            \begin{tablenotes}
+                \footnotesize
+                \item[1] Due to the increase in training time we only performed a single trial for this experiment.
+            \end{tablenotes}
+        \end{threeparttable}
     \end{center}
     \caption[Training Results for Different Observation Sizes]{Training results with different observation sizes. (-, -) denotes only a single observation in the form of a step counter.} \label{tab:ObsSize}
 \end{table}

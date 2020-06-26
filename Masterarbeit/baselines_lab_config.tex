@@ -313,7 +313,7 @@ Depending on the lab mode, there are mode specific command line arguments. We li
 \end{table}
 
 \section{Random Network Distillation Module}
-We already described how we implemented RND curiosity reward in Section \ref{sec:blRND}. In this section we want to list all parameters for our RND reward wrapper. Each of these parameters can be configured using lab config files. We included a complete list in Table \ref{tag:RNDParameters}. The parameters \textit{gamma}, \textit{learning\_rate}, \textit{train\_freq} and \textit{buffer\_size} can be automatically set to match the parameters used for the RL algorithm, by setting the key \texttt{auto\_params: true} in the configuration file under \texttt{curiosity}. All default parameters are set to match the original implementation as close as possible.
+We already described how we implemented RND curiosity reward in Section \ref{sec:blRND}. In this section we want to list all parameters for our RND reward wrapper. Each of these parameters can be configured using lab config files. We included a complete list in Table \ref{tab:RNDParameters}. The parameters \textit{gamma}, \textit{learning\_rate}, \textit{train\_freq} and \textit{buffer\_size} can be automatically set to match the parameters used for the RL algorithm, by setting the key \texttt{auto\_params: true} in the configuration file under \texttt{curiosity}. All default parameters are set to match the original implementation as close as possible.
 
 \begin{table}[ht]
     \begin{center}
