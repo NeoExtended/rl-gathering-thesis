@@ -1,5 +1,6 @@
 import logging
 import os
+from abc import ABC, abstractmethod
 
 import imageio
 import numpy as np
@@ -7,25 +8,40 @@ import numpy as np
 from baselines_lab.utils import get_timestamp
 
 
-class GifRecorder:
-    """
-    Records and saves a gif. Gifs are saved to a given directory with a timestamp as name.
-    :param path: Output directory for all gifs.
-    """
-    def __init__(self, path, name_prefix=""):
+class Recorder(ABC):
+    def __init__(self, path: str, name_prefix: str = ""):
         self.path = path
-        self.images = []
         self.name_prefix = name_prefix
+        self.images = []
 
     def record(self, image):
         self.images.append(image)
 
     def reset(self):
+        self._save_images()
         self.images = []
 
     def close(self):
+        self.reset()
+
+    @abstractmethod
+    def _save_images(self):
+        pass
+
+
+class GifRecorder(Recorder):
+    def _save_images(self):
         if len(self.images) > 0:
             gif_path = os.path.join(self.path, "{}{}.gif".format(self.name_prefix, get_timestamp()))
             logging.info("Saving gif to {}".format(gif_path))
             imageio.mimsave(gif_path, [np.array(img) for img in self.images], fps=30)
-            self.reset()
+
+
+class ImageSequenceRecorder(Recorder):
+    def _save_images(self):
+        print("Saving")
+        if len(self.images) > 0:
+            image_path = os.path.join(self.path, get_timestamp())
+            logging.info("Saving images to {}".format(image_path))
+            for i, image in enumerate(self.images):
+                imageio.save(os.path.join(image_path, "{}.png".format(str(i))))

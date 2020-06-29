@@ -57,6 +57,13 @@ def parse_args(args):
                               type=int,
                               help="Trial to load when resuming training (defaults to last trial from previous run).",
                               default=-1)
+    train_parser.add_argument("--video",
+                              action="store_true",
+                              help="Stores a video for each episode of training (Warning: May consume a lot of memory)")
+    train_parser.add_argument("--video-format",
+                              choices=["gif", "png"],
+                              default="gif",
+                              help="Select the video file format.")
 
     search_parser = subparsers.add_parser("search")
     search_parser.add_argument("--plot",

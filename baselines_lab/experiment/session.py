@@ -18,7 +18,7 @@ if mpi4py is not None:
     from stable_baselines.gail import ExpertDataset
 
 from baselines_lab.env import create_environment
-from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, VecGifRecorder
+from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, VecImageRecorder
 from baselines_lab.experiment import Runner, HyperparameterOptimizer
 from baselines_lab.experiment.samplers import Sampler
 from baselines_lab.model import create_model
@@ -139,7 +139,7 @@ class ReplaySession(Session):
                                         name_prefix=util.get_timestamp())
         else:
             logging.warning("Did not find avconf or ffmpeg - using gif as a video container replacement.")
-            self.env = VecGifRecorder(self.env, video_path)
+            self.env = VecImageRecorder(self.env, video_path)
 
     def run(self):
         self.runner.run(self.num_episodes)
@@ -155,6 +155,8 @@ class TrainSession(Session):
         self.env = None
         self.agent = None
         self.saver = None
+        self.record_video = args.video
+        self.video_format = args.video_format
 
     def _setup_session(self):
         eval_method = self.config['meta'].get('eval_method', 'normal')
@@ -163,6 +165,8 @@ class TrainSession(Session):
                                       seed=self.config['meta']['seed'],
                                       log_dir=util.get_log_directory(),
                                       evaluation='fast' in eval_method)
+        if self.record_video:
+            self._setup_recorder(os.path.join(util.get_log_directory(), "videos"), self.video_format)
 
         self.agent = create_model(self.config['algorithm'], self.env, seed=self.config['meta']['seed'])
 
@@ -181,6 +185,9 @@ class TrainSession(Session):
             config=self.config,
             env=self.env,
             tb_log=bool(self.log))
+
+    def _setup_recorder(self, path, format):
+        self.env = VecImageRecorder(self.env, path, format=format, unvec=True)
 
     def run(self):
         n_trials = self.config['meta'].get('n_trials', 1)

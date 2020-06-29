@@ -8,7 +8,7 @@ from stable_baselines.bench import Monitor
 from stable_baselines.common.atari_wrappers import FrameStack, ScaledFloatFrame
 from stable_baselines.common.vec_env import VecFrameStack, SubprocVecEnv, VecNormalize, DummyVecEnv
 
-from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, CuriosityWrapper, VecGifRecorder, VecScaledFloatFrame, VecStepSave
+from baselines_lab.env.wrappers import EvaluationWrapper, VecEvaluationWrapper, CuriosityWrapper, VecImageRecorder, VecScaledFloatFrame, VecStepSave
 from baselines_lab.env.wrappers.evaluation_wrappers import ParticleInformationWrapper
 
 
@@ -115,7 +115,7 @@ def _create_vectorized_env(env_id, env_kwargs, n_envs, multiprocessing, seed, lo
             env = DummyVecEnv([make_env(env_id, env_kwargs, i, seed, log_dir, wrappers, evaluation=evaluation) for i in range(n_envs)])
 
     if video_path:
-        env = VecGifRecorder(env, video_path, record_obs=True)
+        env = VecImageRecorder(env, video_path, record_obs=True)
 
     if evaluation:
         env = VecEvaluationWrapper(env)
