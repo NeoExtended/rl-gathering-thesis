@@ -44,4 +44,4 @@ class ImageSequenceRecorder(Recorder):
             logging.info("Saving images to {}".format(image_path))
             os.makedirs(image_path, exist_ok=True)
             for i, image in enumerate(self.images):
-                imageio.save(os.path.join(image_path, "{}.png".format(str(i))))
+                imageio.imwrite(os.path.join(image_path, "{}.png".format(str(i))), image)
