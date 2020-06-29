@@ -22,6 +22,7 @@ class TrainingInformation(TensorboardLogReader):
         self.var = None
         self.drop_train = None
         self.drop_test = None
+        self.cv = None
 
     def log_key_points(self, drop_level=0.05, max_step=None):
         tags = ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
@@ -40,6 +41,7 @@ class TrainingInformation(TensorboardLogReader):
         self.time_delta = np.average(self.deltas[self.log_dir])
         self.std = np.mean(np.std(value_data, axis=0))
         self.var = np.mean(np.var(value_data, axis=0))
+        self.cv = np.mean(np.std(value_data, axis=0) / np.mean(value_data, axis=0))
 
         logging.info(str(self.log_dir))
         logging.info("Drop Train: {}".format(self.drop_train))
@@ -49,6 +51,7 @@ class TrainingInformation(TensorboardLogReader):
         logging.info("Time: {}".format(self.time_delta))
         logging.info("Deviation: {}".format(self.std))
         logging.info("Variance: {}".format(self.var))
+        logging.info("Coefficient of Variation: {:.2%}".format(self.cv))
 
     def _get_drop(self, drop_data, drop_level=0.05, drop_min=100000) -> int:
         step_data, value_data = drop_data

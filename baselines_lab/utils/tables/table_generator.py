@@ -27,7 +27,7 @@ class TableGenerator(ABC):
     """
 
     def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
-                 std: bool = False, var: bool = False):
+                 std: bool = False, var: bool = False, cv: bool = False):
         self.files = files
         self.best = best
         self.avg = avg
@@ -37,6 +37,7 @@ class TableGenerator(ABC):
         self.time = time
         self.std = std
         self.var = var
+        self.cv = cv
 
     def make_table(self, output: str, drop_level: float = 0.05, max_step:Optional[int] = None, format: str = "tex"):
         rows = []
@@ -63,6 +64,8 @@ class TableGenerator(ABC):
                 row["Std"] = info.std
             if self.var:
                 row["Var"] = info.var
+            if self.cv:
+                row["CV"] = info.cv
 
             rows.append(row)
 
@@ -100,6 +103,9 @@ class TableGenerator(ABC):
         if self.var:
             table_format.append("r")
             fieldnames.append("Var")
+        if self.cv:
+            table_format.append("r")
+            fieldnames.append("CV")
         if self.run_id:
             sort_start = 1
             table_format.insert(0, "r")
@@ -163,6 +169,8 @@ class TableGenerator(ABC):
         for col in value_cols:
             if col == "Time":
                 frame[col] = frame[col].apply(lambda x: str(timedelta(seconds=int(x))) + "h")
+            elif col == "CV":
+                frame[col] = frame[col].apply(lambda x: "{:.2%}".format(x))
             else:
                 if frame[col].dtype == np.int64:
                     frame[col] = frame[col].apply(human_format)
@@ -234,8 +242,9 @@ class ObservationSizeTableGenerator(TableGenerator):
 
 
 class RewardTableGenerator(TableGenerator):
-    def __init__(self, files: List[Path]):
-        super(RewardTableGenerator, self).__init__(files)
+    def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
+                 std: bool = False, var: bool = False, cv: bool = False):
+        super(RewardTableGenerator, self).__init__(files, best, avg, drop, run_id, time, std, var, cv)
         self.mode = None
 
     def _get_header(self) -> Optional[List[Tuple[str, int, int]]]:
