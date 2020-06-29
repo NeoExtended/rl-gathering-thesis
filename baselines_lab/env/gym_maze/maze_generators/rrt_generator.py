@@ -41,8 +41,8 @@ class RRTGenerator(InstanceGenerator):
     """
 
     def __init__(self, width: int = 100, height: int = 100, n_nodes: int = 400, max_length: float = 5.0, n_loops: int = 10,
-                 thickness: float = 1.0, border: bool = True) -> None:
-        super(RRTGenerator, self).__init__(width, height)
+                 thickness: float = 1.0, border: bool = True, seed=None) -> None:
+        super(RRTGenerator, self).__init__(width, height, seed=seed)
         self.n_nodes = n_nodes
         self.max_length = max_length
         self.n_loops = n_loops
@@ -133,8 +133,8 @@ class RRTGenerator(InstanceGenerator):
 
 class BufferedRRTGenerator(RRTGenerator):
     def __init__(self, width: int = 100, height: int = 100, n_nodes: int = 400, max_length: float = 5.0, n_loops: int = 10,
-                 thickness: float = 1.0, border: bool = True, buffer_size: int = 100, generation_chance: float = 0.05, pre_generate: int = 8):
-        super(BufferedRRTGenerator, self).__init__(width, height, n_nodes, max_length, n_loops, thickness, border)
+                 thickness: float = 1.0, border: bool = True, buffer_size: int = 100, generation_chance: float = 0.05, pre_generate: int = 8, seed=None):
+        super(BufferedRRTGenerator, self).__init__(width, height, n_nodes, max_length, n_loops, thickness, border, seed=seed)
 
         self.buffer = deque(maxlen=buffer_size)
         self.generation_chance = generation_chance
