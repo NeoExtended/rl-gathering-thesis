@@ -25,7 +25,7 @@ def parse_config_args(config_args, args):
     for config in config_args:
         assert os.path.exists(config), "Invalid input file/directory {}".format(config)
         if os.path.isdir(config):
-            files = glob.glob(os.path.join(config, "*.yml"))
+            files = glob.glob(os.path.join(config, "**/*.yml"))
             for file in files:
                 configs.append(get_config(file, args))
         else:
