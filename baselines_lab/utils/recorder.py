@@ -42,6 +42,6 @@ class ImageSequenceRecorder(Recorder):
         if len(self.images) > 0:
             image_path = os.path.join(self.path, get_timestamp())
             logging.info("Saving images to {}".format(image_path))
-            os.mkdirs(image_path, exist_ok=True)
+            os.makedirs(image_path, exist_ok=True)
             for i, image in enumerate(self.images):
                 imageio.save(os.path.join(image_path, "{}.png".format(str(i))))
