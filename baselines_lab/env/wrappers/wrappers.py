@@ -69,7 +69,7 @@ class VecImageRecorder(VecEnvWrapper):
     :param output_directory: (str) Output directory for the gifs. Individual files will be named with a timestamp
     :param record_obs: (bool) If true the recorder records observations instead of the rgb_array output of the env.
     """
-    def __init__(self, env, output_directory, record_obs=False, format: str = "gif", unvec=False, reduction=4):
+    def __init__(self, env, output_directory, record_obs=False, format: str = "gif", unvec=False, reduction=12):
         VecEnvWrapper.__init__(self, env)
         prefix = "obs_" if record_obs else ""
         self.recorders = []
