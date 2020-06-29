@@ -125,7 +125,7 @@ Throughout this section we will provide a number of tables, which use abbreviati
 
 \subsection{Test Results} \label{sec:RewardTestResults}
 
-\paragraph{Corridor Environemnt.}
+\paragraph{Corridor Environment.}
 We begin with our easy instance Corridor. In our tests, we use the basic settings from Section \ref{sec:TestProcedure} and train for 3 million steps per trial. Table \ref{tab:Maze0318/Reward/Discrete} contains the results for discrete rewards and Table \ref{tab:Maze0318/Reward/Continuous} contains the results for continuous rewards.
 
 Looking at the data, we can see, that many parameters do work very well and our dense discrete reward produces results which result in vastly shorter training times than in previous work \cite{huang2019}. Our initial experiments for discrete reward also show some interesting findings: 
@@ -542,11 +542,72 @@ A surprising result for our experiments is that DQN was not able to solve even t
 \end{figure}
 
 \paragraph{Training Progress}
-Looking at Figure \ref{fig:Algorithm/Ep_Length} we can see the average episode length during training. 
-Progress during training, explenation for ACKTR curves.
+Figure \ref{fig:Algorithm/Ep_Length} shows the average episode length during training with different RL algorithms for our three test instances. Looking at Figure \ref{fig:Algorithm/Ep_Length} (a), we can see that DQN was able to compute solutions at various points during training, but suffered from performance collapses multiple times and was therefore unable to converge to a good final solution. All other algorithms were able to compute good solutions during the first one million training steps and then slowly optimized their results. 
+
+\begin{figure} [htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \begin{tabular}{ccc}
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/0_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/6_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/12_k.png} \\
+                \addlinespace[0.25cm]
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/18_k.png} &
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/25_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/29_k.png} \\
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (a) First Episode} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{ccc}
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/30_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/37_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/44_k.png} \\
+                \addlinespace[0.25cm]
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/51_k.png} &
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/58_k.png} & 
+                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/65_k.png} \\
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (b) Second Episode} \\
+        \end{tabular}
+    \end{center}
+    \caption{Example Training ACKTR on Corridor} \label{fig:AcktrTrainingEpisodes}
+\end{figure}
+
+
+Looking at the training curve for ACKTR we can see a surprising unexpected result at the beginning of the training process: The average episode length is below the threshold of 500 steps at the beginning of training and then rises back to the maximum, before it drops again at around 500 thousand steps into training. To explain this anomaly, we included a series of images in Figure TODO, showing frames from the initial episodes generated during training. Figure TODO (a) shows images from the very first episode during training. The ACKTR agent trains its network every 32 steps, improving the network several times over the course of one episode. Because the network is only trained for a short time and stochastic actions are used during training, the agent is able to solve some of the 64 parallel environments, by quickly learning to choose actions that move particles downwards and later more actions which move particles to the right. After finishing the episode the agent learned, that going down and right somehow maximizes its reward and repeats this process. Unfortunately, going to the right too early brings particles into a place, where they are stuck and can only be moved to the goal, by going left (see Figure TODO). Because this is the opposite of what the agent learned so far and it does not directly generate positive reward, due to other particles being moved away from the goal, the agent then struggles to learn this new behavior for the next few episodes.
+
+
+\begin{figure} [htp]
+    \begin{center}
+        \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/vessel/vessel_problems.png}
+    \end{center}
+    \caption{Problems in the vessel environment.} \label{fig:Algorithm/Problems/Vessel}
+\end{figure}
+
+
+\begin{figure} [htp]
+    \begin{center}
+        \begin{tabular}{cc}
+            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_first_progress.png} & 
+            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_problem_1.png} \\
+        \end{tabular}
+    \end{center}
+    \caption{Problems in the brain environment.} \label{fig:Algorithm/Problems/Brain}
+\end{figure}
+
+Figure \ref{fig:Algorithm/Ep_Length} (b) and (c) show the average episode length during training for the Vessel and Brain environment. We can see that ACER optimizes faster for smaller instances, but fails to perform on the larger Brain instance. The curves for PPO and ACKTR seem to be pretty similar, with PPO always delivering results in a little bit less time than ACKTR. This is most probably because the ACKTR implementation does not support the usage of multiple optimization epochs and is therefore less sample efficient than the PPO implementation. 
 
 \paragraph{Result Variation}
-Variation
+When it comes to comparing results, we always have to keep in mind, that the execution of neural networks with Tensorflow 1.14 is not deterministic and we therefore have to deal with a certain amount of result variation. All our experiments so far were therefore repeated three times and we always compare the average results. For future experiments we might be able to save time and still have results which allow comparison, if we know how large our result variation is. 
+
+Looking at the results for different RL algorithms, tested in this section, the average 
+
+Figure \ref{fig:Algorithm/Ep_Length} 
+
+
+
 
 \section{Observations} \label{sec:EvalObs}
 Until now, we always trained our agents with the same observation size independent of the instance size. Surprisingly, we had no problems to train the agent, even on our largest instance which is over 10 times larger than our smallest instance. In this section we want to analyze how different input sizes affect learning on the same instance. 
