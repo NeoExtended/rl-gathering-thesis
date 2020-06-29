@@ -94,7 +94,6 @@ class VecImageRecorder(VecEnvWrapper):
         return recorder
 
     def reset(self):
-        print("reset")
         obs = self.venv.reset()
         for recorder in self.recorders:
             recorder.reset()
@@ -107,13 +106,11 @@ class VecImageRecorder(VecEnvWrapper):
         return obs, rews, dones, infos
 
     def close(self):
-        print("Close")
         for recorder in self.recorders:
             recorder.close()
         VecEnvWrapper.close(self)
 
     def _record(self, obs):
-        #print("Recording images...")
         if self.record_obs:
             if self.unvec:
                 for i, recorder in enumerate(self.recorders):
