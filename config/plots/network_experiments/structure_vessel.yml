@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Networks\Structure\vessel
+
+jobs:
+  - type: table
+    headers: network
+    results:
+      time: true
+    output: "../config/plots/network_experiments/structure_vessel.tex"
