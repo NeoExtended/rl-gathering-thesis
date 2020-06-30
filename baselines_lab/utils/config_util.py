@@ -6,6 +6,7 @@ import glob
 import json
 import logging
 import os
+from pathlib import Path
 
 import yaml
 from gym.utils import seeding
@@ -23,12 +24,12 @@ def parse_config_args(config_args, args):
 
     configs = []
     for config in config_args:
-        assert os.path.exists(config), "Invalid input file/directory {}".format(config)
-        if os.path.isdir(config):
-            files = glob.glob(os.path.join(config, "**/*.yml"))
-            files.extend(os.path.join(config, "*.yml"))
+        path = Path(config)
+        assert path.exists(), "Invalid input file/directory {}".format(config)
+        if path.is_dir():
+            files = path.glob("**/*.yml")
             for file in files:
-                configs.append(get_config(file, args))
+                configs.append(get_config(str(file), args))
         else:
             configs.append(get_config(config, args))
     return configs
