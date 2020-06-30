@@ -548,42 +548,43 @@ Figure \ref{fig:Algorithm/Ep_Length} shows the average episode length during tra
     \begin{center}
         \begin{tabular}{c}
             \begin{tabular}{ccc}
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/0_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/6_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/12_k.png} \\
-                \addlinespace[0.25cm]
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/18_k.png} &
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/25_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/29_k.png} \\
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/0_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/6_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/12_k.png} \\
+                \addlinespace[0.2cm]
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/18_k.png} &
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/25_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/29_k.png} \\
             \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (a) First Episode} \\
+            \addlinespace[0.1cm]
+            {\small (a) Images from the first episode of training.} \\
             \addlinespace[0.5cm]
             \begin{tabular}{ccc}
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/30_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/37_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/44_k.png} \\
-                \addlinespace[0.25cm]
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/51_k.png} &
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/58_k.png} & 
-                \includegraphics[width=0.3\columnwidth]{figures/evaluation/algorithms/training_example/acktr/65_k.png} \\
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/30_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/37_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/44_k.png} \\
+                \addlinespace[0.2cm]
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/51_k.png} &
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/58_k.png} & 
+                \includegraphics[width=0.26\columnwidth]{figures/evaluation/algorithms/training_example/acktr/65_k.png} \\
             \end{tabular} \\
-            \addlinespace[0.15cm]
-            {\small (b) Second Episode} \\
+            \addlinespace[0.1cm]
+            {\small (b) Images from the second episode of training.} \\
         \end{tabular}
     \end{center}
-    \caption{Example Training ACKTR on Corridor} \label{fig:AcktrTrainingEpisodes}
+    \caption[Images During Training Episodes with ACKTR]{Images from the first two episodes of training using ACKTR (from one of the 64 parallel environments). ACKTR improves the strategy of the agent each 32 steps, changing it about 15 times during a single episode. The first episode (a) is largely dominated by the random actions of the new neural network, but still delivers the particles to the goal, because ACKTR quickly favors actions moving particles down and \textit{later} actions moving particles right. The second episode (b) includes the knowledge from the first episode, but moving particles to the right too early leads to particles getting stuck in the corridor above the bottom corridor.} \label{fig:AcktrTrainingEpisodes}
 \end{figure}
 
 
-Looking at the training curve for ACKTR we can see a surprising unexpected result at the beginning of the training process: The average episode length is below the threshold of 500 steps at the beginning of training and then rises back to the maximum, before it drops again at around 500 thousand steps into training. To explain this anomaly, we included a series of images in Figure TODO, showing frames from the initial episodes generated during training. Figure TODO (a) shows images from the very first episode during training. The ACKTR agent trains its network every 32 steps, improving the network several times over the course of one episode. Because the network is only trained for a short time and stochastic actions are used during training, the agent is able to solve some of the 64 parallel environments, by quickly learning to choose actions that move particles downwards and later more actions which move particles to the right. After finishing the episode the agent learned, that going down and right somehow maximizes its reward and repeats this process. Unfortunately, going to the right too early brings particles into a place, where they are stuck and can only be moved to the goal, by going left (see Figure TODO). Because this is the opposite of what the agent learned so far and it does not directly generate positive reward, due to other particles being moved away from the goal, the agent then struggles to learn this new behavior for the next few episodes.
+Looking at the training curve for ACKTR we can see a surprising unexpected result at the beginning of the training process: The average episode length is below the threshold of 500 steps at the beginning of training and then rises back to the maximum, before it drops again at around 500 thousand steps into training. To explain this anomaly, we included a series of images in Figure \ref{fig:AcktrTrainingEpisodes}, showing frames from the initial episodes generated during training. Figure \ref{fig:AcktrTrainingEpisodes} (a) shows images from the very first episode during training. The ACKTR agent trains its network every 32 steps, improving the network several times over the course of one episode. Because the network is only trained for a short time and stochastic actions are used during training, the agent is able to solve some of the 64 parallel environments, by quickly learning to choose actions that move particles downwards and later more actions which move particles to the right. After finishing the episode the agent learned, that going down and right somehow maximizes its reward and repeats this process. Unfortunately, going to the right too early brings particles into a place, where they are stuck and can only be moved to the goal, by going left (see Figure \ref{fig:AcktrTrainingEpisodes} (b)). Because this is the opposite of what the agent learned so far and it does not directly generate positive reward, due to other particles being moved away from the goal, the agent then struggles to learn this new behavior for the next few episodes.
 
+Figure \ref{fig:Algorithm/Ep_Length} (b) and (c) show the average episode length during training for the Vessel and Brain environment. We can see that ACER optimizes faster for smaller instances, but fails to perform on the larger Brain instance. The curves for PPO and ACKTR seem to be pretty similar, with PPO always delivering results in less steps than ACKTR. This is most probably because the ACKTR implementation does not support the usage of multiple optimization epochs and is therefore less sample efficient than the PPO implementation. 
 
 \begin{figure} [htp]
     \begin{center}
         \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/vessel/vessel_problems.png}
     \end{center}
-    \caption{Problems in the vessel environment.} \label{fig:Algorithm/Problems/Vessel}
+    \caption[Training Challenges in the Vessel Environment]{Training challenges in the Vessel environment. After 100k training steps, all algorithms tend to already deliver a decent number of particles to the goal position. The rest of the training then is focused on learning movements to also bring particles to the goal which get stuck in the process and often require movements which bring particles away from the goal position. We highlighted spots where particles often get stuck in \textit{orange}.} \label{fig:Algorithm/Problems/Vessel}
 \end{figure}
 
 
@@ -594,19 +595,53 @@ Looking at the training curve for ACKTR we can see a surprising unexpected resul
             \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_problem_1.png} \\
         \end{tabular}
     \end{center}
-    \caption{Problems in the brain environment.} \label{fig:Algorithm/Problems/Brain}
+    \caption[Training Challenges in the Brain environment]{Training challenges in the Brain environment. Algorithms learn to gather particles at the position marked in green after 100k training steps (left). During this gathering process a number of particles gets stuck at the positions marked in orange. The right image shows the agents behavior after 3 million training steps. The agent has improved its gathering strategy and tries to bring the particles closer to the goal by moving them along the green path. In the process, particles get stuck at positions marked in orange.} \label{fig:Algorithm/Problems/Brain}
 \end{figure}
 
-Figure \ref{fig:Algorithm/Ep_Length} (b) and (c) show the average episode length during training for the Vessel and Brain environment. We can see that ACER optimizes faster for smaller instances, but fails to perform on the larger Brain instance. The curves for PPO and ACKTR seem to be pretty similar, with PPO always delivering results in a little bit less time than ACKTR. This is most probably because the ACKTR implementation does not support the usage of multiple optimization epochs and is therefore less sample efficient than the PPO implementation. 
+After analyzing how ACKTR struggled with the Corridor environment, we also wanted to highlight problems all agents had when training on the Vessel or Brain environment. In Figure \ref{fig:Algorithm/Problems/Vessel} we highlighted the areas where particles got stuck after the first 100k training steps in orange. These places are not surprising, since particles stuck at these positions require movements which would increase the distance to the goal for most of the other particles. We can see from Figure \ref{fig:Algorithm/Ep_Length} (b) that all algorithms except DQN figure out a way to retrieve most of these particles in less than 2 million steps of training. Finally Figure \ref{fig:Algorithm/Problems/Brain} shows us problematic regions for training on the Brain environment. We again highlighted spots, where particles get stuck in orange. The algorithms initially learn to gather particles at the spot highlighted in green (see Figure \ref{fig:Algorithm/Problems/Brain} (left)) and then learn to bring the particles closer to the goal via the path highlighted in green in Figure \ref{fig:Algorithm/Problems/Brain} (right). Some particles then often get stick in the path close to the right of the path to the goal (highlighted in orange). As we can see from Figure \ref{fig:Algorithm/Ep_Length} all algorithms need far more time to solve the Brain environment. The question that remains is if the Brain environment is harder to solve because of its structure, or because of its size. We will try to answer these questions with our experiments in Section TODO.
 
 \paragraph{Result Variation}
-When it comes to comparing results, we always have to keep in mind, that the execution of neural networks with Tensorflow 1.14 is not deterministic and we therefore have to deal with a certain amount of result variation. All our experiments so far were therefore repeated three times and we always compare the average results. For future experiments we might be able to save time and still have results which allow comparison, if we know how large our result variation is. 
+When it comes to comparing results, we always have to keep in mind, that the execution of neural networks with Tensorflow 1.14 is not deterministic and we therefore have to deal with a certain amount of result variation. All our experiments so far were therefore repeated three times and we always compared the average results. For future experiments it might be beneficial to know how much this nondeterminism influences our results using different RL algorithms.
 
-Looking at the results for different RL algorithms, tested in this section, the average 
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{crrrrrr}
+            \toprule
+             & \multicolumn{2}{c}{Corridor} & \multicolumn{2}{c}{Vessel} & \multicolumn{2}{c}{Brain} \\
+            \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+            \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} \\
+            \midrule
+            PPO & 9.40\% & 14.56 & 4.32\% & 9.97 & 8.47\% & 64.66\\
+            ACKTR & \textbf{7.59\%} & \textbf{12.66} & \textbf{3.55\%} & \textbf{9.09} & \textbf{4.98\%} & \textbf{41.53} \\
+            ACER & 13.36\% & 20.06 & 3.86\% & 11.09 & - & - \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Result Variation Using Different RL Algorithms]{Result variation in terms of final episode length during evaluation in absolute numbers (difference between maximum and minimum) and as coefficient of variation (CV) ($\sigma / \mu$) on the three test instances. ACKTR seems to produce the most stable results due to its improved optimization technique, while PPO and ACER still produce comparable results. The variation seems to increase for larger instances. Note that the sample size for this table is low and we therefore present more precise numbers for PPO in Table \ref{tab:Algorithm/ResultVariation2}.} \label{tab:Algorithm/ResultVariation}
+\end{table}
 
-Figure \ref{fig:Algorithm/Ep_Length} 
+We start by looking at the variation during the experiments for the different RL algorithms as listed in Table \ref{tab:Algorithm/ResultVariation}. We can see, that ACKTR provides the most stable results, which is most likely due to its improved optimization technique. We can also see, that both ACER and PPO produce results with more variance, but still do limit the variance to a certain degree. We can therefore argue, that larger changes in performance due to some change in the experimental setup can still be detected, even when only using a single trial to compare results. 
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{crrrrrr}
+            \toprule
+             & \multicolumn{2}{c}{Corridor} & \multicolumn{2}{c}{Vessel} & \multicolumn{2}{c}{Brain} \\
+            \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+            \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} \\
+            \midrule
+            PPO & 7.11\% & 10.81 & 4.74\% & 10.89 & 5.53\% & 44.58\\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Result Variation Using Different RL Algorithms]{Result variation in terms of averaged final episode length during evaluation in absolute numbers (difference between maximum and minimum) and as coefficient of variation (CV) ($\sigma / \mu$) on the three test instances. The results in this table are calculated from the results of the reward experiments excluding experiments using DEL, curiosity and experiments without normalization. The results are comparable to the results calculated with lower sample size in Table \ref{tab:Algorithm/ResultVariation}.} \label{tab:Algorithm/ResultVariation2}
+\end{table}
+
+Because the data we use is very limited due to each experiment being only repeated three times, the error in Table \ref{tab:Algorithm/ResultVariation} can be quite large. We therefore also analyze the variation in past experiments. Using data from the reward experiments with continuous reward and excluding experiments with DEL, curiosity reward or without normalization. Using this data, we can compute the result variation as an average over 15 trials for Corridor and Vessel and 9 trials for Brain. The results are shown in Table \ref{tab:Algorithm/ResultVariation2}. We can see, that even with a larger sample size, we get comparable results. In praxis this means, that independent of the training randomness, we will still get a usable result at some point. Results of single trials are comparable within a certain error bound, but evaluation of close results still requires multiple trials.
 
 
+\subsection{Conclusion}
+In this section we tested four popular RL algorithms - DQN, ACKTR, ACER and PPO - to solve our three test environments. We saw, that both ACKTR and PPO performed fairly well on all three environments, while DQN fails to solve even the easy Corridor environment. ACER was able to solve both the Corridor and the Vessel environment, but failed at the larger Brain environment. Since PPO is much more popular than ACKTR and also delivered slightly better results, we will continue to use PPO for all future experiments. 
 
 
 \section{Observations} \label{sec:EvalObs}
