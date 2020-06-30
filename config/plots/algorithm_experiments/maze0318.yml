@@ -5,16 +5,24 @@ runs:
   - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\Maze0318\2020_06_25_163935
 
 jobs:
+#  - type: table
+#    headers: algorithm
+#    results:
+#      time: true
+#    output: "../config/plots/algorithm_experiments/Maze0318_algorithms.tex"
+#  - type: figure
+##    plot_avg_only: true
+#    alias:
+#      "2020_06_23_224340": ACER
+#      "2020_06_25_091158": ACKTR
+#      "2020_06_25_163935": DQN
+#      Baseline: PPO
+#    output: "../config/plots/algorithm_experiments/"
   - type: table
     headers: algorithm
     results:
-      time: true
-    output: "../config/plots/algorithm_experiments/Maze0318_algorithms.tex"
-  - type: figure
-#    plot_avg_only: true
-    alias:
-      "2020_06_23_224340": ACER
-      "2020_06_25_091158": ACKTR
-      "2020_06_25_163935": DQN
-      Baseline: PPO
-    output: "../config/plots/algorithm_experiments/"
+      cv_train: true
+      cv_test: true
+      rd_train: true
+      rd_test: true
+    output: "../config/plots/algorithm_experiments/Maze0318_variation.tex"

@@ -2,15 +2,23 @@ runs:
   - F:\Uni\2020_Semester XIV\Learning_Archive\Algorithm\Verification\Maze0122
 
 jobs:
+#  - type: table
+#    headers: algorithm
+#    results:
+#      time: true
+#    output: "../config/plots/algorithm_experiments/Maze0122_algorithms.tex"
+#  - type: figure
+##    plot_avg_only: true
+#    alias:
+#      "2020_06_24_192813": ACKTR
+#      "2020_06_24_005036": ACER
+#      Baseline: PPO
+#    output: "../config/plots/algorithm_experiments/"
   - type: table
     headers: algorithm
     results:
-      time: true
-    output: "../config/plots/algorithm_experiments/Maze0122_algorithms.tex"
-  - type: figure
-#    plot_avg_only: true
-    alias:
-      "2020_06_24_192813": ACKTR
-      "2020_06_24_005036": ACER
-      Baseline: PPO
-    output: "../config/plots/algorithm_experiments/"
+      cv_train: true
+      cv_test: true
+      rd_train: true
+      rd_test: true
+    output: "../config/plots/algorithm_experiments/Maze0122_variation.tex"

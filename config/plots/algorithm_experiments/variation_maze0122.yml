@@ -1,0 +1,12 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0122\continuous
+
+jobs:
+  - type: table
+    headers: algorithm
+    results:
+      cv_train: true
+      cv_test: true
+      rd_train: true
+      rd_test: true
+    output: "../config/plots/algorithm_experiments/Maze0122_reward_variation.tex"

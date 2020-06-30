@@ -1,0 +1,16 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_052753
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_133612
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_171043
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_204454
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_092251
+
+jobs:
+  - type: table
+    headers: algorithm
+    results:
+      cv_train: true
+      cv_test: true
+      rd_train: true
+      rd_test: true
+    output: "../config/plots/algorithm_experiments/VesselMaze02_reward_variation.tex"

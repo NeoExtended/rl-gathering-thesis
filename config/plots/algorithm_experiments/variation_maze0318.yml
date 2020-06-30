@@ -1,0 +1,16 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_07_120843
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_07_010830
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_07_100245
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_07_033510
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\Maze0318\continuous\2020_06_05_211401
+
+jobs:
+  - type: table
+    headers: algorithm
+    results:
+      cv_train: true
+      cv_test: true
+      rd_train: true
+      rd_test: true
+    output: "../config/plots/algorithm_experiments/Maze0318_reward_variation.tex"
