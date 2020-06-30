@@ -209,6 +209,10 @@ class TableGenerator(ABC):
             return ObservationSizeTableGenerator(**kwargs)
         elif type == "algorithm":
             return RLAlgorithmTableGenerator(**kwargs)
+        elif type == "network":
+            return NetworkTableGenerator(**kwargs)
+        elif type == "activations":
+            return ActivationsTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
 
@@ -220,6 +224,47 @@ class RLAlgorithmTableGenerator(TableGenerator):
 
     def _get_fieldnames(self) -> List[str]:
         return ['Algorithm']
+
+
+class NetworkTableGenerator(TableGenerator):
+    def __init__(self, activations=False, **kwargs):
+        super(NetworkTableGenerator, self).__init__(**kwargs)
+        self.activations = activations
+
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        policy_type = config['algorithm']['policy']['name']
+        data = {}
+        if policy_type == "SimpleMazeCnnPolicy":
+            data['MLP'] = "[512]"
+            data['CNN'] = "default"
+
+            if self.activations:
+                data["CNN Act"] = "Leaky ReLU"
+                data["MLP Act"] = "Leaky ReLU"
+        elif policy_type == "GeneralCnnPolicy":
+            mlp = config['algorithm']['policy'].get("mlp_arch", [512])
+            data['MLP'] = str(mlp)
+            if config['algorithm']['policy'].get("extractor_arch"):
+                data['CNN'] = str(config['algorithm']['policy']['extractor_arch'])
+            else:
+                data['CNN'] = "default"
+
+            if self.activations:
+                data["CNN Act"] = config['algorithm']['policy'].get("extractor_act", "Leaky ReLU")
+                data["MLP Act"] = config['algorithm']['policy'].get("mlp_act", "Leaky ReLU")
+
+        return data
+
+    def _get_fieldnames(self) -> List[str]:
+        if self.activations:
+            return ['CNN', 'MLP', 'CNN Act', 'MLP Act']
+        else:
+            return ['CNN', 'MLP']
+
+
+class ActivationsTableGenerator(NetworkTableGenerator):
+    def __init__(self, **kwargs):
+        super(ActivationsTableGenerator, self).__init__(activations=True, **kwargs)
 
 
 class ObservationSizeTableGenerator(TableGenerator):
