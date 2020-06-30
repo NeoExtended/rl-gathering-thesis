@@ -27,7 +27,7 @@ class TableGenerator(ABC):
     """
 
     def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
-                 std: bool = False, var: bool = False, cv: bool = False):
+                 std: bool = False, var: bool = False, cv_train: bool = False, cv_test: bool = False, rd_train: bool = False, rd_test: bool = False):
         self.files = files
         self.best = best
         self.avg = avg
@@ -37,7 +37,10 @@ class TableGenerator(ABC):
         self.time = time
         self.std = std
         self.var = var
-        self.cv = cv
+        self.cv_train = cv_train
+        self.cv_test = cv_test
+        self.rd_train = rd_train
+        self.rd_test = rd_test
 
     def make_table(self, output: str, drop_level: float = 0.05, max_step:Optional[int] = None, format: str = "tex"):
         rows = []
@@ -64,8 +67,14 @@ class TableGenerator(ABC):
                 row["Std"] = info.std
             if self.var:
                 row["Var"] = info.var
-            if self.cv:
-                row["CV"] = info.cv
+            if self.cv_train:
+                row["CV Train"] = info.cv_train
+            if self.cv_test:
+                row["CV Test"] = info.cv_test
+            if self.rd_train:
+                row["Delta Train"] = info.result_delta_train
+            if self.rd_test:
+                row["Delta Test"] = info.result_delta_test
 
             rows.append(row)
 
@@ -103,9 +112,18 @@ class TableGenerator(ABC):
         if self.var:
             table_format.append("r")
             fieldnames.append("Var")
-        if self.cv:
+        if self.cv_train:
             table_format.append("r")
-            fieldnames.append("CV")
+            fieldnames.append("CV Train")
+        if self.cv_test:
+            table_format.append("r")
+            fieldnames.append("CV Test")
+        if self.rd_train:
+            table_format.append("r")
+            fieldnames.append("Delta Train")
+        if self.rd_test:
+            table_format.append("r")
+            fieldnames.append("Delta Test")
         if self.run_id:
             sort_start = 1
             table_format.insert(0, "r")
@@ -169,7 +187,7 @@ class TableGenerator(ABC):
         for col in value_cols:
             if col == "Time":
                 frame[col] = frame[col].apply(lambda x: str(timedelta(seconds=int(x))) + "h")
-            elif col == "CV":
+            elif col == "CV Train" or col == "CV Test":
                 frame[col] = frame[col].apply(lambda x: "{:.2%}".format(x))
             else:
                 if frame[col].dtype == np.int64:
@@ -243,8 +261,8 @@ class ObservationSizeTableGenerator(TableGenerator):
 
 class RewardTableGenerator(TableGenerator):
     def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
-                 std: bool = False, var: bool = False, cv: bool = False):
-        super(RewardTableGenerator, self).__init__(files, best, avg, drop, run_id, time, std, var, cv)
+                 std: bool = False, var: bool = False, cv_train: bool = False, cv_test: bool = False):
+        super(RewardTableGenerator, self).__init__(files, best, avg, drop, run_id, time, std, var, cv_train, cv_test)
         self.mode = None
 
     def _get_header(self) -> Optional[List[Tuple[str, int, int]]]:

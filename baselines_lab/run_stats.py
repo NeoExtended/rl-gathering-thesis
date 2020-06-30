@@ -22,7 +22,7 @@ def make_table(config, directories):
         directories[i] = Path(d)
     results = config.get('results', None)
     best = avg = drop = True
-    run_id = time = std = var = False
+    run_id = time = std = var = cv_train = cv_test = rd_train = rd_test = False
 
     if results:
         best = results.get('best', True)
@@ -32,13 +32,18 @@ def make_table(config, directories):
         time = results.get('time', False)
         std = results.get('std', False)
         var = results.get('var', False)
+        cv_train = results.get('cv_train', False)
+        cv_test = results.get('cv_test', False)
+        rd_train = results.get('rd_train', False)
+        rd_test = results.get('rd_test', False)
     format = config.get('format', 'tex')
     drop_level = config.get('drop_level', 0.05)
     max_step = config.get('max_step', None)
     output = config.get("output", "./logs")
 
     generator = TableGenerator.make_generator(config['headers'], files=directories, best=best, avg=avg, drop=drop,
-                                              run_id=run_id, time=time, std=std, var=var)
+                                              run_id=run_id, time=time, std=std, var=var, cv_train=cv_train, cv_test=cv_test,
+                                              rd_test=rd_test, rd_train=rd_train)
     generator.make_table(output, format=format, drop_level=drop_level, max_step=max_step)
 
 
