@@ -67,7 +67,11 @@
 \lstset{style=mystyle}
 
 \chapter{Implementation} \label{chp:Implementation}
-In this chapter we will take a look at different parts of the implementation. We will begin by discussing some general implementation notes in Chapter \ref{sec:ImplementationNotes} and then continue with an overview of our experimentation environment called \textit{baselines lab} in Section \ref{sec:BaselinesLab}. Finally, we will talk about the particle simulation environment, including reward shaping, extended environment models and instance generation in Section \ref{sec:MazeEnvironment}.
+To evaluate how reinforcement learning performs when being faced with the problem of distributed particle navigation we needed to implement a number of components: A simulation for the particles and mazes to test which allows feedback to the RL algorithm, an experimentation environment, which lets us test RL algorithms with different parameters on the simulation and an evaluation component, which monitors the performance during and after training.
+
+In this chapter, we will begin by presenting our flexible experimentation framework called \textit{Baselines-Lab} in Section \ref{sec:BaselinesLab}. This framework implements an easy-to-use laboratory environment for RL experiments, which is completely controllable by configuration files and command-line arguments and allows the user to customize RL algorithms for \textit{any} problem. The framework uses the reinforcement learning library \textit{stable-baselines} \cite{stable-baselines} as backend infrastructure and thus offers many high-quality implementations of RL algorithms for testing. Baselines-Lab also extends stable-baselines with components like curiosity, automated hyperparametersearch, or a flexible neural network generation system. All in all, Baselines-Lab is designed to offer an easy way to train, monitor and evaluate deep RL agents under a given problem. We will later use Baselines-Lab for all our experiments in Chapter \ref{chp:Evaluation}. 
+
+To perform experiments on the particle navigation problem, we need an implementation which simulates the maze and the particles. This simulation needs to be as fast as possible, because RL algorithms will need to simulate millions of steps during training. We also needed an environment which is customizable in every aspect, to allow us to experiment with different reward settings, randomized mazes, randomized goal positions or different particle behavior. We implemented this particle simulator along with a modular system for environment customization and provide implementation details in in Section \ref{sec:MazeEnvironment}. 
 
 \section{General Implementation Notes} \label{sec:ImplementationNotes}
 Before dive into the actual implementation we want to talk a little bit about our general design choices. As a programming language we chose to use Python 3 \cite{van2011python, pythonWebsite}. Python is an interpreted high-level programming language. Even though it is interpreted and thus may be slower than a direct implementation in C or C++, the easy integration of high-performance libraries which also scale into distributed systems make applications developed in python very fast. In the past years many ML library have been developed for python making Python an ideal choice for data-science and machine learning projects.
@@ -225,9 +229,9 @@ Baselines Lab offers a bunch of additional functions which are designed to help 
 \end{itemize}
 
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
-Since most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for our environment. At the same time we are interested in a modular design, since we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. In the following sections we then explain in detail how these components work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or unprecise observations in Section \ref{sec:ExtendedMaze}. Finally we will talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
+Because most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for the particle simulation environment. At the same time we are interested in a modular design, as we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. We then discuss implementation details and advances in comparison to previous implementations in Section \ref{sec:MazeImplementationDetails}. In the following sections we then explain in detail how the components of the modular extensions work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or imprecise observations in Section \ref{sec:ExtendedMaze} and finally talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
 
-\subsection{Basic Implementation} \label{sec:MazeImplementation}
+\subsection{Implementation Overview} \label{sec:MazeImplementation}
 We designed the implementation for the maze environment around two key ideas: First, the environment should run as fast as possible, because the agent will need to play hundreds or thousands of episodes. Designing a lightweight environment will therefore save a lot of time during training. Second, we need an environment which is configurable with our lab configuration file system in its main aspects. This means having the possibility to dynamically load instances, define rewards and even particle behavior. For the implementation we therefore decided to build the maze environment as a modular system, which allows easy configuration and extension of the existing architecture. 
 
 Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the main components of the environment. The master class \textit{MazeBase} handles basic functions like rendering of the environment and provides an interface to the outside world. The internal operations however rely on the used components. The modules which can be integrated into the MazeBase class all inherit from three interfaces and therefore can be divided into three groups:
@@ -251,6 +255,30 @@ Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the main componen
   \end{figure}
 
 All components of the maze environment are generally designed with performance in mind. When implementing particle motions and reward generations, we minimized the use of python loop statements and instead solved most of the computations by utilizing NumPy \cite{oliphant2006guide} functions.
+
+\subsection{Implementation Details} \label{sec:MazeImplementationDetails}
+To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{Gym} \cite{openAIgym}. Our implementation of the particle maze environment inherits from the gyms base class for environments and therefore defines the four most important methods:
+
+\begin{itemize}
+    \item \texttt{reset()} which resets the environment to a randomized initial state and returns the initial observation.
+    \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an action and receiving a tuple of (observation, reward, done, info) in return, where done indicates if the episode is over and info may contain additional information.
+    \item \texttt{render()} which allows us to render the environment in form of an rgb image intended for the user to display.
+    \item \texttt{seed(seed)} which allows to set a random seed to generate reproducible results. 
+\end{itemize}
+
+The core method for the environment is the \texttt{step} method. Most of the agent-environment interaction will take place here and step will be called thousands or even millions of times during each training run. We want to explain how we optimized this method to be as fast as possible, but first we want to take a step back and talk about the general concept of the maze environment.
+
+The maze environment has to keep track of two things: The maze and the particles. We store both of these using 2-dimensional Numpy arrays. The maze is stored in two versions: A version containing a one if the field is blocked and a version containing a one, if the field is free. This choice is not the most memory efficient, but will save some computation later on. We store the particle positions in a list-like structure, containing an entry for each particle with its (x, y)-position. 
+
+TODO: 
+
+explain how to avoid loops with Numpy
+
+talk about multiple ways to the same goal in numpy - compare to L.Huangs solution.
+
+talk about differences in observations. 
+
+perform speed test with same reward system.
 
 \subsection{Reward Shaping} \label{sec:MazeReward}
 Rewards are a fundamental component of reinforcement learning. For RL algorithms the difficulty of a problem can largely depend on how much information the reward signal provides during training. Problems become especially complicated when dealing with very sparse rewards (e.g. just a single reward at the end of an episode). When designing a reward signal for a problem, it is therefore desirable to include as much information as possible into the reward signal to obtain faster and better learning results. Providing much information with the reward signal can include a risk though: The reward must be unbiased and should not limit the solution space the algorithm can come up with. If we reward specific strategies, the RL algorithm will just replicate that strategy and not learn anything new.
