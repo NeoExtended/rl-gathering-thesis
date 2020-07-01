@@ -207,6 +207,8 @@ class TableGenerator(ABC):
             return RewardTableGenerator(**kwargs)
         elif type == "observation_size":
             return ObservationSizeTableGenerator(**kwargs)
+        elif type == "frame_stack":
+            return FrameStackingTableGenerator(**kwargs)
         elif type == "algorithm":
             return RLAlgorithmTableGenerator(**kwargs)
         elif type == "network":
@@ -265,6 +267,22 @@ class NetworkTableGenerator(TableGenerator):
 class ActivationsTableGenerator(NetworkTableGenerator):
     def __init__(self, **kwargs):
         super(ActivationsTableGenerator, self).__init__(activations=True, **kwargs)
+
+
+class FrameStackingTableGenerator(TableGenerator):
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        data = {}
+        frame_stack = config['env']['frame_stack']
+
+        if frame_stack:
+            data['Frame Stack'] = frame_stack.get('n_stack', 4)
+        else:
+            data['Frame Stack'] = 1
+
+        return data
+
+    def _get_fieldnames(self) -> List[str]:
+        return ['Frame Stack']
 
 
 class ObservationSizeTableGenerator(TableGenerator):

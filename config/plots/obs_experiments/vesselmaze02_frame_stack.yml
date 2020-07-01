@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Obs_Experiments\frame_stack\VesselMaze02
+
+jobs:
+  - type: table
+    headers: frame_stack
+    results:
+      time: true
+    output: "../config/plots/obs_experiments/vesselmaze02_frame_stack.tex"
