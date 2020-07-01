@@ -605,50 +605,47 @@ When it comes to comparing results, we always have to keep in mind, that the exe
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{crrrrrr}
-            \toprule
-             & \multicolumn{2}{c}{Corridor} & \multicolumn{2}{c}{Vessel} & \multicolumn{2}{c}{Brain} \\
-            \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
-            \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} \\
-            \midrule
-            PPO & 9.40\% & 14.56 & 4.32\% & 9.97 & 8.47\% & 64.66\\
-            ACKTR & \textbf{7.59\%} & \textbf{12.66} & \textbf{3.55\%} & \textbf{9.09} & \textbf{4.98\%} & \textbf{41.53} \\
-            ACER & 13.36\% & 20.06 & 3.86\% & 11.09 & - & - \\
-            \bottomrule
-        \end{tabular}
+        \begin{threeparttable}
+            \begin{tabular}{crrrrrr}
+                \toprule
+                 & \multicolumn{2}{c}{Corridor} & \multicolumn{2}{c}{Vessel} & \multicolumn{2}{c}{Brain} \\
+                \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+                \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} \\
+                \midrule
+                PPO & 9.40\% & 14.56 & 4.32\% & 9.97 & 8.47\% & 64.66\\
+                ACKTR & \textbf{7.59\%} & \textbf{12.66} & \textbf{3.55\%} & \textbf{9.09} & \textbf{4.98\%} & \textbf{41.53} \\
+                ACER & 13.36\% & 20.06 & 3.86\% & 11.09 & - & - \\
+                \midrule
+                PPO\tnote{1} & 7.11\% & 10.81 & 4.74\% & 10.89 & 5.53\% & 44.58 \\
+                \bottomrule
+            \end{tabular}
+            \begin{tablenotes}
+                \footnotesize
+                \item[1] Results are calculated as an average over data from the reward experiments, excluding experiments using DEL, curiosity or no normalization.
+            \end{tablenotes}
+
+        \end{threeparttable}
+        
     \end{center}
-    \caption[Result Variation Using Different RL Algorithms]{Result variation in terms of final episode length during evaluation in absolute numbers (difference between maximum and minimum) and as coefficient of variation (CV) ($\sigma / \mu$) on the three test instances. ACKTR seems to produce the most stable results due to its improved optimization technique, while PPO and ACER still produce comparable results. The variation seems to increase for larger instances. Note that the sample size for this table is low and we therefore present more precise numbers for PPO in Table \ref{tab:Algorithm/ResultVariation2}.} \label{tab:Algorithm/ResultVariation}
+    \caption[Result Variation Using Different RL Algorithms]{Result variation in terms of final episode length during evaluation in absolute numbers (difference between maximum and minimum) and as coefficient of variation (CV) ($\sigma / \mu$) on the three test instances. ACKTR seems to produce the most stable results due to its improved optimization technique, while PPO and ACER still produce comparable results. The variation seems to increase for larger instances. Note that the sample size for the upper part of this table is fairly low with only three repetitions per experiment. We therefore included a second row for PPO using data from the reward experiments for comparison.} \label{tab:Algorithm/ResultVariation}
 \end{table}
 
 We start by looking at the variation during the experiments for the different RL algorithms as listed in Table \ref{tab:Algorithm/ResultVariation}. We can see, that ACKTR provides the most stable results, which is most likely due to its improved optimization technique. We can also see, that both ACER and PPO produce results with more variance, but still do limit the variance to a certain degree. We can therefore argue, that larger changes in performance due to some change in the experimental setup can still be detected, even when only using a single trial to compare results. 
 
-\begin{table}[htp]
-    \begin{center}
-        \begin{tabular}{crrrrrr}
-            \toprule
-             & \multicolumn{2}{c}{Corridor} & \multicolumn{2}{c}{Vessel} & \multicolumn{2}{c}{Brain} \\
-            \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
-            \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} & \multicolumn{1}{c}{CV} & \multicolumn{1}{c}{Delta} \\
-            \midrule
-            PPO & 7.11\% & 10.81 & 4.74\% & 10.89 & 5.53\% & 44.58\\
-            \bottomrule
-        \end{tabular}
-    \end{center}
-    \caption[Result Variation Using Different RL Algorithms]{Result variation in terms of averaged final episode length during evaluation in absolute numbers (difference between maximum and minimum) and as coefficient of variation (CV) ($\sigma / \mu$) on the three test instances. The results in this table are calculated from the results of the reward experiments excluding experiments using DEL, curiosity and experiments without normalization. The results are comparable to the results calculated with lower sample size in Table \ref{tab:Algorithm/ResultVariation}.} \label{tab:Algorithm/ResultVariation2}
-\end{table}
-
-Because the data we use is very limited due to each experiment being only repeated three times, the error in Table \ref{tab:Algorithm/ResultVariation} can be quite large. We therefore also analyze the variation in past experiments. Using data from the reward experiments with continuous reward and excluding experiments with DEL, curiosity reward or without normalization. Using this data, we can compute the result variation as an average over 15 trials for Corridor and Vessel and 9 trials for Brain. The results are shown in Table \ref{tab:Algorithm/ResultVariation2}. We can see, that even with a larger sample size, we get comparable results. In praxis this means, that independent of the training randomness, we will still get a usable result at some point. Results of single trials are comparable within a certain error bound, but evaluation of close results still requires multiple trials.
-
+Because the data we use is very limited due to each experiment being only repeated three times, the error in Table \ref{tab:Algorithm/ResultVariation} can be quite large. We therefore also analyze the variation in past experiments. Using data from the reward experiments with continuous reward and excluding experiments with DEL, curiosity reward or without normalization. Using this data, we can compute the result variation as an average over 15 trials for Corridor and Vessel and 9 trials for Brain. The results are shown in the last row of Table \ref{tab:Algorithm/ResultVariation}. We can see, that even with a larger sample size, we get comparable results. In praxis this means, that independent of the training randomness, we will still get a usable result at the end of the training process. For our experiments, results of single trials are comparable within a certain error bound, but evaluation of close results still requires multiple trials.
 
 \subsection{Conclusion}
 In this section we tested four popular RL algorithms - DQN, ACKTR, ACER and PPO - to solve our three test environments. We saw, that both ACKTR and PPO performed fairly well on all three environments, while DQN fails to solve even the easy Corridor environment. ACER was able to solve both the Corridor and the Vessel environment, but failed at the larger Brain environment. Since PPO is much more popular than ACKTR and also delivered slightly better results, we will continue to use PPO for all future experiments. 
 
 
 \section{Observations} \label{sec:EvalObs}
+All agents we trained so far used the same observation input: The environment generates an images containing the maze and all particle positions which is then downscaled to 84 by 84 pixels and stacked together with the previous four observations. This procedure is used by many other authors (e.g. \cite{burda2018large, mnih2015human}) and has shown to improve learning on the Atari benchmark. However all these games provide the exact same input dimensions with a screen being 160 pixels wide and 210 pixels high \cite{bellemare2013arcade}. Most of the games also include moving objects which are not under the direct control of the player, or include some sort of physics simulation with makes frame stacking very important to give the agent the possibility to estimate motion. For our simple particle environments, the input sizes are directly dependent on the size of the maze. This may require less downscaling for larger instances and may allow more downscaling for smaller ones. We will therefore analyze how much downscaling affects the results in Section \ref{sec:Eval/ObsSize}. While frame stacking is important if objects are moving without the player control, or the behavior of objects under the players control may depend on past states, our particle environment contains none of these two aspects. We therefore analyze, how agents behave under different levels of frame stacking in Section \ref{sec:Eval/FrameStack}.
+
+
+\subsection{Observation Size} \label{sec:Eval/ObsSize}
 Until now, we always trained our agents with the same observation size independent of the instance size. Surprisingly, we had no problems to train the agent, even on our largest instance which is over 10 times larger than our smallest instance. In this section we want to analyze how different input sizes affect learning on the same instance. 
 
-Because observation size does not seem to matter to much in terms of performance, we were curious, if the agent would be able to solve an instance without any input at all. This means that the agent only receives a single input in form of a step counter. This counter gets increased by 1 after each agent-environment interaction. Since the goal is static, the agent should be able to remember a sequence of movements which brings all (or most) particles to the goal position. Since we only have a single input, we have to change the network architecture for these experiments. All experiments which work with input size 1 use a fully connected network with three layers. The first two layers are shared between the actor and the critic and contain 512 and 1024 neurons respectively. The network then diverges and contains another fully connected layer with 256 neurons for each the actor and the critic.
-
+Because observation size does not seem to matter to much in terms of performance, we also want to evaluate, if the agent is able to solve an instance without any input at all. This means that the agent will only receive a single input in form of a step counter. This counter gets incremented by 1 after each agent-environment interaction. Since the goal is static, the agent should be able to remember a sequence of movements which brings all (or most) particles to the goal position. Since we only have a single input, we have to change the network architecture for these experiments. All experiments which work with input size 1 use a fully connected network with three layers. The first two layers are shared between the actor and the critic and contain 512 and 1024 neurons respectively. The network then diverges and contains another fully connected layer with 256 neurons for each the actor and the critic.
 
 \begin{table}[htp]
     \begin{center}
@@ -725,8 +722,142 @@ Different frame sizes do not only affect the performance of the learned strategy
 
 Let us now look at the results for the other instances in Table \ref{tab:ObsSize} (b) and (c). We can see, that even though the results were similar, there are some important differences: Even for slightly larger instances like the vessel instance, providing a larger input requires a change in network architecture to deal with the increased information. For both the vessel and the brain instance, increasing the observation size lead to much slower \textit{and} worse overall results. We will therefore try to improve the network to handle larger input sizes in Section \ref{sec:EvalNetworks}. Another important finding is, that we cannot simply downscale much larger instances and still expect good results. On the Brain instance the original 84 by 84 downscale was the tiniest observation size that still worked. This exposes a problem if we want to solve real-world instances which would be much larger or even three-dimensional. 
 
+
+\subsection{Frame Stacking} \label{sec:Eval/FrameStack}
+Frame stacking is important for settings where the agent must be able to estimate the movements of objects. For example if we want to drive a car and have top-down images of its position, we need to estimate its current velocity from its change of position, to calculate future movements. However in our particle environment, the movements of the particles will not be affected by past actions, since the particles do not have an internal velocity and stop after each move. We therefore expect frame stacking to only have a minor effect on the training process.   
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & 6 & 61.34 & 66.34 & 143k & 1:17:40h \\
+                2 & 4 & 61.81 & 71.28 & 147k & 0:40:36h \\
+                3 & 2 & 57.22 & 66.69 & 145k & 0:34:00h \\
+                4 & 1 & \textbf{56.44} & \textbf{59.70} & \textbf{122k} & \textbf{0:31:25h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (a) Results for the Corridor instance.} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & 6 & 107.91 & 108.86 & 569k & 2:02:54h \\
+                2 & 4 & \textbf{91.06} & 96.72 & 532k & 1:10:00h \\
+                3 & 2 & 92.06 & 99.84 & 443k & 0:59:14h \\
+                4 & 1 & 93.16 & \textbf{94.32} & \textbf{382k} & \textbf{0:53:57h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (b) Results for the Vessel Instance} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rcrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & 4 & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
+                2 & 2 & 487.31 & 495.77 & \textbf{6M} & \textbf{1:58:52h} \\
+                3 & 1 & 326.06 & 345.49 & 6.54M & 3:49:05h \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (c) Results for the Brain Instance} \\
+        \end{tabular}
+        
+    \end{center}
+    \caption[Evaluation Results for Different Levels of Frame Stacking]{Results for different levels of frame stacking. The best values are marked in bold. We can see, that frame stacking does not improve learning for the basic maze environments. By disabling frame stacking (setting it to one) learning times can be significantly reduced (see (a)). Agents also learn better strategies on smaller instances using only single frames as input (see (a) bold). However this advantage does not seem to translate to larger instances (see (c)). We can argue, that the difference in performance is small enough, that the reduced training time compensates for the slightly worse performance. Without frame stacking, agents generally learn faster as they require both less steps (earlier drop time) and less computation time per step. The reduced computation time mainly originates from smaller neural networks due to the decreased input size. For (c) this difference is smaller, because the larger instance leads to a CPU instead of a GPU bottleneck.} \label{tab:Eval/FrameStacking}
+\end{table}
+
+We evaluated the effects of frame stacking on our three test instances and included the results  in Table \ref{tab:Eval/FrameStacking}. We can see, that our prediction was right and frame stacking does not provide any benefits for training on our basic maze environments. Form Table \ref{tab:Eval/FrameStacking} (a) we can see, that removing frame stacking may not only provide results in less overall time, but also may improve the final performance. This advantage seems to disappear for larger instances with longer training times (see Table \ref{tab:Eval/FrameStacking} (b) and (c)) but we still get comparably good results without frame stacking. Agents generally seem to learn faster with less frame stacking, which makes sense, because the agent has to process and "understand" less information and therefore has to deal with less total states. As the agent does not need to know the position of particles over time, it can concentrate on the current position of the particles. The reduced input size also leads to smaller neural networks, which further accelerates learning in terms of wall-clock time. This can also be seen in Figure \ref{fig:Eval/FrameStacking/Maze0122} where we show the average episode length during training in relation to the training time. 
+
+\begin{figure}[htp]
+    \begin{center}
+        \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/observations/maze0122_frame_stack_ep_len.pdf}
+    \end{center}
+    \caption{Maze0122 Ep len TODO} \label{fig:Eval/FrameStacking/Maze0122}
+\end{figure}
+
+\paragraph{Conclusion. } Following our results, when training agents for the simple maze environment, we can remove frame stacking without loosing any performance. However we have to be careful with this decision when extending or changing the setting. For noisy observations (see Section \ref{sec:EvalError}) as well as when dealing with particles which keep their velocity (see Section \ref{sec:EvalPhysical}) it might be a significant disadvantage to remove this information. 
+
+
 \section{Network Architecture} \label{sec:EvalNetworks}
-Network Sizes and Activation Functions.
+In this section we want to evaluate how much influence different network architecture has on the performance. For all past experiments we used the same neural network structure, using a simple CNN equal to the one used in previous experiments. In Section \ref{sec:Eval/NetworkStructure}, we will test other networks on our test instances, to see, if we can achieve an improvement in training time or final result by adding or removing layers. Finally, we will also evaluate if we are able to improve the performance, by replacing the leaky ReLU activation function in Section \ref{sec:Eval/ActivationFunctions}.
+
+\subsection{Network Structure} \label{sec:Eval/NetworkStructure}
+The CNN we used in past experiments consists of three convolutional layers with 32 ($8 \times 8, s=2$), 64 ($4\times4, s=2$) and 64 ($4 \times 4, s=1$) filters respectively, followed by a single fully connected layer with 512 neurons. The CNN extractor this network uses is used by many other authors who performed experiments on similar sized environments like the Atari game suite (e.g. \cite{burda2018large, burda2018exploration, mnih2015human}). We therefore expect the CNN to be fairly optimized for the given input and mostly focus on the structure of the fully connected layers. We also expect network sizes to only matter for larger, more complicated instances, where more complex behavior has to be learned. we therefore limit our tests to the Vessel and the Brain instance.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{threeparttable}
+            \begin{tabular}{rccrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & default & [512] & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+                2 & default & [512, 'pi': [512], 'vf': [512]] & 101.03 & 104.18 & 538k & 1:10:47h \\
+                3 & default & [512, 512] & 95.97 & 99.09 & 508k & 1:10:34h \\
+                4 & default & [256] & 94.16 & 98.81 & 506k & \textbf{1:09:27h} \\
+                5 & default & [256, 448, 'pi': [448], 'vf': [448]] & 98.38 & 107.02 & 536k & 1:10:37h \\
+                6\tnote{1} & modified\tnote{2} & [512] & 110.00 & 114.35 & \textbf{413k} & 1:51:27h \\
+                \bottomrule
+            \end{tabular}
+            \begin{tablenotes} \footnotesize
+                \item[1] We removed downscaling for this experiment.
+                \item[2] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+            \end{tablenotes}
+
+        \end{threeparttable}
+        
+    \end{center}
+    \caption{Vessel}
+\end{table}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{threeparttable}
+            \begin{tabular}{rccrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & default & [512] & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
+                2 & default & [512, {'pi': [512], 'vf': [512]}] & 317.84 & 334.83 & \textbf{6.79M} & \textbf{4:24:58h} \\
+                3\tnote{1} \ \tnote{2} & modified\tnote{3} & [512] & 326.53 & \textbf{326.53}\tnote{2} & 7.41M & 16:08:57h \\
+                \bottomrule
+            \end{tabular}
+            \begin{tablenotes} \footnotesize
+                \item[1] We changed downscaling to ($168 \times 168$) for this experiment.
+                \item[2] Due to the increase in training time, this experiment does not use multiple trials. 
+                \item[3] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+            \end{tablenotes}
+        \end{threeparttable}
+    \end{center}
+    \caption{Brain}
+\end{table}
+
+Table TODO, shows the results on the Vessel instance.
+
+
+\subsection{Activation Functions} \label{sec:Eval/ActivationFunctions}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rccccrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            1 & default & [512] & selu & selu & 311.84 & \textbf{328.06} & \textbf{5.94M} & 4:39:51h \\
+            2 & default & [512] & Leaky ReLU & tanh & 401.34 & 415.33 & 9.68M & \textbf{4:24:44h} \\
+            3 & default & [512] & Leaky ReLU & Leaky ReLU & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Activations - Brain}
+\end{table}
+
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
 Extended Environment Models

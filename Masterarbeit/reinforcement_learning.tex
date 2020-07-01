@@ -389,7 +389,7 @@ We already discussed a lot of important extensions for Deep Q-Learning, but ther
 
 
 
-Most of the techniques to improve Deep Q-Learning that were discussed can also be used in conjunction. In 2018 the DeepMind team created an agent which they called \textit{Rainbow} and which was able to outperform all standalone techniques on the Atari 2600 benchmark \cite{hessel2018rainbow}. Even though this proves that the combination of these extensions can be beneficial, the introduction of several new hyperparameters requires careful fine-tuning which might take a lot of time even with modern hyperparametersearch algorithms. 
+Most of the techniques to improve Deep Q-Learning that were discussed can also be used in conjunction. In 2018 the DeepMind team created an agent which they called \textit{Rainbow} and which was able to outperform all standalone techniques on the Atari 2600 benchmark \cite{bellemare2013arcade, hessel2018rainbow}. Even though this proves that the combination of these extensions can be beneficial, the introduction of several new hyperparameters requires careful fine-tuning which might take a lot of time even with modern hyperparametersearch algorithms. 
 
 \section{Policy Gradient Methods} \label{sec:PGMethods}
 We already saw, that Q-Learning (with its extensions) is a very powerful tool to solve RL problems. Nevertheless we also saw that Q-Learning suffers from a lot of problems and with all its extensions is hard to parameterize correctly. Also we are not able to solve RL problems with continuous action spaces, since there would be an infinite number of actions to choose from. Therefore we need an alternative way to deal with reinforcement learning problems.
