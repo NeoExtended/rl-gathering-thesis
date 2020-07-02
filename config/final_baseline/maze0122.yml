@@ -26,5 +26,5 @@ env:
   frame_stack: false
 
 meta:
-  n_timesteps: 12000000
+  n_timesteps: 15000000
   log_dir: "./logs/Baseline/maze0122/"
