@@ -82,7 +82,7 @@ Since Python offers the easy integration of additional libraries we also make us
 \begin{itemize}
     \item OpenAI Gym \cite{openAIgym} for a standardized environment creation as well as the integration of the Atari environments for testing purposes.
     \item OpenCV \cite{opencv_library} for image preprocessing.
-    \item Numpy \cite{oliphant2006guide} for fast matrix computations.
+    \item NumPy \cite{oliphant2006guide} for fast matrix computations.
     \item Optuna \cite{akiba2019optuna} for automated hyperparameter search.
 \end{itemize}
 
@@ -257,28 +257,118 @@ Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the main componen
 All components of the maze environment are generally designed with performance in mind. When implementing particle motions and reward generations, we minimized the use of python loop statements and instead solved most of the computations by utilizing NumPy \cite{oliphant2006guide} functions.
 
 \subsection{Implementation Details} \label{sec:MazeImplementationDetails}
-To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{Gym} \cite{openAIgym}. Our implementation of the particle maze environment inherits from the gyms base class for environments and therefore defines the four most important methods:
+In this section we want to talk about technical details of our implementation. We will talk about the interface between the environment and the agent, how observations are generated and how we optimized the environment for speed. We also compare our implementation to the previous implementation of L. Huang \cite{huangMazeGithub}.
+
+\paragraph{Agent Interaction. }
+To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{OpenAI Gym} \cite{openAIgym}. Our implementation of the particle maze environment inherits from the gym base class for environments and therefore defines the four methods:
 
 \begin{itemize}
-    \item \texttt{reset()} which resets the environment to a randomized initial state and returns the initial observation.
-    \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an action and receiving a tuple of (observation, reward, done, info) in return, where done indicates if the episode is over and info may contain additional information.
+    \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an \textit{action} and receiving a tuple of (observation, reward, done, info) in return. Done indicates if the episode is over and info may contain additional information. If the environment is done it needs to be reset manually by calling \texttt{reset}.
+    \item \texttt{reset()} which resets the environment to a initial state (which is usually randomized) and returns the initial observation.
     \item \texttt{render()} which allows us to render the environment in form of an rgb image intended for the user to display.
     \item \texttt{seed(seed)} which allows to set a random seed to generate reproducible results. 
 \end{itemize}
 
-The core method for the environment is the \texttt{step} method. Most of the agent-environment interaction will take place here and step will be called thousands or even millions of times during each training run. We want to explain how we optimized this method to be as fast as possible, but first we want to take a step back and talk about the general concept of the maze environment.
+Environments are usually registered within the gym registry and can then be created by specifying their unique name or id. The interface allows to provide extra arguments to the environment on creation to allow environment customization. 
 
-The maze environment has to keep track of two things: The maze and the particles. We store both of these using 2-dimensional Numpy arrays. The maze is stored in two versions: A version containing a one if the field is blocked and a version containing a one, if the field is free. This choice is not the most memory efficient, but will save some computation later on. We store the particle positions in a list-like structure, containing an entry for each particle with its (x, y)-position. 
+The core method for the environment is the \texttt{step} method. During training, all of the agent-environment interaction will happen by calling step with a selected action and receiving the observation and reward in return. The step method therefore must update the environment and create a new observation together with the reward for the selected action. Because step will be called thousands or even millions of times during each training session, all sub-methods called by step must be as lightweight as possible. We want to explain how we optimized the step method in a moment, but first we want to talk about the general concept of the maze environment.
 
-TODO: 
+The maze environment has to keep track of two things: The maze and the particles. We store both of these using 2-dimensional NumPy arrays. The maze is stored in two versions: One containing \textit{true} if the field is blocked and \textit{false} otherwise and an inverted version containing \textit{true}, if the field is not blocked and \textit{false} otherwise called freespace. This choice is not the most memory efficient, but will save some computation time when computing observations. We store the particle positions in a list-like structure, containing an entry for each particle with its (y, x) position. 
 
-explain how to avoid loops with Numpy
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \parbox{0.9\columnwidth}{\inputpython{figures/implementation/code/loop_check.py}{0}{5}} \\
+            \addlinespace[0.05cm]
+            {\small (a) Native Python code.} \\
+            \addlinespace[0.5cm]
+            \parbox{0.9\columnwidth}{\inputpython{figures/implementation/code/no_loop_check.py}{1}{2}} \\
+            \addlinespace[0.05cm]
+            {\small (b) Python code with NumPy} \\
+            
+        \end{tabular}
+    \end{center}
+    \vspace{-0.25cm}
+    \caption[Example for Python Loop Substitution with NumPy]{Example for substituting a Python loop with a NumPy statement. The array freespace is a 2d array containing false for blocked and true for non-blocked pixels. The locations array is a list of particle positions. NumPy arrays allow for advanced indexing, e.g. with a number of tuples. We also can index multiple dimensions of the array at the same time. Using these advantages, we can convert the Python loop from (a) into a single line of NumPy code in example (b).} \label{fig:MazeImplementation/Loops}
+\end{figure}
 
-talk about multiple ways to the same goal in numpy - compare to L.Huangs solution.
 
-talk about differences in observations. 
+\paragraph{Code Optimization. }
+In order to optimize the code, our main concern is the execution speed of Python. Because Python is an interpreted language, the execution is slow when being compared to natively compiled languages like C. We therefore need to take advantage of libraries written in such a language to accelerate our code. The largest difference can be achieved, by eliminating loops from Python code. This can be easily demonstrated by a simple example: Let us say, we want to check which of our particles may have moved to a blocked pixel. We could do this, by iterating through the particles and check for each particle if its current position is not blocked using the freespace array  as demonstrated in Figure \ref{fig:MazeImplementation/Loops} (a). An alternative, which uses NumPy arrays can achieve the same result without the loop using just a single line statement as demonstrated in Figure \ref{fig:MazeImplementation/Loops} (b). 
 
-perform speed test with same reward system.
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \parbox{0.95\columnwidth}{\inputpython{figures/implementation/code/collision_detection_vanilla.py}{0}{9}} \\
+            \addlinespace[0.05cm]
+            {\small (a) Using native Python code only.} \\
+            \addlinespace[0.5cm]
+            \parbox{0.95\columnwidth}{\inputpython{figures/implementation/code/collision_detection_numpy.py}{0}{5}} \\
+            \addlinespace[0.05cm]
+            {\small (b) Using NumPy to eliminate loops.} \\
+            \addlinespace[0.5cm]
+            \parbox{0.95\columnwidth}{\inputpython{figures/implementation/code/collision_detection_numpy_2.py}{0}{7}} \\
+            \addlinespace[0.05cm]
+            {\small (c) Using single dimensional indexes instead of 2d-indexes.} \\
+            
+        \end{tabular}
+    \end{center}
+    \vspace{-0.25cm}
+    \caption[Examples for Collision Detection using NumPy]{Examples for our collision detection system using different approaches. (a) uses a pure Python approach, while (b) and (c) use NumPy to accelerate computation. (c) uses a different indexing method than (b), by changing the multidimensional index from (b) to a single dimensional index by flattening the array.} \label{fig:MazeImplementation/Collision}
+\end{figure}
+
+Avoiding loops - especially when manipulating arrays - can save a lot of time, since the same operations may be executed hundreds or thousands of times for a single call. When it comes to array manipulation, NumPy (which is written in C) offers a lot of methods, which allow us to completely avoid Python loops even for complex operations. In Figure \ref{fig:MazeImplementation/Collision} (b), we show how we managed to perform the collision detection between particles and maze using solely NumPy statements. We also provide an alternative implementation using only native Python code in Figure \ref{fig:MazeImplementation/Collision} (a). Both implementations receive an action, the freespace array and the current location of the particles. They translate the action into the change of particle position using a global variable called \texttt{action\_map}. The native Python implementation then uses a loop to check for each particle if changing its position according to the action results in a new valid position and updates the location if this is true. This NumPy implementation first computes all new locations, ignoring collisions in Line 1. It then computes if these positions are valid in Line 2 and selects only valid positions in Line 3. 
+
+
+We compare the speed of both implementations in Table \ref{tab:MazeImplementation/CollisionDetectionSpeed}. We can see, that avoiding Python loops significantly improves performance and also scales very well with increasing instance sizes and particle numbers. Note that the native Python implementation uses lists instead of NumPy arrays.
+
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{crrrr}
+            \toprule
+            \multicolumn{1}{c}{Instance Size} & \multicolumn{1}{c}{Particle Count} & \multicolumn{1}{c}{Native} & \multicolumn{1}{c}{NumPy} & \multicolumn{1}{c}{NumPy Flattened} \\
+            \midrule
+            (100x100) & 64 & 9.27s & 1.34s & \textbf{1.22s} \\
+            (100x100) & 256 & 16.32s & 1.62s & \textbf{1.55s} \\
+            (100x100) & 1024 & 41.77s & 2.61s & \textbf{2.56s} \\
+            \midrule
+            (150x150) & 64 & 17.66s & 1.31s & \textbf{1.24s} \\
+            (150x150) & 256 & 24.90s & 1.64s & \textbf{1.59s} \\
+            (150x150) & 1024 & 52.43s & 2.66s & \textbf{2.59s} \\
+            \midrule
+            (200x200) & 64 & 28.13s & 1.26s & \textbf{1.22s} \\
+            (200x200) & 256 & 35.05s & \textbf{1.57s} & 1.61s \\
+            (200x200) & 1024 & 61.50s & 2.67s & \textbf{2.60s} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Speed Comparison for Different Collision Detection Implementations]{Speed comparison for different implementations of the collision detection. Each run was executed with 100k randomly generated actions for the particle movement. We can see, that the pure Python implementation is significantly slower than a NumPy supported implementation. Both NumPy implementations also scale very well and are only affected by the number of particles due to the improved array structure (the Python implementation uses lists). The NumPy implementation with a flattened array is slightly faster in almost every test compared to the non-flattened implementation (see bold results).} \label{tab:MazeImplementation/CollisionDetectionSpeed}
+\end{table}
+
+Additionally using NumPy methods for all array manipulation tasks, we also tried to compare NumPy implementations with each other. Often there are multiple possibilities to solve the same problem using NumPy and not all of them have the same speed. Sticking to our collision detection example, we included an alternative implementation using also NumPy in Figure \ref{fig:MazeImplementation/Collision} (c). The only difference to the example in Figure \ref{fig:MazeImplementation/Collision} (b) is in Line 2. Instead of using the particle locations directly to index the two-dimensional array, we first flatten the array and then use a single dimensional index. For NumPy, this single dimensional index is faster, which can be seen, by comparing the results in Table \ref{tab:MazeImplementation/CollisionDetectionSpeed}.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{lrr}
+            \toprule
+            \multicolumn{1}{c}{Environment} & \multicolumn{1}{c}{Old Implementation} & \multicolumn{1}{c}{New Implementation} \\
+            \midrule
+            Corridor & 63.75s & \textbf{6.54s} \\
+            Capillary & 68.41s & \textbf{7.66s} \\
+            Brain & 160.22s & \textbf{12.31s} \\ 
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Maze Environment Implementation Speed Comparison]{Comparison between the environments implemented by L.Huang \cite{huangMazeGithub} and our implementation. The performance is measured in seconds for the execution of the step-method on different instances (see Section \ref{sec:TestProcedure} for a list of instances). The best value is marked in bold. Each environment performs 100k random actions with 256 particles and is automatically reset after performing 2000 steps. We can see, that our new implementation significantly reduces interaction time and also scales better with larger environments.} \label{tab:MazeImplementation/ImplementationComparison}
+\end{table}
+
+Previous implementations like the implementation of L. Huang \cite{huangMazeGithub} also used NumPy. We compared the difference in execution time between the different implementations on three test instances (see Section \ref{sec:TestProcedure} for a description of the instances) and listed the results in Table \ref{tab:MazeImplementation/ImplementationComparison}. We can see, that our new implementation significantly reduces agent-environment interaction time, being between 10 and 13 times faster.
+
+\paragraph{Observations. }
+We finally want to talk about the observations that are generated by the environment, which are similar, but not equal to previous implementations. The agent receives a single channel (greyscale) image where the maze is shown with blocked pixels being set to 255 and non-blocked pixels being set to zero. The positions of the particles are marked with a fixed value, independently of the number of particles gathered at a single pixel. Previous implementations used to mark more than a single pixel for each particle and instead marked a area of nine pixels around its center in the observation. 
+
+In the case of random goal positions, we add two elements to the observation input: A circle around the goal position, indicating the goal range, and a square with side lengths of 3 pixels, centered at the goal position. Both the circle and the square also have their individual value, which is different from the value used to mark the positions of the particles. 
 
 \subsection{Reward Shaping} \label{sec:MazeReward}
 Rewards are a fundamental component of reinforcement learning. For RL algorithms the difficulty of a problem can largely depend on how much information the reward signal provides during training. Problems become especially complicated when dealing with very sparse rewards (e.g. just a single reward at the end of an episode). When designing a reward signal for a problem, it is therefore desirable to include as much information as possible into the reward signal to obtain faster and better learning results. Providing much information with the reward signal can include a risk though: The reward must be unbiased and should not limit the solution space the algorithm can come up with. If we reward specific strategies, the RL algorithm will just replicate that strategy and not learn anything new.

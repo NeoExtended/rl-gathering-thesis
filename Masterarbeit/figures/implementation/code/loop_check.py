@@ -1,4 +1,4 @@
-def check(locations, freespace):
+def check(freespace, locations):
     valid = []
     for loc in locations:
         valid.append(freespace[loc[0]][loc[1]])
