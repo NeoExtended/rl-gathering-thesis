@@ -27,4 +27,4 @@ env:
 
 meta:
   n_timesteps: 3000000
-  log_dir: "./logs/Baseline/vessel/"
+  log_dir: "./logs/Baseline/maze0318/"
