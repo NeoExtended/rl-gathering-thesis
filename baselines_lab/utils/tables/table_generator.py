@@ -85,9 +85,9 @@ class TableGenerator(ABC):
         table_format.insert(0, "r")  # Index
         self.value_start = sort_start + sort_len + 1
         dataframe = pd.DataFrame(rows, columns=fieldnames)
-
-        dataframe.sort_values(fieldnames[sort_start:sort_start+sort_len], inplace=True, ascending=False, na_position="first")
-        dataframe.reset_index(drop=True, inplace=True)
+        if sort_len > 0:
+            dataframe.sort_values(fieldnames[sort_start:sort_start+sort_len], inplace=True, ascending=False, na_position="first")
+            dataframe.reset_index(drop=True, inplace=True)
         if format == "tex":
 
             self._format_frame(dataframe, fieldnames[sort_start+sort_len:], ["min"]*(len(fieldnames)-sort_start+sort_len))
@@ -215,8 +215,23 @@ class TableGenerator(ABC):
             return NetworkTableGenerator(**kwargs)
         elif type == "activations":
             return ActivationsTableGenerator(**kwargs)
+        elif type == "simple":
+            return SimpleTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
+
+
+class SimpleTableGenerator(TableGenerator):
+    def __init__(self, **kwargs):
+        if 'run_id' in kwargs:
+            del kwargs['run_id']
+        super(SimpleTableGenerator, self).__init__(run_id=True, **kwargs)
+
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        return dict()
+
+    def _get_fieldnames(self) -> List[str]:
+        return []
 
 
 class RLAlgorithmTableGenerator(TableGenerator):

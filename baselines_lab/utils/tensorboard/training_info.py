@@ -46,10 +46,15 @@ class TrainingInformation(TensorboardLogReader):
         self.var = np.mean(np.var(value_data, axis=0))
         #self.cv_test = np.mean(np.std(value_data, axis=0) / np.mean(value_data, axis=0))
         self.cv_test = np.std(value_data, axis=0)[-1] / np.mean(value_data, axis=0)[-1]
+        self.result_delta_test = np.max(value_data, axis=0)[-1] - np.min(value_data, axis=0)[-1]
+
         step_data_train, value_data_train = tag_values.get("episode_length/ep_length_mean")
+        step_data_train, value_data_train = np.asarray(step_data_train), np.asarray(value_data_train)
+        # Check if all rows in step data are equal. If not interpolate.
+        if step_data_train.dtype == np.object or not (step_data_train == step_data_train[0]).all():
+            step_data_train, value_data_train = interpolate(step_data_train, value_data_train)
         #self.cv_train = np.mean(np.std(value_data_train, axis=0) / np.mean(value_data_train, axis=0))
         self.cv_train = np.std(value_data_train, axis=0)[-1] / np.mean(value_data_train, axis=0)[-1]
-        self.result_delta_test = np.max(value_data, axis=0)[-1] - np.min(value_data, axis=0)[-1]
         self.result_delta_train = np.max(value_data_train, axis=0)[-1] - np.min(value_data_train, axis=0)[-1]
 
         logging.info(str(self.log_dir))
