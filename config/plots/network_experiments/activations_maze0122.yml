@@ -7,3 +7,13 @@ jobs:
     results:
       time: true
     output: "../config/plots/network_experiments/activations_maze0122.tex"
+  - type: figure
+    step_type: time
+    tags: ["episode_length/ep_length_mean", "episode_length/eval_ep_length_mean"]
+    names: ["Training Episode Length", "Evaluation Episode Length"]
+    smoothing: 0.0
+    alias:
+      "2020_06_28_075847": "Leaky RELU + Tanh"
+      "2020_06_28_212003": "SELU"
+      Baseline: "Leaky ReLU"
+    output: "../config/plots/network_experiments/"

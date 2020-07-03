@@ -1,0 +1,11 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Reward_Experimente\VesselMaze02\continuous\2020_06_08_171043
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Baseline\vessel\2020_07_02_164429
+
+jobs:
+  - type: figure
+    alias:
+      "2020_06_08_171043": "Default Settings"
+      "2020_07_02_164429": "Optimized Baseline"
+    output: "../config/plots/baseline"
+    
