@@ -18,6 +18,14 @@ register(id="Maze0122Continuous-v0",
                  'goal_range': 15,
                  'reward_generator': "continuous"})
 
+register(id="Maze0122Continuous-v2",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/map0122.csv',
+                 'goal': None,
+                 'goal_range': 15,
+                 'reward_generator': "continuous"})
+
 register(id="Maze0122SmallContinuous-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
@@ -165,3 +173,11 @@ register(id="VesselMaze02Discrete-v0",
                  'goal': [85, 66],
                  'goal_range': 10,
                  'reward_generator': "goal"})
+
+register(id="VesselMaze02Continuous-v2",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/small_vessel_2.csv',
+                 'goal': None,
+                 'goal_range': 10,
+                 'reward_generator': "continuous"})
