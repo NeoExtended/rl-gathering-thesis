@@ -794,7 +794,7 @@ Nevertheless, with less or no frame stacking we usually get comparably good resu
 In this section we want to evaluate how much influence different network architecture has on the performance. For all past experiments we used the same neural network structure, using a simple CNN equal to the one used in previous experiments. In Section \ref{sec:Eval/NetworkStructure}, we will test other networks on our test instances, to see, if we can achieve an improvement in training time or final result by adding or removing layers. Finally, we will also evaluate if we are able to improve the performance, by replacing the leaky ReLU activation function in Section \ref{sec:Eval/ActivationFunctions}.
 
 \subsection{Network Structure} \label{sec:Eval/NetworkStructure}
-The CNN we used in past experiments consists of three convolutional layers with 32 ($8 \times 8, s=2$), 64 ($4\times4, s=2$) and 64 ($4 \times 4, s=1$) filters respectively, followed by a single fully connected layer with 512 neurons. The CNN extractor this network uses is used by many other authors who performed experiments on similar sized environments like the Atari game suite (e.g. \cite{burda2018large, burda2018exploration, mnih2015human}). We therefore expect the CNN to be fairly optimized for the given input and mostly focus on the structure of the fully connected layers. We also expect network sizes to only matter for larger, more complicated instances, where more complex behavior has to be learned. we therefore limit our tests to the Vessel and the Brain instance.
+The CNN we used in past experiments consists of three convolutional layers with 32 ($8 \times 8, s=2$), 64 ($4\times4, s=2$) and 64 ($4 \times 4, s=1$) filters respectively, followed by a single fully connected layer with 512 neurons. This network structure is widely used and has shown to provide good performance on tasks like the Atari benchmark (e.g. \cite{burda2018large, burda2018exploration, mnih2015human}). We therefore expect the CNN to be fairly optimized for the given input and mostly focus on the structure of the fully connected layers. We also expect network sizes to only matter for larger, more complicated instances, where more complex behavior has to be learned. We therefore limit our tests to the Vessel and the Brain instance.
 
 \begin{table}[htp]
     \begin{center}
@@ -803,24 +803,25 @@ The CNN we used in past experiments consists of three convolutional layers with 
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & default & [512] & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
-                2 & default & [512, {'pi': [512], 'vf': [512]}] & 101.03 & 104.18 & 538k & 1:10:47h \\
-                3 & default & [512, 512] & 95.97 & 99.09 & 508k & 1:10:34h \\
-                4 & default & [256] & 94.16 & 98.81 & 506k & \textbf{1:09:27h} \\
-                5 & default & [256, 448, {'pi': [448], 'vf': [448]}] & 98.38 & 107.02 & 536k & 1:10:37h \\
-                6 & default & [128] & 101.97 & 104.03 & 476k & 1:09:56h \\
-                7\tnote{1} & modified\tnote{2} & [512] & 110.00 & 114.35 & \textbf{413k} & 1:51:27h \\
+                1 & default\tnote{1} & [128] & 101.97 & 104.03 & 476k & 1:09:56h \\
+                2 & default\tnote{1} & [256] & 94.16 & 98.81 & 506k & \textbf{1:09:27h} \\
+                3 & default\tnote{1} & [512] & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+                4 & default\tnote{1} & [512, 512] & 95.97 & 99.09 & 508k & 1:10:34h \\
+                5 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 101.03 & 104.18 & 538k & 1:10:47h \\
+                6 & default\tnote{1} & [256, 448, {'pi': [448], 'vf': [448]}] & 98.38 & 107.02 & 536k & 1:10:37h \\
+                7\tnote{2} & modified\tnote{3} & [512] & 110.00 & 114.35 & \textbf{413k} & 1:51:27h \\
                 \bottomrule
             \end{tabular}
             \begin{tablenotes} \footnotesize
-                \item[1] We removed downscaling for this experiment.
-                \item[2] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+                \item[1] Structure: ('conv', 32, 8, 4), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+                \item[2] We removed downscaling for this experiment.
+                \item[3] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
             \end{tablenotes}
 
         \end{threeparttable}
         
     \end{center}
-    \caption{Vessel}
+    \caption[Test Results for Different Network Structures on the Vessel Environment]{Test results for different network structures on the Vessel environment. The best results are marked in bold. We can see, that our initial network with 512 neurons in the dense layer provides the best results in terms of final result, while only performing very slightly slower than smaller networks on our test machine.} \label{tab:Eval/NetworkStructure/Vessel}
 \end{table}
 
 \begin{table}[htp]
@@ -830,76 +831,140 @@ The CNN we used in past experiments consists of three convolutional layers with 
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & default & [512] & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
-                2 & default & [512, {'pi': [512], 'vf': [512]}] & 317.84 & 334.83 & \textbf{6.79M} & \textbf{4:24:58h} \\
-                3\tnote{1} \ \tnote{2} & modified\tnote{3} & [512] & 326.53 & \textbf{326.53}\tnote{2} & 7.41M & 16:08:57h \\
+                1 & default\tnote{1} & [512] & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
+                2 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 317.84 & 334.83 & \textbf{6.79M} & \textbf{4:24:58h} \\
+                3\tnote{2,3} & modified\tnote{4} & [512] & 326.53 & \textbf{326.53}\tnote{3} & 7.41M & 16:08:57h \\
                 \bottomrule
             \end{tabular}
             \begin{tablenotes} \footnotesize
-                \item[1] We changed downscaling to ($168 \times 168$) for this experiment.
-                \item[2] Due to the increase in training time, this experiment does not use multiple trials. 
-                \item[3] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+                \item[1] Structure: ('conv', 32, 8, 4), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
+                \item[2] We changed downscaling to ($168 \times 168$) for this experiment.
+                \item[3] Due to the increase in training time, this experiment does not use multiple trials. 
+                \item[4] Structure: ('conv', 32, 8, 4), ('pool', 2, 2), ('conv', 64, 4, 2), ('conv', 64, 3, 1)
             \end{tablenotes}
         \end{threeparttable}
     \end{center}
-    \caption{Brain}
+    \caption[Test Results for Different Network Structures on the Brain Environment]{Test results for different network structures on the Brain environment. Similarity to the test results on the Vessel environment (see Table \ref{tab:Eval/NetworkStructure/Vessel}) we can observe, that larger networks do not provide noticeable advantages or disadvantages. Increased size - especially in the convolutional layers - may lead to vastly increased training times though.} \label{tab:Eval/NetworkStructure/Brain}
 \end{table}
 
-Table TODO, shows the results on the Vessel instance.
+Table \ref{tab:Eval/NetworkStructure/Vessel} shows the results for different network sizes on the Vessel instance. Surprisingly, we can see that the network structure does not seem to have a great impact on training performance. While the network we used for all past experiments provided the best results in terms of final performance, the performance of other network types was very similar. Even with only one quarter of the neurons in the fully connected layer the network still is able to perform well (see Experiment 1). Larger networks do not seem to benefit training neither in initial speed, nor in final performance (see Experiments 4, 5, 6). We also tried to increase the amount of information the network receives, by removing downscaling wrapper and compensating for the increased layer size by adding a max-pooling layer after the first convolution. Looking at the results for Experiment 7, we can see, that this change also does not benefit training and also increases training time drastically due to the increased size of the first convolutional filters. 
 
+To verify our results, we also tested some of the networks on the larger Brain instance. The results are listed in Table \ref{tab:Eval/NetworkStructure/Brain}. The results are very similar to the results on the Vessel instance. Larger networks do not seem to provide an advantage in terms of final performance, but contrary to before, we can observe that the larger network in Experiment 2 seems to learn a little bit faster initially. 
+
+\paragraph{Analysis. } The results from the experiments for different network structures are surprising, as neural networks are at the core of the RL agent. For single target goals, the size of the network does not seem to matter too much, as long as the CNN extractor retains its structure. Because the goal position does not change, the initial position of particles does not influence the required actions to bring the particles to the goal too much. The agents therefore do not need to learn very complex behavior and smaller networks are sufficient to learn this information. We perform additional experiments with random goals in Section \ref{sec:EvalRandomGoals} which support this claim.
 
 \subsection{Activation Functions} \label{sec:Eval/ActivationFunctions}
+In this section we want to take a look at how activation functions influence the performance. We presented a number of activation functions in Section \ref{ssec:ActivationFunctions} and want to compare three different configurations: 
 
-\begin{table}[htp]
+\begin{enumerate}
+    \item A configuration using the tanh activation function, which is still widely used for MLPs. We will use a leaky ReLU activation functions for the CNN extractor and the tanh function only for the fully connected layer of the network. Tanh offers more nonlinearity than the Leaky ReLU function and therefore may improve performance.
+    \item A configuration using the modern SELU function. SELU as an extension of the ELU function combines the advantages of the Leaky ReLU function with nonlinearity and a layer self-normalization property. It is slightly harder to compute, but also promises faster convergence. We use the SELU function on both, the CNN and the MLP part of our network and change the network weight initialization to the lecun normal initialization to take advantage of the self-normalization property.
+    \item A configuration using our default Leaky ReLU function on both, the CNN extractor and the MLP network.
+\end{enumerate}
+
+\begin{table}[ht]
     \begin{center}
-        \begin{tabular}{rccccrrrr}
-            \toprule
-             &  &  &  &  & \multicolumn{2}{c}{Episode Length} & \\
-            \cmidrule(lr){6-7}
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-            \midrule
-            1 & default & [512] & selu & selu & \textbf{54.50} & \textbf{55.88} & 184k & 0:44:21h \\
-            2 & default & [512] & Leaky ReLU & tanh & 58.06 & 69.75 & \textbf{146k} & \textbf{0:40:24h} \\
-            3 & default & [512] & Leaky ReLU & Leaky ReLU & 61.81 & 71.28 & 147k & 0:40:36h \\
-            \bottomrule
+        \begin{tabular}{c}
+            \begin{tabular}{rccccrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & SELU & SELU & \textbf{54.50} & \textbf{55.88} & 184k & 0:44:21h \\
+                2 & Leaky ReLU & Tanh & 58.06 & 69.75 & \textbf{146k} & \textbf{0:40:24h} \\
+                3 & Leaky ReLU & Leaky ReLU & 61.81 & 71.28 & 147k & 0:40:36h \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (a) Results for the Corridor instance} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rccccrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & SELU & SELU & 96.71 & 97.27 & 505k & 1:19:05h \\
+                2 & Leaky ReLU & Tanh & 99.94 & 102.25 & \textbf{475k} & 1:10:54h \\
+                3 & Leaky ReLU & Leaky ReLU & \textbf{91.06} & \textbf{96.72} & 532k & \textbf{1:10:00h} \\
+                \bottomrule
+            \end{tabular} \\
+            \addlinespace[0.15cm]
+            {\small (b) Results for the Vessel instance} \\
+            \addlinespace[0.5cm]
+            \begin{tabular}{rccccrrrr}
+                \toprule
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+                \midrule
+                1 & SELU & SELU & 311.84 & \textbf{328.06} & \textbf{5.94M} & 4:39:51h \\
+                2 & Leaky ReLU & Tanh & 401.34 & 415.33 & 9.68M & \textbf{4:24:44h} \\
+                3 & Leaky ReLU & Leaky ReLU & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
+                \bottomrule
+            \end{tabular}\\
+            \addlinespace[0.15cm]
+            {\small (c) Results for the Brain instance} \\
+           % \addlinespace[0.15cm]
         \end{tabular}
     \end{center}
-    \caption{Activations - Maze0318}
+    \caption[Evaluation Results for Different Combinations of Activation Functions]{Results for different combinations of activation functions on the three test instances. We can see, that the SELU and the Leaky ReLU function perform well on all instances, whereas the Tanh function only performs well on smaller instances. Even though the SELU function requires more computation time, it can be a viable replacement, because it shows to improve convergence speed significantly on larger instances (see (c)) and also improves final results on certain instances (see (a)).} \label{tab:Eval/ActivationFunctions}
 \end{table}
 
-\begin{table}[htp]
+\begin{figure}[htp]
     \begin{center}
-        \begin{tabular}{rccccrrrr}
+        \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/networks/maze0122_ep_len.pdf}
+    \end{center}
+    \caption[Episode Length Using Different Activation Functions on the Brain Environment]{Episode length during training on the Brain environment using different activation functions. The x-axis shows time in minutes. We can see, that the SELU function - while being the fastest in terms of earliest improvement - produces a relatively unstable training. We did not observe this behavior on smaller instances, but it might produce problems for larger instances. Training with the Tanh function makes training progress very slow compared with other activation functions.} \label{fig:Eval/ActivationFunctions/Maze0122}
+\end{figure}
+
+We test all three activation function configurations, in combination with the simple network we used in previous experiments. The results of the experiments on the three test instances can be found in Table \ref{tab:Eval/ActivationFunctions}. We can see, that the choice of the activation function has greater influence on the agent's performance than the network structure. When comparing the results of the SELU activation function to the results of the Leaky ReLU function, we can see that the SELU function performs at least equally well when it comes to result quality (episode length), but also provides significantly faster improvement on larger instances (see Table \ref{tab:Eval/ActivationFunctions} (c)). Even though the SELU function is computationally slightly heavier, the time difference on our test machine was relatively small. For example on the Brain instance, the network using the SELU function needed 5\% more total wall-clock time, but 19\% less steps for the first significant improvement. This difference can not be generalized though, as the agent using the SELU function needed more time for the first improvement on the Corridor environment. Looking at Figure \ref{fig:Eval/ActivationFunctions/Maze0122} we can also see that the SELU activation function provides faster results, but the training process seems to be less stable overall. Luckily the instability does not result in complete performance collapses. The SELU function therefore is a viable option for larger instances, but requires periodical model evaluation to stop training at a favorable moment.
+
+When comparing the results of the SELU and the Leaky ReLU activation function to the results of the Leaky ReLU/Tanh combination, we can see, that the network trains faster and produces better or equal results for small instances (see Table \ref{tab:Eval/ActivationFunctions} (a) and (b)), but produces significantly worse results on larger instances (see Table \ref{tab:Eval/ActivationFunctions} (c)). Using the Tanh function did not make a larger difference in wall-clock time on our test system and was on-par with the Leaky ReLU only network. This is most likely, because the Tanh function was only used on a small portion of the network and therefore was not slowed down by the more expensive activation function.
+
+\subsection{Conclusion} \label{sec:Eval/Networks/Conclusion}
+Neural networks only seem to play a minor role when it comes to the basic particle navigation problem. The network that was also used by previous work performs well and often outperforms larger networks, or networks with other activation functions. Switching from the Leaky ReLU to the SELU activation function may provide benefits in some situations and can lead to faster results on larger instances. Larger networks will not be needed for current applications, but might be necessary when dealing with larger inputs, or more complicated environments. We will therefore repeat some of the tests from this section when extending the environment model in Section \ref{sec:EvalExtendedModels} and when dealing with randomness in Section \ref{sec:EvalRandomness}. 
+
+\section{Baseline} \label{sec:EvalBaseline}
+Baseline for our test instances using findings from test results.
+
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/maze0318_ep_len.pdf} \\
+            \addlinespace[0.15cm]
+            {\small (a) Maze0318} \\
+            \addlinespace[0.5cm]
+            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/vessel_ep_len.pdf} \\
+            \addlinespace[0.15cm]
+            {\small (b) Vessel} \\
+            \addlinespace[0.5cm]
+            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/maze0122_ep_len.pdf} \\
+            \addlinespace[0.15cm]
+            {\small (c) Maze0122} \\
+            \addlinespace[0.5cm]
+        \end{tabular}
+
+    \end{center}
+    \caption{Baselines} \label{fig:Eval/Baselines}
+\end{figure}
+
+
+\subsection{Comparison to Previous Approaches} \label{sec:EvalRLComparison}
+Compare here.
+
+\begin{table}
+    \begin{center}
+        \begin{tabular}{lrrrrrr}
             \toprule
-             &  &  &  &  & \multicolumn{2}{c}{Episode Length} & \\
-            \cmidrule(lr){6-7}
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            & \multicolumn{3}{c}{Training Steps} & \multicolumn{3}{c}{Avg Episode Length} \\
+            \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+            \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} \\
             \midrule
-            1 & default & [512] & selu & selu & 96.71 & 97.27 & 505k & 1:19:05h \\
-            2 & default & [512] & Leaky ReLU & tanh & 99.94 & 102.25 & \textbf{475k} & 1:10:54h \\
-            3 & default & [512] & Leaky ReLU & Leaky ReLU & \textbf{91.06} & \textbf{96.72} & 532k & \textbf{1:10:00h} \\
+            Corridor & 75M & 3M & 96\% & 240 & 217.53 & \\
+            Capillary & 160M & 6M & 96.25\% & 400 & 381,44 & \\
+            Brain & 250M & 12M & 95.2\% & 1600 & 1217.32 & \\
             \bottomrule
         \end{tabular}
+
     \end{center}
-    \caption{Activations - Vessel}
+    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousApproach}
 \end{table}
-
-
-\begin{table}[htp]
-    \begin{center}
-        \begin{tabular}{rccccrrrr}
-            \toprule
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
-            \midrule
-            1 & default & [512] & selu & selu & 311.84 & \textbf{328.06} & \textbf{5.94M} & 4:39:51h \\
-            2 & default & [512] & Leaky ReLU & tanh & 401.34 & 415.33 & 9.68M & \textbf{4:24:44h} \\
-            3 & default & [512] & Leaky ReLU & Leaky ReLU & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
-            \bottomrule
-        \end{tabular}
-    \end{center}
-    \caption{Activations - Brain}
-\end{table}
-
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
 Extended Environment Models
@@ -910,7 +975,35 @@ Physical Particles
 \section{Randomized Instances} \label{sec:EvalRandomness}
 Randomized Instances
 \subsection{Random Goal Positions} \label{sec:EvalRandomGoals}
-Random Goal Positions
+acceptable
+
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Run} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
+            \midrule
+            1 & 2020\_06\_29\_202152 & 467.09 & 483.80 & 2.72M \\
+            2 & 2020\_06\_30\_203358 & \textbf{73.21} & \textbf{78.03} & 398k \\
+            3 & 2020\_07\_01\_131051 & 146.50 & 155.36 & 428k \\
+            4 & 2020\_07\_01\_230121 & 130.47 & 135.40 & 402k \\
+            5 & 2020\_07\_02\_083922 & 128.09 & 143.76 & 460k \\
+            6 & 2020\_07\_03\_002628 & 106.75 & 118.45 & \textbf{283k} \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Maze0318} \label{tab:Eval/RandomGoal/Maze0318}
+\end{table}
+
+\begin{figure}[htp]
+    \begin{center}
+        \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/randomness/goals/maze0318_episode_length.pdf}
+    \end{center}
+    \caption{Maze0318} \label{fig:Eval/RandomGoal/Maze0318}
+\end{figure}
+
+
 \subsection{Random Mazes} \label{sec:EvalRandomMaze}
 Random Mazes
 \section{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
