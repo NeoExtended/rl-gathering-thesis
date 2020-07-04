@@ -858,7 +858,7 @@ In this section we want to take a look at how activation functions influence the
 
 \begin{enumerate}
     \item A configuration using the tanh activation function, which is still widely used for MLPs. We will use a leaky ReLU activation functions for the CNN extractor and the tanh function only for the fully connected layer of the network. Tanh offers more nonlinearity than the Leaky ReLU function and therefore may improve performance.
-    \item A configuration using the modern SELU function. SELU as an extension of the ELU function combines the advantages of the Leaky ReLU function with nonlinearity and a layer self-normalization property. It is slightly harder to compute, but also promises faster convergence. We use the SELU function on both, the CNN and the MLP part of our network and change the network weight initialization to the lecun normal initialization to take advantage of the self-normalization property.
+    \item A configuration using the modern SELU function. SELU as an extension of the ELU function combines the advantages of the Leaky ReLU function with nonlinearity and a layer self-normalization property. It is slightly harder to compute, but also promises faster convergence. We use the SELU function on both, the CNN and the MLP part of our network and change the network weight initialization to the LeCun normal initialization to take advantage of the self-normalization property.
     \item A configuration using our default Leaky ReLU function on both, the CNN extractor and the MLP network.
 \end{enumerate}
 
@@ -921,7 +921,10 @@ When comparing the results of the SELU and the Leaky ReLU activation function to
 Neural networks only seem to play a minor role when it comes to the basic particle navigation problem. The network that was also used by previous work performs well and often outperforms larger networks, or networks with other activation functions. Switching from the Leaky ReLU to the SELU activation function may provide benefits in some situations and can lead to faster results on larger instances. Larger networks will not be needed for current applications, but might be necessary when dealing with larger inputs, or more complicated environments. We will therefore repeat some of the tests from this section when extending the environment model in Section \ref{sec:EvalExtendedModels} and when dealing with randomness in Section \ref{sec:EvalRandomness}. 
 
 \section{Baseline} \label{sec:EvalBaseline}
-Baseline for our test instances using findings from test results.
+In this section we want to take our findings from the previous sections to establish a performance baseline for the test instances. These experiments can be used to compare future work against our results and show, that a combination of our previous findings also yields good results. We also compare our results to previous RL agents in Section \ref{sec:EvalRLComparison} and against previous algorithmic approaches in Section \ref{sec:EvalAlgorithms}.
+
+\paragraph{Final Agent Configuration}
+For the training of the final agents we chose to use PPO (see Section \ref{sec:EvalRLAlgorithms}) with the hyperparameters given in Table \ref{tab:PPOHyperparemeters}. For reward we use our novel continuous internally normalized reward (see Section \ref{sec:EvalReward}). Observations will be downscaled to 84 by 84 pixels to be compatible with all environments, but we remove frame stacking (see Section \ref{sec:EvalObs}). Finally, we use the same network structure as in previous experiments, but use SELU activations for all neurons in the hidden layers (see Section \ref{sec:EvalNetworks}).
 
 \begin{figure}[htp]
     \begin{center}
@@ -945,7 +948,11 @@ Baseline for our test instances using findings from test results.
 \end{figure}
 
 
-\subsection{Comparison to Previous Approaches} \label{sec:EvalRLComparison}
+\paragraph{Baseline Performance}
+We train two separate sets of agents, one with a fixed number of 256 particles and one with a randomized number of particles, where the particle count is randomly selected to be between 1 and one fifth of the number of non-blocked pixels of the current environment for each episode. The results for the performance of the agents can be found in Table TODO. We also included plots for the average episode length during training in Figure \ref{fig:Eval/Baselines}. TODO.
+
+
+\subsection{Comparison to Previous RL Approaches} \label{sec:EvalRLComparison}
 Compare here.
 
 \begin{table}
@@ -963,7 +970,44 @@ Compare here.
         \end{tabular}
 
     \end{center}
-    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousApproach}
+    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousRLApproach}
+\end{table}
+
+\subsection{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
+Comparison to Algorithmic Approaches - real time capable implementations of Algorithmic approaches?
+
+\begin{table}
+    \begin{center}
+        \begin{tabular}{llrrrrrr}
+            \toprule
+            & & \multicolumn{3}{c}{Avg Ep Len (256 Particles)} & \multicolumn{3}{c}{Avg Ep Len (1000 Particles)} \\
+            \cmidrule(lr){3-5} \cmidrule(lr){6-8} 
+            \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} \\
+            \midrule
+            \multirow{4}{*}{Corridor} & ssp & & \multirow{4}{*}{217.53} & & & & \\
+            & dsp & & & & & & \\
+            & mte & & & & & & \\
+            & mtse & 457.98 & & & 477.75 & & \\
+            \midrule
+            \multirow{4}{*}{Vessel} & ssp & & & & & & \\
+            & dsp & & & & & & \\
+            & mte & & & & & & \\
+            & mtse & & & & & & \\
+            \midrule
+            \multirow{4}{*}{Capillary} & ssp & & \multirow{4}{*}{381.44} & & & & \\
+            & dsp & & & & & & \\
+            & mte & & & & & & \\
+            & mtse & & & & & & \\
+            \midrule
+            \multirow{4}{*}{Brain} & ssp & & \multirow{4}{*}{1217.32} & & & & \\
+            & dsp & & & & & & \\
+            & mte & & & & & & \\
+            & mtse & & & & & & \\
+            \bottomrule
+        \end{tabular}
+
+    \end{center}
+    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousAlgorithmicApproach}
 \end{table}
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
@@ -972,24 +1016,36 @@ Extended Environment Models
 Dealing with Error
 \subsection{Physical Particles} \label{sec:EvalPhysical}
 Physical Particles
+
+
 \section{Randomized Instances} \label{sec:EvalRandomness}
-Randomized Instances
+The largest difference between traditional algorithmic approaches and the approach using RL agents is, that RL agents must be trained for each individual instance. This means that while solving the environment itself might be faster, the computation time needed for RL algorithms is significantly larger. In this section, we want to take training on an environment a step further and analyze, how well RL agents are able to "understand" the environment. We want to evaluate if RL agents are able to learn a strategy which is able to gather the particles at random goal position in a given maze environment. We present our results in Section \ref{sec:EvalRandomGoals}. We then want to take it even a step further and and train agents to solve randomized maze environments in Section \ref{sec:EvalRandomMaze}. 
+
 \subsection{Random Goal Positions} \label{sec:EvalRandomGoals}
-acceptable
+In this section, we want to take a first step into agents which learn more flexible strategies by randomizing goal positions between episodes. To learn where the particles should be gathered, we need to include the goal position in the observation. We therfore mark the goal position with a square, surrounded by a circle indicating the goal range, as we described in detail in Section \ref{sec:MazeImplementationDetails}. Because the new setting might introduce completely new requirements for our agent, we first test different agent configurations which yielded good results in the past on the Corridor environment. Below is a complete list of our tested agents, describing the changes to the agents in comparison to the original default agent which only uses continuous non-normalized reward (see Section \ref{sec:TestProcedure}). 
+
+\begin{enumerate}
+    \item The default configuration. 
+    \item A configuration using a larger network which has a diverging last layer with an additional 512 neurons for both the actor and the critic (we will call this \textit{Network 1}), together with SELU activations on all hidden layers and LeCun normal distribution network initialization. 
+    \item A configuration using SELU activations on all hidden layers and LeCun normal distribution network initialization.
+    \item A configuration using Network 1.
+    \item A configuration using Network 1, SELU activations with LeCun normal distribution network initialization and reduces frame stacking from four to two frames.
+    \item A configuration using a neural network with two shared fully connected layers with 512 neurons \textit{and} an extra fully connected layer with 512 neurons for both the actor and the critic (we will call this \textit{Network 2}). Additionally, all hidden layers use SELU activations and the layers are initialized using the LeCun normal distribution.  
+\end{enumerate}
 
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{rrrrr}
+        \begin{tabular}{rlrrr}
             \toprule
-            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Run} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Configuration} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 & 2020\_06\_29\_202152 & 467.09 & 483.80 & 2.72M \\
-            2 & 2020\_06\_30\_203358 & \textbf{73.21} & \textbf{78.03} & 398k \\
-            3 & 2020\_07\_01\_131051 & 146.50 & 155.36 & 428k \\
-            4 & 2020\_07\_01\_230121 & 130.47 & 135.40 & 402k \\
-            5 & 2020\_07\_02\_083922 & 128.09 & 143.76 & 460k \\
-            6 & 2020\_07\_03\_002628 & 106.75 & 118.45 & \textbf{283k} \\
+            1 & Default & 467.09 & 483.80 & 2.72M \\
+            2 & Network 1 + SELU & \textbf{73.21} & \textbf{78.03} & 398k \\
+            3 & SELU & 146.50 & 155.36 & 428k \\
+            4 & SELU again TODO & 130.47 & 135.40 & 402k \\
+            5 & Network 1 + SELU + FS 2 & 128.09 & 143.76 & 460k \\
+            6 & Network 2 + SELU & 106.75 & 118.45 & \textbf{283k} \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -1006,5 +1062,3 @@ acceptable
 
 \subsection{Random Mazes} \label{sec:EvalRandomMaze}
 Random Mazes
-\section{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
-Comparison to Algorithmic Approaches
