@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import time
 
 import gym
 from stable_baselines.gail import generate_expert_traj
@@ -48,10 +49,12 @@ def run_alg(args):
     env.seed(args.seed)
     env = GymMazeWrapper(env, render=args.render, allow_diagonal=not args.disallow_diagonal)
     results = []
+    times = []
 
     for i in range(args.trials):
         env.reset()
         total_moves = 0
+        begin = time.time()
         if args.preprocessing:
             logging.info("Running preprocessing algorithm")
             pre_alg = MoveToRandomCornerAlgorithm(env)
@@ -69,10 +72,14 @@ def run_alg(args):
         target_alg.run()
         total_moves += target_alg.get_number_of_movements()
 
-        logging.info("Finished execution of trial {}/{}. Total number of moves: {}".format(i+1, args.trials, total_moves))
+        end = time.time()
+        diff = end - begin
+        logging.info("Finished execution of trial {}/{}. Total number of moves: {}. Time: {}s".format(i+1, args.trials, total_moves, diff))
         results.append(total_moves)
+        times.append(diff)
     logging.info("Finished execution.")
     logging.info("Average episode length: {}".format(sum(results) / len(results)))
+    logging.info("Average time per episode: {}s".format(sum(times) / len(times)))
 
     if args.save_results:
         log_dir = create_log_directory(args.log_dir)
@@ -85,7 +92,8 @@ def run_alg(args):
             f.write("n_particles: {}\n".format(args.n_particles))
             f.write("episode_length: {}\n".format(results))
             f.write("average: {}\n".format(sum(results) / len(results)))
-
+            f.write("average_time: {}s\n".format(sum(times) / len(times)))
+            f.write("times: {}\n".format(times))
 
 def generate_pretrain_data(args):
     env = gym.make(args.env, n_particles=args.n_particles)
