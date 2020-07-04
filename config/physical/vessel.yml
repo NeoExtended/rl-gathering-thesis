@@ -1,0 +1,29 @@
+import:
+  - "../config/algorithm/ppo_maze_default.yml"
+  - "../config/env/maze_default_wrappers.yml"
+  - "../config/meta/maze0318_reward_experiments.yml"
+
+algorithm:
+  policy:
+    name: GeneralCnnPolicy
+    initializer: lecun_normal
+    extractor_act: selu
+    mlp_act: selu
+    scale: false
+
+env:
+  name: "PhysicalVesselMaze02Continuous-v0"
+  reward_kwargs:
+    time_penalty: true
+    dynamic_episode_length: false
+    normalize: true
+    positive_only: false
+  normalize:
+    norm_obs: true
+    norm_reward: true
+    precompute: true
+    samples: 10000
+
+meta:
+  n_timesteps: 6000000
+  log_dir: "./logs/Physical/vessel/"
