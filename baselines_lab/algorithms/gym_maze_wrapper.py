@@ -77,4 +77,5 @@ class GymMazeWrapper(gym.Wrapper):
         return particle
 
     def get_goal(self):
-        return self.env.goal
+        # Translate goal position from x, y to y, x
+        return [self.env.goal[1], self.env.goal[0]]
