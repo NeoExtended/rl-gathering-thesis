@@ -114,7 +114,7 @@ register(id="Maze0518Continuous-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
          kwargs={'instance': '../mapdata/map0518.csv',
-                 'goal': [60, 130],
+                 'goal': [61, 130],
                  'goal_range': 10,
                  'reward_generator': "continuous"})
 
@@ -122,7 +122,7 @@ register(id="Maze0518Continuous-v1",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
          kwargs={'instance': '../mapdata/map0518.csv',
-                 'goal': [60, 130],
+                 'goal': [61, 130],
                  'goal_range': 10,
                  'n_particles': -1,
                  'reward_generator': "continuous"})
@@ -166,6 +166,15 @@ register(id="PhysicalVesselMaze02Continuous-v0",
          kwargs={'instance': '../mapdata/small_vessel_2.csv',
                  'goal': [85, 66],
                  'goal_range': 10,
+                 'reward_generator': "continuous",
+                 'step_type': "physical"})
+
+register(id="PhysicalMaze0122Continuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': '../mapdata/map0122.csv',
+                 'goal': [96, 204],
+                 'goal_range': 15,
                  'reward_generator': "continuous",
                  'step_type': "physical"})
 
