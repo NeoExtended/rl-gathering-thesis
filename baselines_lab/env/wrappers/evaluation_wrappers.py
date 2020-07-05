@@ -136,6 +136,7 @@ class EpisodeInformationAggregator:
         self.n_successful_episodes = 0
         self.failed_reward = 0
         self.failed_steps = 0
+        self.last_save = None
 
         self.reward_buffer = [0] * num_envs
         self.step_buffer = [0] * num_envs
@@ -247,6 +248,6 @@ class EpisodeInformationAggregator:
         if self.n_failed_episodes > 0:
             output['reward_on_fail'] = round(float(self.failed_reward / self.n_failed_episodes), 4)
 
-        output_path = os.path.join(self.path, "evaluation_{}.yml".format(get_timestamp()))
-        logging.info("Saving results to {}".format(output_path))
-        config_util.save_config(output, output_path)
+        self.last_save = os.path.join(self.path, "evaluation_{}.yml".format(get_timestamp()))
+        logging.info("Saving results to {}".format(self.last_save))
+        config_util.save_config(output, self.last_save)

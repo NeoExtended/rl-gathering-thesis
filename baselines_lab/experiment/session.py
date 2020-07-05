@@ -5,8 +5,10 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines.common.vec_env import VecVideoRecorder
+import yaml
 
 # Load mpi4py-dependent algorithms only if mpi is installed.
 try:
@@ -25,7 +27,7 @@ from baselines_lab.model import create_model
 from baselines_lab.model.callbacks import CheckpointManager, TensorboardLogger
 from baselines_lab.model.callbacks.obs_logger import ObservationLogger
 from baselines_lab.utils import util, config_util
-from baselines_lab.utils.tensorboard import Plotter, TensorboardLogReader
+from baselines_lab.utils.tensorboard import Plotter, TensorboardLogReader, EvaluationLogReader
 
 PLOT_TAGS = ["curiosity/ep_ext_reward_mean", "curiosity/ep_int_reward_mean", "episode_length/ep_length_mean", "episode_length/eval_ep_length_mean", "episode_reward", "reward/ep_reward_mean", "reward/eval_ep_reward_mean"]
 PLOT_NAMES = ["normalized extrinsic reward", "intrinsic reward", "episode length", "eval episode length", "total episode reward", "episode reward", "eval episode reward"]
@@ -88,14 +90,14 @@ class ReplaySession(Session):
         Session.__init__(self, config, args)
 
         if args.checkpoint_path:
-            data_path = args.checkpoint_path
+            self.data_path = args.checkpoint_path
         else:
-            data_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
+            self.data_path = os.path.split(os.path.dirname(config['algorithm']['trained_agent']))[0]
 
         self.env = create_environment(config=config,
                                       seed=self.config['meta']['seed'],
-                                      log_dir=data_path,
-                                      video_path=data_path if args.obs_video else None,
+                                      log_dir=self.data_path,
+                                      video_path=self.data_path if args.obs_video else None,
                                       evaluation=args.evaluate)
 
         self.agent = create_model(config['algorithm'], self.env, seed=self.config['meta']['seed'])
@@ -104,12 +106,13 @@ class ReplaySession(Session):
 
         self.deterministic = not args.stochastic
         if args.video:
-            self._setup_video_recorder(data_path)
+            self._setup_video_recorder(self.data_path)
 
+        self.evaluate = args.evaluate
         if args.evaluate:
             self.num_episodes = args.evaluate
-            eval_wrapper = util.unwrap_env(self.env, VecEvaluationWrapper, EvaluationWrapper)
-            eval_wrapper.aggregator.path = data_path
+            self.eval_wrapper = util.unwrap_env(self.env, VecEvaluationWrapper, EvaluationWrapper)
+            self.eval_wrapper.aggregator.path = self.data_path
         else:
             # Render about 4 complete episodes per env in enjoy mode without evaluation.
             self.num_episodes = self.config['env']['n_envs'] * 4
@@ -141,8 +144,27 @@ class ReplaySession(Session):
             logging.warning("Did not find avconf or ffmpeg - using gif as a video container replacement.")
             self.env = VecImageRecorder(self.env, video_path)
 
+    def _finish_evaluation(self):
+        # Hacky stuff, need to refactor environment evaluation system. :(
+        if self.evaluate:
+            reader = EvaluationLogReader([self.data_path])
+            data = reader.read_data(["max_distance"])[self.data_path]
+            steps = []
+            for env in data["max_distance"][0]:
+                steps.append(env[-1])
+            avg_steps = np.average(steps)
+            with open(self.eval_wrapper.aggregator.last_save, "r") as f:
+                evaluation_results = yaml.load(f)
+            evaluation_results["accurate_episode_length"] = float(avg_steps)
+            evaluation_results["steps"] = steps
+            with open(self.eval_wrapper.aggregator.last_save, "w") as f:
+                yaml.dump(evaluation_results, f)
+
+            logging.info("Number of steps pre wrappers: {}".format(avg_steps))
+
     def run(self):
         self.runner.run(self.num_episodes)
+        self._finish_evaluation()
 
 
 class TrainSession(Session):

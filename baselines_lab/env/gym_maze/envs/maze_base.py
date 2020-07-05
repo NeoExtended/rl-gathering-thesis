@@ -146,7 +146,7 @@ class MazeBase(gym.Env):
             self.goal = [new_goal[1], new_goal[0]]
             self.reward_generator = self.reward_generator_class(self.maze, self.goal, self.goal_range, self.n_particles, self.action_map, **self.reward_kwargs)
 
-    def _randomize_n_particles(self, locations, fan_out=5):
+    def _randomize_n_particles(self, locations, fan_out=2):
         """
         Computes a random number of particles for the current map.
         :param locations: (list) Number of free locations for particles
