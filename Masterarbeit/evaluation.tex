@@ -595,14 +595,18 @@ Figure \ref{fig:Algorithm/Ep_Length} (b) and (c) show the average episode length
 \begin{figure} [htp]
     \begin{center}
         \begin{tabular}{cc}
-            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_first_progress.png} & 
-            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_problem_1.png} \\
+            \multicolumn{2}{c}{\includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_first_progress.png}} \\
+            \multicolumn{2}{c}{\small (a) Initial Problems}\\
+            \addlinespace[0.5cm]
+            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_problem_1.png} & 
+            \includegraphics[width=0.45\columnwidth]{figures/evaluation/algorithms/training_example/brain/brain_problem_2.png} \\
+            {\small (b) Strategy after the first 3M Training Steps} & {\small (c) Final Strategy}\\
         \end{tabular}
     \end{center}
-    \caption[Training Challenges in the Brain environment]{Training challenges in the Brain environment. Algorithms learn to gather particles at the position marked in green after 100k training steps (left). During this gathering process a number of particles gets stuck at the positions marked in orange. The right image shows the agents behavior after 3 million training steps. The agent has improved its gathering strategy and tries to bring the particles closer to the goal by moving them along the green path. In the process, particles get stuck at positions marked in orange.} \label{fig:Algorithm/Problems/Brain}
+    \caption[Training Challenges in the Brain environment]{Training challenges in the Brain environment. Algorithms learn to gather particles at the position marked in green after 100k training steps (a). During this gathering process a number of particles gets stuck at the positions marked in orange. After the first 3 million training steps (see (b)), the strategy is complex enough, to retrieve most of the particles and gather them in the area marked in green. While moving the particles down, a number of particles gets stuck at the top (orange). Other particles are stuck at the bottom the whole time. After a few more million training steps, the agent changes its strategy and gathers particles at the top (not only in the corner) (see (c)). Particles are then gathered in an area near the top right corner and brought down to the goal. Particles stuck at the orange positions are retrieved when the particles from the top are already close to the goal.} \label{fig:Algorithm/Problems/Brain}
 \end{figure}
 
-After analyzing how ACKTR struggled with the Corridor environment, we also wanted to highlight problems all agents had when training on the Vessel or Brain environment. In Figure \ref{fig:Algorithm/Problems/Vessel} we highlighted the areas where particles got stuck after the first 100k training steps in orange. These places are not surprising, since particles stuck at these positions require movements which would increase the distance to the goal for most of the other particles. We can see from Figure \ref{fig:Algorithm/Ep_Length} (b) that all algorithms except DQN figure out a way to retrieve most of these particles in less than 2 million steps of training. Finally Figure \ref{fig:Algorithm/Problems/Brain} shows us problematic regions for training on the Brain environment. We again highlighted spots, where particles get stuck in orange. The algorithms initially learn to gather particles at the spot highlighted in green (see Figure \ref{fig:Algorithm/Problems/Brain} (left)) and then learn to bring the particles closer to the goal via the path highlighted in green in Figure \ref{fig:Algorithm/Problems/Brain} (right). Some particles then often get stick in the path close to the right of the path to the goal (highlighted in orange). As we can see from Figure \ref{fig:Algorithm/Ep_Length} all algorithms need far more time to solve the Brain environment. The question that remains is if the Brain environment is harder to solve because of its structure, or because of its size. We will try to answer these questions with our experiments in Section TODO.
+After analyzing how ACKTR struggled with the Corridor environment, we also wanted to highlight problems all agents had when training on the Vessel or Brain environment. In Figure \ref{fig:Algorithm/Problems/Vessel} we highlighted the areas where particles got stuck after the first 100k training steps in orange. These places are not surprising, since particles stuck at these positions require movements which would increase the distance to the goal for most of the other particles. We can see from Figure \ref{fig:Algorithm/Ep_Length} (b) that all algorithms except DQN figure out a way to retrieve most of these particles in less than 2 million steps of training. Finally Figure \ref{fig:Algorithm/Problems/Brain} shows us problematic regions for training on the Brain environment. We again highlighted spots, where particles get stuck in orange. The algorithms initially learn to gather particles in the area highlighted in green (see Figure \ref{fig:Algorithm/Problems/Brain} (a)) and then learn to bring the particles closer to the goal via the path highlighted in green in Figure \ref{fig:Algorithm/Problems/Brain} (b). Some particles then often get stuck in the path close to the right of the path to the goal (highlighted in orange). The algorithm then learn an improved strategy over time, which gathers particles at the top without further gathering them in the top left corner, and then gather particles in the top right corner before moving them down to the goal (see Figure \ref{fig:Algorithm/Problems/Brain} (c)). Particles at the bottom will be retrieved later, once particles from the top are already close to the goal. As we can see from Figure \ref{fig:Algorithm/Ep_Length} all algorithms need far more time to solve the Brain environment. The question that remains is if the Brain environment is harder to solve because of its structure, or because of its size. We will leave this question open for future work.
 
 \paragraph{Result Variation}
 When it comes to comparing results, we always have to keep in mind, that the execution of neural networks with Tensorflow 1.14 is not deterministic and we therefore have to deal with a certain amount of result variation. All our experiments so far were therefore repeated three times and we always compared the average results. For future experiments it might be beneficial to know how much this nondeterminism influences our results using different RL algorithms.
@@ -949,13 +953,32 @@ For the training of the final agents we chose to use PPO (see Section \ref{sec:E
 
 
 \paragraph{Baseline Performance}
-We train two separate sets of agents, one with a fixed number of 256 particles and one with a randomized number of particles, where the particle count is randomly selected to be between 1 and one fifth of the number of non-blocked pixels of the current environment for each episode. The results for the performance of the agents can be found in Table TODO. We also included plots for the average episode length during training in Figure \ref{fig:Eval/Baselines}. TODO.
+We train two separate sets of agents, one with a fixed number of 256 particles and one with a randomized number of particles, where the particle count is randomly selected to be between 1 and one fifth of the number of non-blocked pixels of the current environment for each episode. The results for the performance of the agents can be found in Table \ref{tab:Eval/BaselinePerformance}. We also included plots for the average episode length during training in Figure \ref{fig:Eval/Baselines}. TODO.
+
+\begin{table} [htp]
+    \begin{center}
+        \begin{tabular}{lrrr}
+            \toprule
+            & \multicolumn{3}{c}{Avgerage Episode Length} \\
+            \cmidrule(lr){2-4}
+            Instance & 256 Particles & 1000 Particles & 2000 Particles \\
+            \midrule
+            Corridor & 216.73 & &  \\
+            Vessel & 417.48 & & \\
+            Capillary & 375.01 & & \\
+            Brain & 1143.59 & 1241.70 & 1404.70 \\
+            \bottomrule
+        \end{tabular}
+
+    \end{center}
+    \caption{Baseline Performance} \label{tab:Eval/BaselinePerformance}
+\end{table}
 
 
 \subsection{Comparison to Previous RL Approaches} \label{sec:EvalRLComparison}
 Compare here.
 
-\begin{table}
+\begin{table}[htp]
     \begin{center}
         \begin{tabular}{lrrrrrr}
             \toprule
@@ -963,9 +986,9 @@ Compare here.
             \cmidrule(lr){2-4} \cmidrule(lr){5-7}
             \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} \\
             \midrule
-            Corridor & 75M & 3M & 96\% & 240 & 217.53 & \\
-            Capillary & 160M & 6M & 96.25\% & 400 & 381,44 & \\
-            Brain & 250M & 12M & 95.2\% & 1600 & 1217.32 & \\
+            Corridor & 75M & 3M & 96\% & 246.48 & & \\
+            Capillary & 160M & 6M & 96.25\% & 386.42 & & \\
+            Brain & 250M & 12M & 95.2\% & 1500.08 & 1241.70 & \\
             \bottomrule
         \end{tabular}
 
@@ -978,31 +1001,31 @@ Comparison to Algorithmic Approaches - real time capable implementations of Algo
 
 \begin{table}
     \begin{center}
-        \begin{tabular}{llrrrrrr}
+        \begin{tabular}{llrrr}
             \toprule
-            & & \multicolumn{3}{c}{Avg Ep Len (256 Particles)} & \multicolumn{3}{c}{Avg Ep Len (1000 Particles)} \\
-            \cmidrule(lr){3-5} \cmidrule(lr){6-8} 
-            \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} \\
+            & & \multicolumn{3}{c}{Average Episode Length} \\
+            \cmidrule(lr){3-5} 
+            \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} \\
             \midrule
-            \multirow{4}{*}{Corridor} & ssp & & \multirow{4}{*}{217.53} & & & & \\
-            & dsp & & & & & & \\
-            & mte & & & & & & \\
-            & mtse & 457.98 & & & 477.75 & & \\
+            \multirow{4}{*}{Corridor} & ssp & 612.18 & \multirow{4}{*}{244.97} & -59.98\% \\
+            & dsp & 661.10 & & -62.95\% \\
+            & mte & 568.43 & & -56.90\% \\
+            & mtse & 491.14 & & -50.12\% \\
             \midrule
-            \multirow{4}{*}{Vessel} & ssp & & & & & & \\
-            & dsp & & & & & & \\
-            & mte & & & & & & \\
-            & mtse & & & & & & \\
+            \multirow{4}{*}{Vessel} & ssp & 1344.00 & \multirow{4}{*}{396.23} & \\
+            & dsp & & & \\
+            & mte & & & \\
+            & mtse & & & \\
             \midrule
-            \multirow{4}{*}{Capillary} & ssp & & \multirow{4}{*}{381.44} & & & & \\
-            & dsp & & & & & & \\
-            & mte & & & & & & \\
-            & mtse & & & & & & \\
+            \multirow{4}{*}{Capillary} & ssp & 1316.59 & & \\
+            & dsp & 1475.26 & & \\
+            & mte & 1932.20 & & \\
+            & mtse & 1010.84 & & \\
             \midrule
-            \multirow{4}{*}{Brain} & ssp & & \multirow{4}{*}{1217.32} & & & & \\
-            & dsp & & & & & & \\
-            & mte & & & & & & \\
-            & mtse & & & & & & \\
+            \multirow{4}{*}{Brain} & ssp & 5238.91 & \multirow{4}{*}{1241.70} & -76.30\% \\
+            & dsp & 5187.72 & & -76.06\% \\
+            & mte & 4863.12 & & -74.47\% \\
+            & mtse & 4605.64 & & -73.04\% \\
             \bottomrule
         \end{tabular}
 
@@ -1041,24 +1064,34 @@ In this section, we want to take a first step into agents which learn more flexi
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Configuration} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
             1 & Default & 467.09 & 483.80 & 2.72M \\
-            2 & Network 1 + SELU & \textbf{73.21} & \textbf{78.03} & 398k \\
+            2 & Network 1 + SELU & \textbf{102.81} & 125.10 & 398k \\
             3 & SELU & 146.50 & 155.36 & 428k \\
-            4 & SELU again TODO & 130.47 & 135.40 & 402k \\
+            4 & Network 1 & 398.08 & 415.38 & 2.15M \\ 
             5 & Network 1 + SELU + FS 2 & 128.09 & 143.76 & 460k \\
-            6 & Network 2 + SELU & 106.75 & 118.45 & \textbf{283k} \\
+            6 & Network 2 + SELU & 106.75 & \textbf{118.45} & \textbf{283k} \\
             \bottomrule
         \end{tabular}
     \end{center}
-    \caption{Maze0318} \label{tab:Eval/RandomGoal/Maze0318}
+    \caption[Evaluation Results for Different Agents on the Random Goal Corridor Environment]{Evaluation results for different agent configurations on the random goal Corridor environment. We can see, that network architecture plays a larger role than in previous tests (see 1/4). The choice of the activation function is even more important than before, making a huge difference in training performance (see 1/3). Frame Stacking becomes more important again, because it is easier to differentiate the goal position from the particles when successive frames can be compared: Particles will move - the goal will not. Finally, larger networks learn the tasks even faster (see results for Network 2).} \label{tab:Eval/RandomGoal/Maze0318}
 \end{table}
 
 \begin{figure}[htp]
     \begin{center}
         \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/randomness/goals/maze0318_episode_length.pdf}
     \end{center}
-    \caption{Maze0318} \label{fig:Eval/RandomGoal/Maze0318}
+    \caption[Episode Length for Different Agents on the Random Goal Corridor Environment]{Episode length during training for different agents on the random goal corridor environment. We can see, that the Network 2 performs } \label{fig:Eval/RandomGoal/Maze0318}
 \end{figure}
 
+We begin our evaluation on the Corridor environment to determine which configuration works best for the random goal task. The results can be found in Table \ref{tab:Eval/RandomGoal/Maze0318}. We can see, that while the results are similar to before in terms of ranking, the difference between the configurations is much larger: While the default configuration works fine on the standard Corridor environment, it fails to optimize on the random goal environment. This can also be seen in Figure \ref{fig:Eval/RandomGoal/Maze0318} where we can see a very flat training curve for the default configuration (blue). 
+
+\begin{figure}[htp]
+    \begin{center}
+        \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/randomness/goals/maze0318_episode_length_final.pdf}
+    \end{center}
+    \caption[Episode Length for Different Agents on the Random Goal Corridor Environment]{12m} \label{fig:Eval/RandomGoal/Maze0318}
+\end{figure}
+
+Strategic comparison to agent trained on single goal only. TODO
 
 \subsection{Random Mazes} \label{sec:EvalRandomMaze}
 Random Mazes

@@ -228,6 +228,30 @@ Baselines Lab offers a bunch of additional functions which are designed to help 
     \item \textit{Email Notification.} Baselines Lab can automatically send email notifications to send updates about the training progress. This feature is only available on Linux and requires \textit{mailx} to be installed. To send email notifications we have to specify a mail address via the \texttt{-{}-mail} command line argument. 
 \end{itemize}
 
+
+\subsection{Example Usage} \label{sec:BLExampleUsage}
+In this section, we want to give a complete example, of how Baselines Lab can be used to train an RL agent on a novel environment. 
+
+\paragraph{Creating an Environment.} Before training an agent, we must implement an environment which handles the interaction with the agent. To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{OpenAI Gym} \cite{openAIgym}. Baselines Lab requires environments to implement this standard. Every environment must inherit from \texttt{gym.Env} and define the following four methods:
+
+\begin{itemize}
+    \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an \textit{action} and receiving a tuple of (observation, reward, done, info) in return. Done indicates if the episode is over and info may contain additional information. If the environment is done it needs to be reset manually by calling \texttt{reset}.
+    \item \texttt{reset()} which resets the environment to a initial state (which is usually randomized) and returns the initial observation.
+    \item \texttt{render()} which allows us to render the environment in form of an rgb image intended for the user to display.
+    \item \texttt{seed(seed)} which allows to set a random seed to generate reproducible results. 
+\end{itemize}
+
+Environments are usually registered within the gym registry and can then be created by specifying their unique name or id to \texttt{gym.make()}. The interface allows to provide extra arguments to the environment on creation to allow environment customization. 
+
+In Figure TODO, we implemented a simple example environment, in which the goal is to increment or decrement a random initial number until it matches a random number between 1 and 100. The agent can choose between six actions which increase or decrease the current number by 1, 5 or 10. The reward is calculated by the change in difference between the current and the target number. The observation is generated from the TODO.
+
+\paragraph{Training an Agent.}
+
+\paragraph{Optimizing Hyperparameters.}
+
+\paragraph{Evaluating the Results.}
+
+
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
 Because most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for the particle simulation environment. At the same time we are interested in a modular design, as we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. We then discuss implementation details and advances in comparison to previous implementations in Section \ref{sec:MazeImplementationDetails}. In the following sections we then explain in detail how the components of the modular extensions work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or imprecise observations in Section \ref{sec:ExtendedMaze} and finally talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
 
@@ -259,19 +283,8 @@ All components of the maze environment are generally designed with performance i
 \subsection{Implementation Details} \label{sec:MazeImplementationDetails}
 In this section we want to talk about technical details of our implementation. We will talk about the interface between the environment and the agent, how observations are generated and how we optimized the environment for speed. We also compare our implementation to the previous implementation of L. Huang \cite{huangMazeGithub}.
 
-\paragraph{Agent Interaction. }
-To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{OpenAI Gym} \cite{openAIgym}. Our implementation of the particle maze environment inherits from the gym base class for environments and therefore defines the four methods:
-
-\begin{itemize}
-    \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an \textit{action} and receiving a tuple of (observation, reward, done, info) in return. Done indicates if the episode is over and info may contain additional information. If the environment is done it needs to be reset manually by calling \texttt{reset}.
-    \item \texttt{reset()} which resets the environment to a initial state (which is usually randomized) and returns the initial observation.
-    \item \texttt{render()} which allows us to render the environment in form of an rgb image intended for the user to display.
-    \item \texttt{seed(seed)} which allows to set a random seed to generate reproducible results. 
-\end{itemize}
-
-Environments are usually registered within the gym registry and can then be created by specifying their unique name or id. The interface allows to provide extra arguments to the environment on creation to allow environment customization. 
-
-The core method for the environment is the \texttt{step} method. During training, all of the agent-environment interaction will happen by calling step with a selected action and receiving the observation and reward in return. The step method therefore must update the environment and create a new observation together with the reward for the selected action. Because step will be called thousands or even millions of times during each training session, all sub-methods called by step must be as lightweight as possible. We want to explain how we optimized the step method in a moment, but first we want to talk about the general concept of the maze environment.
+\paragraph{Agent Interaction.}
+Like every environment which we want to use with Baselines Lab, the particle maze environment inherits from the OpenAI Gym base class \texttt{gym.Env} (see Section \ref{sec:BLExampleUsage}). The core method for the environment therefore is the \texttt{step} method. During training, all of the agent-environment interaction will happen by calling step with a selected action and receiving the observation and reward in return. The step method therefore must update the environment and create a new observation together with the reward for the selected action. Because step will be called thousands or even millions of times during each training session, all sub-methods called by step must be as lightweight as possible. We want to explain how we optimized the step method in a moment, but first we want to talk about the general concept of the maze environment.
 
 The maze environment has to keep track of two things: The maze and the particles. We store both of these using 2-dimensional NumPy arrays. The maze is stored in two versions: One containing \textit{true} if the field is blocked and \textit{false} otherwise and an inverted version containing \textit{true}, if the field is not blocked and \textit{false} otherwise called freespace. This choice is not the most memory efficient, but will save some computation time when computing observations. We store the particle positions in a list-like structure, containing an entry for each particle with its (y, x) position. 
 

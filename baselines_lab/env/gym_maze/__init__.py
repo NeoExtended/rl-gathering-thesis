@@ -106,7 +106,7 @@ register(id="Maze0518Discrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
          max_episode_steps=2000,
          kwargs={'instance': '../mapdata/map0518.csv',
-                 'goal': [60, 130],
+                 'goal': [61, 130],
                  'goal_range': 10,
                  'reward_generator': "goal"})
 
