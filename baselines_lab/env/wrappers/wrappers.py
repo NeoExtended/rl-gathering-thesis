@@ -7,6 +7,7 @@ from stable_baselines.common.vec_env import VecEnvWrapper
 from baselines_lab.utils.recorder import GifRecorder, ImageSequenceRecorder
 from baselines_lab.env.gym_maze.envs.maze_base import PARTICLE_MARKER
 
+
 class WarpGrayscaleFrame(gym.ObservationWrapper):
     def __init__(self, env, width=84, height=84):
         """
@@ -43,7 +44,7 @@ class InvisibleParticleNoiseWrapper(gym.ObservationWrapper):
     def observation(self, observation):
         particles = np.where(observation == PARTICLE_MARKER)
         random_particles = np.random.randint(0, self.max_particles)
-        choice = np.random.choice(len(particles[0]), random_particles, replace=False)
+        choice = np.random.choice(len(particles[0]), min(len(particles[0]), random_particles), replace=False)
         coords = np.asarray(particles)[:, choice]
         observation[tuple(coords)] = 0
         return observation
