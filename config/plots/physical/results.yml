@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Physical\maze0122\2020_07_05_121238
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Physical\maze0318\2020_07_04_223043
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Physical\vessel\2020_07_05_005452
+
+jobs:
+  - type: table
+    headers: instance
+    output: "../config/plots/physical/results.tex"

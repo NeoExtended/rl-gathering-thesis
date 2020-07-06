@@ -232,7 +232,7 @@ Baselines Lab offers a bunch of additional functions which are designed to help 
 \subsection{Example Usage} \label{sec:BLExampleUsage}
 In this section, we want to give a complete example, of how Baselines Lab can be used to train an RL agent on a novel environment. 
 
-\paragraph{Creating an Environment.} Before training an agent, we must implement an environment which handles the interaction with the agent. To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{OpenAI Gym} \cite{openAIgym}. Baselines Lab requires environments to implement this standard. Every environment must inherit from \texttt{gym.Env} and define the following four methods:
+\paragraph{Creating the Environment.} Before training an agent, we must implement an environment which handles the interaction with the agent. To allow creators of RL algorithms and creators of RL problems to have a unified interface, OpenAI released a standardized format, together with a collection of some of the most used RL problems called \textit{OpenAI Gym} \cite{openAIgym}. Baselines Lab requires environments to implement this standard. Every environment must inherit from \texttt{gym.Env} and define the following four methods:
 
 \begin{itemize}
     \item \texttt{step(action)} which allows the agent to interact with the environment by specifying an \textit{action} and receiving a tuple of (observation, reward, done, info) in return. Done indicates if the episode is over and info may contain additional information. If the environment is done it needs to be reset manually by calling \texttt{reset}.
@@ -241,15 +241,59 @@ In this section, we want to give a complete example, of how Baselines Lab can be
     \item \texttt{seed(seed)} which allows to set a random seed to generate reproducible results. 
 \end{itemize}
 
-Environments are usually registered within the gym registry and can then be created by specifying their unique name or id to \texttt{gym.make()}. The interface allows to provide extra arguments to the environment on creation to allow environment customization. 
+Environments are usually registered within the gym registry and can then be created by specifying their unique name or id to \texttt{gym.make()}. The interface allows to provide extra arguments to the environment on creation to allow environment customization. For more information on environment creation or how to use environment methods, please refer to the Gym documentation at \cite{openAIdocumentation}.
 
-In Figure TODO, we implemented a simple example environment, in which the goal is to increment or decrement a random initial number until it matches a random number between 1 and 100. The agent can choose between six actions which increase or decrease the current number by 1, 5 or 10. The reward is calculated by the change in difference between the current and the target number. The observation is generated from the TODO.
+\begin{figure}[p]
+    \begin{center}
+        \inputpython{figures/implementation/code/number_env.py}{0}{39}
+    \end{center}
+    \caption[Example Implementation of a Simple Environment]{Example environment implementation using the OpenAI gym interface. The goal for the agent is to increment or decrement a random number until it matches a second random number as fast as possible, by choosing from the actions (+1, +5, +10, -1, -5, -10). Note that we omitted an implementation for the \texttt{render} method, which should display the environment visually.} \label{fig:EnvironmentExampleImplementation}
+\end{figure}
 
-\paragraph{Training an Agent.}
+In Figure \ref{fig:EnvironmentExampleImplementation}, we implemented a simple example environment, in which the goal is to increment or decrement a random initial number until it matches a second random number between 0 and 100. The agent can choose between six actions which increase or decrease the current number by 1, 5 or 10. The reward is calculated by the change in difference between the current and the target number plus a fixed negative value of -0.5 to encourage the agent to end episodes as fast as possible. The observation is generated as a concatenation of the current and the target number, and the episode ends if the current and the target number are equal. The environment has to be registered within the Gym registry, either by installing it, or by calling \texttt{gym.register()} at the start of the program. The first way is preferred, as it allows to use Baselines Lab without loading any additional Python script.
 
-\paragraph{Optimizing Hyperparameters.}
+\paragraph{Starting a Training Session.}
+To train an agent, we have to call the \texttt{run\_lab.py} run script with the parameter \texttt{train} and the location of a lab configuration file. For our simple example, let us say we want to train an agent using the actor-critic algorithm and train for 100000 steps with a learning rate of 0.0001 on 8 parallel environments. We also set gamma to 0.99 and we also want to normalize the observations and the reward and we want the values to be precomputed using a random agent. The configuration file then looks like this:
+
+\begin{figure}[h]
+    \lstinputlisting[language=yaml]{figures/implementation/example_config.yml}
+    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel Number environments for a total of 100000 steps.}
+    \label{fig:NumberEnvConfig}
+\end{figure}
+
+ Similar to before, we also have to specify the neural network and we decide to use the predefined stable-baselines policy \texttt{MlpPolicy}. For a complete list of available parameters please refer to Appendix \ref{apx:BaselinesLab} and the stable-baselines documentation \cite{stable-baselines-docs}. After defining the configuration file, we can start training, by calling \\ 
+
+\texttt{python run\_lab.py train number\_env\_config.yml} \\ 
+
+ \noindent Logs will be automatically written to the directory specified by \texttt{log\_dir} during training. For each time the lab is started, a new subdirectory with a current timestamp will be created. This subdirectory will contain a copy of the configuration file, a folder containing model checkpoints, a folder containing Tensorboard log files and - depending on the configuration - a folder containing plots from the training process. 
 
 \paragraph{Evaluating the Results.}
+Now that we successfully trained an agent, we want to see the result in action and evaluate the performance of the agent. This can be done by calling \\
+
+\texttt{python run\_lab.py enjoy number\_env\_config.yml} \\
+
+\noindent This will load the latest agent checkpoint and use it to "play" a few episodes. If the environment has an implementation for the \texttt{render} method, the episodes will be rendered on screen. If we want to create a video from the agent, we can also start the enjoy mode with the \texttt{-{}-video} flag. The video is automatically saved at the log directory the agent is loaded from. If an agent should be loaded from a different location, we can use the \texttt{-{}-checkpoint-path} command to specify a path to another log directory. For more information on possible arguments see Appendix \ref{apx:BaselinesLab}. 
+
+We now can see what the agent does, but we now want to have exact numbers about the agents performance. We can start the enjoy mode with the \texttt{-{}-evaluate} argument and specify a number of episodes which should be used for the evaluation. By using the evaluate argument, we can automatically collect information on achieved episode length and episode reward. The program also differentiates between successful (non time limited) and non-successful (time limited) episodes if the environment is wrapped in a time limit wrapper.
+
+\paragraph{Optimizing Hyperparameters.}
+Often when training RL agents, the default hyperparameters for the RL algorithms do not work properly - especially for complex environments. Tuning hyperparameters is therefore very important and can be done in multiple ways. Let us begin with manual parameter tuning. To manual tune we can make use of the logs. By running the command \texttt{tensorboard -{}-logdir LOG\_DIR} and replacing \texttt{LOG\_DIR} with the location of our logs, we can start a new Tensorboard instance and connect to that instance with any internet browser. The default port is 6006. Tensorboard can also be started in a directory containing multiple log directories to compare different configurations. Tensorboard visualizes a number of parameters which have been logged during training, most importantly episode length and episode reward, but depending on the learning algorithm used, we can also see algorithm specific parameters over time, like the approximate Kullback-Leibler divergence for PPO. We also added some more values to the Tensorboard logging as described in Section \ref{sec:blFunctions}.  
+
+A look at the logs often helps to understand why the agent does or does not learn. For example, if the reward increases over time, but the agent fails to solve the environment, we maybe just have to increase the number of training steps, or the learning rate. If learning is unstable, we often see an oscillating reward or episode length. We then can try to decrease the learning rate or increase the number of parallel environments. If the reward is not increasing over time, we maybe need to change the observations or the reward the agent is receiving or modify the neural network. 
+
+\begin{figure}[ht!]
+    \lstinputlisting[language=yaml]{figures/implementation/example_config_search.yml}
+    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel Number environments for a total of 100000 steps.}
+    \label{fig:NumberEnvConfigSearch}
+\end{figure}
+
+Unfortunately, manual tuning of hyperparameters requires a lot of insight into the RL algorithm used \textit{and} is also dependent on the environment specific challenges. Manual parameter tuning therefore can be a very time consuming task. We therefore integrated automated hyperparametersearch into Baselines Lab to help optimizing parameters. For each RL algorithm contained in Stable Baselines, we provide a set of parameters in a reasonable range which can automatically be tested on a given environment. Let us say, we want to search for ideal parameters for our problem. We already optimized the learning rate, but we are not sure about the value of gamma. Additionally, we want to know how many parallel environments work best. We included an example configuration in Figure \ref{fig:NumberEnvConfigSearch}. To set the learning rate to a fixed value, we simply leave it in the algorithm configuration. Because we want to search for an optimal value for gamma, we have to remove it. Environment parameters will not be evaluated on default, so we define a new parameter in the search configuration. For more details see Section \ref{sec:blSearch} and Appendix \ref{apx:BaselinesLab}. 
+
+Once we finished creating the new configuration file, we can start Baslines Lab again, this time with the search lab mode: \\
+
+\texttt{python run\_lab.py search number\_env\_search\_config.yml} \\
+
+\noindent This will start the automated hyperparametersearch. Once finished, the log directory will contain configuration files for the three best configurations which were tested during the hyperparametersearch. All configurations will also create a Tensorboard log file, so we can inspect and compare training results.
 
 
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
@@ -496,9 +540,9 @@ We investigate the performance of RL algorithms when dealing with physical parti
 To train agents to solve randomized mazes, we need a generator which produces blood vessel like structures. To generate these structures we used an algorithm called \textit{rapidly-exploring random tree} (RRT) \cite{lavalle1998rapidly}. The algorithm was originally designed to efficiently search high-dimensional spaces by randomly generating a space-filling tree. The tree is generated by randomly proposing new points in the search space and connecting these new points to the closest point of the search tree. If the random point is to far away from the closest point of the search tree, a new node is inserted at a predefined maximum length in the direction of the random point. Using the RRT algorithm, we create blood-vessel like instances in four steps:
 
 \begin{enumerate}
-    \item Generate a new RRT. A low bound on the maximum length for each new segment ensures a river-like structure of the tree. Figure \ref{fig:RRTTrees} (a) shows an example RRT tree with 250 nodes.
-    \item We calculate the \textit{flow} to the starting node of the tree. Each leaf node generates a flow of one and propagates that flow back to the root node of the tree (see Figure \ref{fig:RRTTrees} (b)).
-    \item Create random loops in the tree, by generating a set amount of random points and connecting them to the two closest nodes of the tree. (see Figure \ref{fig:RRTTrees} (c))
+    \item Generate a new RRT. A low bound on the maximum length for each new segment ensures a river-like structure of the tree. Figure \ref{fig:RRRTrees} (a) shows an example RRT tree with 250 nodes.
+    \item We calculate the \textit{flow} to the starting node of the tree. Each leaf node generates a flow of one and propagates that flow back to the root node of the tree (see Figure \ref{fig:RRRTrees} (b)).
+    \item Create random loops in the tree, by generating a set amount of random points and connecting them to the two closest nodes of the tree. (see Figure \ref{fig:RRRTrees} (c))
     \item Draw the tree, using the square root of the flow value as width for each segment.
 \end{enumerate}
 
@@ -517,7 +561,7 @@ To train agents to solve randomized mazes, we need a generator which produces bl
     \end{center}
     %\vspace*{-12pt}
     \caption[Random Instance Generation]{Creating vessel-like random instances with the RRT algorithm.}
-    \label{fig:RRTTrees}
+    \label{fig:RRRTrees}
     %\vspace*{-12pt}
   \end{figure}
 

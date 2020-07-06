@@ -1037,23 +1037,54 @@ Comparison to Algorithmic Approaches - real time capable implementations of Algo
 Extended Environment Models
 \subsection{Dealing with Error} \label{sec:EvalError}
 Dealing with Error
-\subsection{Physical Particles} \label{sec:EvalPhysical}
-Physical Particles
 
+\subsection{Physical Particles} \label{sec:EvalPhysical}
+In this section we want to evaluate, how the agent performs when confronted with a more realistic particle system. Instead of having the capability to directly change the position of the particles, the agent now only has the ability to accelerate particles in a direction and the particles retain their velocity after a step (for more details see \ref{sec:ExtendedMaze}). To give the agent the possibility to predict the velocity of each particle, we reenable the observation frame stacking with four frames. All other agent settings are equal to the settings used for the baseline. Additionally to training new agents with the physical environment, we also test how the agents trained for the baseline experiments (see Section \ref{sec:EvalBaseline}) behave with the new particle model.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{threeparttable}
+            \begin{tabular}{rlrrrrr}
+                \toprule
+                 &  & \multicolumn{3}{c}{Agent for Physical Env} & \multicolumn{2}{c}{Agent for Standard Env\tnote{1}} \\
+                \cmidrule(lr){3-5} \cmidrule(lr){6-7}
+                \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Avg Ep Len} & \multicolumn{1}{c}{Failrate} \\
+                \midrule
+                1 & Corridor & 55.75 & 56.66 & 121k & 75.02\tnote{2} & 0.00 \%\\
+                2 & Vessel & 105.34 & 112.21 & 853k & 376.23\tnote{2} & 17.19\% \\
+                3 & Brain & 183.03 & 205.25 & 3.96M & 370.15\tnote{2} & 40.06\% \\
+                \bottomrule
+            \end{tabular}
+            \begin{tablenotes}
+                \footnotesize
+                \item[1] Evaluation results for an agent trained without the physical particle model, but tested with the physical particle model.
+                \item[2] Excluding failed episodes.
+            \end{tablenotes}
+        \end{threeparttable}
+        
+    \end{center}
+    \caption[Agent Performance on Environments with the Physical Particle Model]{Performance in terms of episode length for the RL agents using the physical particle model on different environments. We also included an evaluation of the performance of agents trained with the non-physical model and evaluated with the physical particle model. By comparing the results with Table TODO, we can see that the physical particle model is not harder for RL agents to solve, than the standard particle model. The numbers for the episode lengths are even smaller for large instances, because particles can move more than one pixel per step. Agents trained without the physical model are still able to perform to some extend, but often fail to solve episodes on more complex instances.} \label{tab:Eval/Physical}
+\end{table}
+
+We listed the results of our experiments in Table \ref{tab:Eval/Physical}. By comparison with Table TODO, we can see, that environments using the physical particle model are not harder to solve for RL agents than agents with the simple particle model. Episodes under the physical particle model are evenly long or even shorter than under the standard particle model, because physical particles can move more than one pixel in a single step, if they are accelerated fast enough. 
+
+Surprisingly, agents which are not trained for an environment using the physical particle model are still able to perform to some extend. Because the decisions for actions are made in a direct interaction with the environment, an agent not knowing about the physical properties of the particles can still compute the correct direction for the particles to move to. Of course depending on the physical model and the numbers used for friction, mass and acceleration force, the success of agents trained without such models might deteriorate further. Still, we can see, that using our model, the baseline agents are able to solve episodes for all environments. Larger environments which also require more careful particle movements tend to fail more often. 
+
+Training agents using the physical particle model might give us the same success than before, but because the simulation of physical particles is more expensive, still costs more time. Since agents are able to learn a lot about the maze environment even without the physical particle model, we propose to pretrain agents without the physical particle model and later switch to physical particles to save training time.  
 
 \section{Randomized Instances} \label{sec:EvalRandomness}
 The largest difference between traditional algorithmic approaches and the approach using RL agents is, that RL agents must be trained for each individual instance. This means that while solving the environment itself might be faster, the computation time needed for RL algorithms is significantly larger. In this section, we want to take training on an environment a step further and analyze, how well RL agents are able to "understand" the environment. We want to evaluate if RL agents are able to learn a strategy which is able to gather the particles at random goal position in a given maze environment. We present our results in Section \ref{sec:EvalRandomGoals}. We then want to take it even a step further and and train agents to solve randomized maze environments in Section \ref{sec:EvalRandomMaze}. 
 
 \subsection{Random Goal Positions} \label{sec:EvalRandomGoals}
-In this section, we want to take a first step into agents which learn more flexible strategies by randomizing goal positions between episodes. To learn where the particles should be gathered, we need to include the goal position in the observation. We therfore mark the goal position with a square, surrounded by a circle indicating the goal range, as we described in detail in Section \ref{sec:MazeImplementationDetails}. Because the new setting might introduce completely new requirements for our agent, we first test different agent configurations which yielded good results in the past on the Corridor environment. Below is a complete list of our tested agents, describing the changes to the agents in comparison to the original default agent which only uses continuous non-normalized reward (see Section \ref{sec:TestProcedure}). 
+In this section, we want to take a first step into training agents which learn more flexible strategies by randomizing goal positions. Because agents need to know, where the particles should be gathered, we need to include the goal position in the observation. We therefore mark the goal position with a square, surrounded by a circle indicating the goal range, as we described in detail in Section \ref{sec:MazeImplementationDetails}. Because the new setting might introduce completely new requirements for the training of the agent, we first test different agent configurations which yielded good results in the past on the Corridor environment. Below is a complete list of the tested configurations. The configurations are based on the original default agent which only uses continuous non-normalized reward (see Section \ref{sec:TestProcedure}) and not on the baseline agent. This decision was made, because we found in our pre-experiments, that frame stacking is important for the agent to find the goal position. This is caused by the simple fact that the goal does not move between frames, whereas the particles do. The goal is therefore easier to see, if we have access to multiple successive frames.
 
 \begin{enumerate}
     \item The default configuration. 
     \item A configuration using a larger network which has a diverging last layer with an additional 512 neurons for both the actor and the critic (we will call this \textit{Network 1}), together with SELU activations on all hidden layers and LeCun normal distribution network initialization. 
     \item A configuration using SELU activations on all hidden layers and LeCun normal distribution network initialization.
     \item A configuration using Network 1.
-    \item A configuration using Network 1, SELU activations with LeCun normal distribution network initialization and reduces frame stacking from four to two frames.
-    \item A configuration using a neural network with two shared fully connected layers with 512 neurons \textit{and} an extra fully connected layer with 512 neurons for both the actor and the critic (we will call this \textit{Network 2}). Additionally, all hidden layers use SELU activations and the layers are initialized using the LeCun normal distribution.  
+    \item A configuration using Network 1, SELU activations with LeCun normal distribution network initialization and reduced frame stacking from 4 to 2 frames.
+    \item A configuration using a neural network with two shared fully connected layers with 512 neurons \textit{and} an additional fully connected layer with 512 neurons for both the actor and the critic (we will call this \textit{Network 2}). All hidden layers use SELU activations and the layers are initialized using the LeCun normal distribution.  
 \end{enumerate}
 
 
@@ -1082,7 +1113,7 @@ In this section, we want to take a first step into agents which learn more flexi
     \caption[Episode Length for Different Agents on the Random Goal Corridor Environment]{Episode length during training for different agents on the random goal corridor environment. We can see, that the Network 2 performs } \label{fig:Eval/RandomGoal/Maze0318}
 \end{figure}
 
-We begin our evaluation on the Corridor environment to determine which configuration works best for the random goal task. The results can be found in Table \ref{tab:Eval/RandomGoal/Maze0318}. We can see, that while the results are similar to before in terms of ranking, the difference between the configurations is much larger: While the default configuration works fine on the standard Corridor environment, it fails to optimize on the random goal environment. This can also be seen in Figure \ref{fig:Eval/RandomGoal/Maze0318} where we can see a very flat training curve for the default configuration (blue). 
+We begin the evaluation on the Corridor environment to determine which configuration works best for the random goal task. The results can be found in Table \ref{tab:Eval/RandomGoal/Maze0318}. We can see, that while the results are similar to before in terms of ranking, the difference between the configurations is much larger: While the default configuration works fine on the standard Corridor environment, it fails to optimize on the random goal environment. This can also be seen in Figure \ref{fig:Eval/RandomGoal/Maze0318} where we can see a very flat training curve for the default configuration (blue). 
 
 \begin{figure}[htp]
     \begin{center}

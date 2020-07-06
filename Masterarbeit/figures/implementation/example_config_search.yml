@@ -1,0 +1,28 @@
+algorithm:
+  name: "a2c"
+  policy:
+    name: "MlpPolicy"
+  learning_rate: 0.0001
+
+env:
+  name: "NumberEnv-v0"
+  normalize:
+    norm_obs: true
+    norm_reward: true
+    precompute: true
+    samples: 10000
+
+meta:
+  n_timesteps: 100000
+  log_dir: "./logs/NumberEnv"
+
+search:
+  n_trials: 40
+  sampler: "tpe"
+  pruner:
+    method: "halving"
+    min_resource: 10000
+  env:
+    n_envs:
+      method: "categorical"
+      choices: [4, 8, 16]
