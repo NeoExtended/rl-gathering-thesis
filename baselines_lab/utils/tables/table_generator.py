@@ -217,6 +217,8 @@ class TableGenerator(ABC):
             return ActivationsTableGenerator(**kwargs)
         elif type == "simple":
             return SimpleTableGenerator(**kwargs)
+        elif type == "instance":
+            return InstanceTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
 
@@ -232,6 +234,24 @@ class SimpleTableGenerator(TableGenerator):
 
     def _get_fieldnames(self) -> List[str]:
         return []
+
+
+class InstanceTableGenerator(TableGenerator):
+    Instances = {"Maze0122": "Brain",
+                 "Maze0318": "Corridor",
+                 "Maze0518": "Capillary",
+                 "VesselMaze02": "Vessel"}
+
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        data = {}
+        for key in self.Instances.keys():
+            if key in config["env"]["name"]:
+                data["Instance"] = self.Instances[key]
+
+        return data
+
+    def _get_fieldnames(self) -> List[str]:
+        return ["Instance"]
 
 
 class RLAlgorithmTableGenerator(TableGenerator):
