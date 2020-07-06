@@ -167,7 +167,7 @@ class StagesRRTGenerator(RRTGenerator):
             self.current_stage += 1
         else:
             self.current_stage = 0
-        if self.current_stage > len(self.stages):
+        if self.current_stage >= len(self.stages):
             self._generate()
 
         return self.stages[self.current_stage]
