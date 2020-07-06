@@ -53,7 +53,7 @@ class RRTGenerator(InstanceGenerator):
             self.width -= 2
             self.height -= 2
 
-    def generate(self) -> np.ndarray:
+    def generate(self, success=True) -> np.ndarray:
         nodes = self._generate_tree()
         self._calculate_flow(nodes)
         self._create_loops(nodes)
@@ -142,7 +142,7 @@ class BufferedRRTGenerator(RRTGenerator):
         for i in range(pre_generate):
             self._generate()
 
-    def generate(self) -> np.ndarray:
+    def generate(self, success=True) -> np.ndarray:
         if self.np_random.rand() < self.generation_chance:
             self._generate()
         return self.buffer[self.np_random.randint(len(self.buffer))]
@@ -151,3 +151,26 @@ class BufferedRRTGenerator(RRTGenerator):
         last = self._last
         self.buffer.append(super().generate())
         self._last = last
+
+
+class StagesRRTGenerator(RRTGenerator):
+    def __init__(self, width: int = 100, height: int = 100, n_nodes: int = 400, max_length: float = 5.0, n_loops: int = 10,
+                 thickness: float = 1.0, border: bool = True, max_stages: int = 100, seed=None):
+        super(StagesRRTGenerator, self).__init__(width, height, n_nodes, max_length, n_loops, thickness, border, seed=seed)
+        self.max_stages = max_stages
+        self.stages = []
+        self.current_stage = 0
+        self._generate()
+
+    def generate(self, success=True) -> np.ndarray:
+        if success:
+            self.current_stage += 1
+        else:
+            self.current_stage = 0
+        if self.current_stage > len(self.stages):
+            self._generate()
+
+        return self.stages[self.current_stage]
+
+    def _generate(self):
+        self.stages.append(super().generate())

@@ -1,6 +1,6 @@
 from gym.envs.registration import register
 
-from baselines_lab.env.gym_maze.maze_generators import BufferedRRTGenerator
+from baselines_lab.env.gym_maze.maze_generators import BufferedRRTGenerator, StagesRRTGenerator
 
 register(id="Maze0122Discrete-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
@@ -150,6 +150,14 @@ register(id="RandomMazeDiscrete-v0",
                  'goal': None,
                  'goal_range': 10,
                  'reward_generator': "goal"})
+
+register(id="StagesMazeContinuous-v0",
+         entry_point="baselines_lab.env.gym_maze.envs:MazeBase",
+         max_episode_steps=2000,
+         kwargs={'instance': StagesRRTGenerator,
+                 'goal': None,
+                 'goal_range': 10,
+                 'reward_generator': "continuous"})
 
 register(id="PhysicalMaze0318Continuous-v0",
          entry_point="baselines_lab.env.gym_maze.envs:MazeBase",

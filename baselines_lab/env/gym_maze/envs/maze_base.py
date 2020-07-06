@@ -41,6 +41,7 @@ class MazeBase(gym.Env):
         self.instance_kwargs = {} if instance_kwargs is None else instance_kwargs
         self.goal_range = goal_range
         self.locations = None  # Nonzero freespace - not particle locations!
+        self.done = False
 
         if allow_diagonal:
             # self.action_map = {0: (1, 0), 1: (1, 1), 2: (0, 1), 3: (-1, 1), # {S, SE, E, NE, N, NW, W, SW}
@@ -92,7 +93,7 @@ class MazeBase(gym.Env):
 
     def _load_map(self, goal):
         # Load map if necessary
-        self.freespace = self.map_generator.generate()  # 1: Passable terrain, 0: Wall
+        self.freespace = self.map_generator.generate(success=self.done)  # 1: Passable terrain, 0: Wall
         self.maze = np.ones(self.freespace.shape,
                             dtype=np.uint8) - self.freespace  # 1-freespace: 0: Passable terrain, 1: Wall
         self.height, self.width = self.maze.shape
@@ -125,6 +126,7 @@ class MazeBase(gym.Env):
         for modifier in self.step_modifiers:
             modifier.reset(self.particle_locations, self.maze, self.freespace)
 
+        self.done = False
         return self._generate_observation()
 
     def _randomize_particle_locations(self, locations):
@@ -170,6 +172,8 @@ class MazeBase(gym.Env):
             modifier.step_done(valid_locations)
 
         done, reward = self.reward_generator.step(action, self.particle_locations)
+        if done:
+            self.done = True
         return (self._generate_observation(), reward, done, info)
 
     def render(self, mode='human'):

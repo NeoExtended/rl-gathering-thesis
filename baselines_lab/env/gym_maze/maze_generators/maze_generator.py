@@ -32,7 +32,7 @@ class InstanceGenerator(ABC):
         return True
 
     @abstractmethod
-    def generate(self) -> np.ndarray:
+    def generate(self, success=True) -> np.ndarray:
         pass
 
 
@@ -41,7 +41,7 @@ class InstanceReader(InstanceGenerator):
         super(InstanceReader, self).__init__(0, 0, None)
         self.path = path
 
-    def generate(self) -> np.ndarray:
+    def generate(self, success=True) -> np.ndarray:
         if not self._last:
             self._last = np.loadtxt(self.path).astype(np.uint8)
             self.height, self.width = self._last.shape
@@ -57,7 +57,7 @@ class RandomInstanceReader(InstanceGenerator):
         self.instances = []
         self._read_instances(paths)
 
-    def generate(self) -> np.ndarray:
+    def generate(self, success=True) -> np.ndarray:
         self._last = self.instances[self.np_random.randint(len(self.instances))]
         self.height, self.width = self._last.shape
         return self._last
