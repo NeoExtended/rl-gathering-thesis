@@ -115,6 +115,10 @@ class StepInformationProvider(ABC):
                 free += 1
         return free
 
+    def set_particle_count(self, n_particles):
+        self.n_particles = n_particles
+        self._total_start_cost = None
+
     @property
     def convex_corners(self) -> Tuple[int, int, int, int]:
         if self._convex_corners is None:
@@ -217,6 +221,9 @@ class RewardGenerator(ABC):
         self.calculator = calculator
         for generator in self.generators:
             generator.set_information_provider(calculator)
+
+    def set_particle_count(self, n_particles):
+        self.calculator.set_particle_count(n_particles=n_particles)
 
     def add_sub_generator(self, generator):
         generator.set_information_provider(self.calculator)
