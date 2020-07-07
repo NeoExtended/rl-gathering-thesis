@@ -80,6 +80,25 @@ class ObservationNoiseWrapper(gym.ObservationWrapper):
         return result
 
 
+class RepeatedActionWrapper(gym.ActionWrapper):
+    def __init__(self, env, probability=0.1):
+        super(RepeatedActionWrapper, self).__init__(env)
+        self.probability = probability
+        self.last_action = 0
+        self.true_action = 0
+
+    def action(self, action):
+        self.true_action = action
+        if np.random.rand() < self.probability:
+            return self.last_action
+        else:
+            self.last_action = action
+            return action
+
+    def reverse_action(self, action):
+        return action
+
+
 class NoObsWrapper(gym.Wrapper):
     def __init__(self, env, rew_is_obs=False):
         """
