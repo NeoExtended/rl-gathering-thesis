@@ -1,7 +1,7 @@
 \chapter{Deep Learning} \label{chp:DeepLearning}
-In this chapter we want to take a step back and talk about the the fundamentals of machine learning with a special focus on artificial neural networks. We will take a look at how these networks are built and how they can be trained. The term \textit{Deep Learning} actually refers to the structural size of these artificial networks in modern applications which are build from tens to hundreds of layers.
+In this chapter we want to take a step back and talk about the the fundamentals of machine learning with a special focus on artificial neural networks. We will take a look at how these networks are built and how they can be trained. Details on the special topic of deep reinforcement learning can be found in Chapter \ref{chp: RLOverview}.
 
-We will begin with some basic motivation and get familiar with terms and notation for machine learning in Section \ref{ssec:MLNutshell}. We then dive into the world of artificial neural networks and how they can be trained in Section \ref{sec:ANNs}, where we also talk about some of the most challenging problems for nowadays architectures and how they can be solved. Finally we will finish with some specialized network structures for specific applications in Section \ref{sec:SpecializedNetworks}.
+The term \textit{Deep Learning} actually refers to the structural size of these artificial networks in modern applications which are build from tens to hundreds of layers. We will begin with some basic motivation and get familiar with terms and notation for machine learning in Section \ref{ssec:MLNutshell}. We then dive into the world of artificial neural networks and how they can be trained in Section \ref{sec:ANNs}, where we also talk about some of the most challenging problems for nowadays architectures and how they can be solved. Finally we will finish with some specialized network structures for specific applications in Section \ref{sec:SpecializedNetworks}.
 
 \section{Machine Learning in a Nutshell} \label{ssec:MLNutshell}
 In this Section we want to give an introduction into machine learning. We will begin with some motivation and talk about why machine learning matters in Section \ref{ssec:MLMotivation} and follow up with some basic terms and notation in Section \ref{ssec:MLNotation}.
@@ -50,12 +50,10 @@ Technical advances were often inspired by carful observation of the nature aroun
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Biological Neuron]{Biological Neuron\footnotemark}
+  \caption[Biological Neuron]{Representation of a biological neuron \cite{blaus2013Neuron}. Signals are received from the dendrites. If the signal strength rises above a certain level, the neuron sends a signal down its axon, stimulating connected neurons or muscles connected to its synaptic terminals.}
   \label{fig:biological_neuron}
   %\vspace*{-12pt}
 \end{figure}
-
-\footnotetext{Image created by Bruce Blaus, released under Creative Commons under \url{https://commons.wikimedia.org/wiki/File:Blausen_0657_MultipolarNeuron.png}}
 
 Before we look at the first artificial neuron, let us first take a look at its biological counterpart for which we included a sketch in Figure \ref{fig:biological_neuron}. Since the neuron is a specialized cell, it contains a cell body with a nucleus. Around its core, the neuron branches out into \textit{dendrites}. These dendrites can be seen as the inputs of the neuron. The output of the neuron is a single, long dendrite, called the \textit{axon}. The axon can have extremely different length, ranging from less than a millimeter up to meters. At its end, the axon branches out into \textit{telondendrias}, which end in \textit{synapic terminals} (also called \textit{synapses}). The synapses themselves are connected to the dendrites of other neurons or muscles. If the neuron receives a signal through its dendrites and the signal strength rises up to a certain level, the neuron answers by sending short electrical impulses called \textit{action potentials} (APs) down its axon. These APs result in neurotransmitters being released in the synapses - transmitting the signal to the next cell. Neurotransmitters are chemical substances which means, the electrical (digital) signal gets converted into an analog signal at the synapses. This signal at the synapses can lead to a further transmission of signals or inhibit the next neuron from firing. 
 
@@ -149,7 +147,7 @@ It took a few years, until in 1985 Rumelhart et al. were able to develop an algo
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Gradient Descent]{The idea of gradient descent.}
+  \caption[Gradient Descent]{The idea of gradient descent. A local minimum is iteratively approximated by following the steepest descent. The learning rate controls how far we go in each iteration. Higher learning rates can speed up the process, but may also lead to unstable results.}
   \label{fig:GradientDescent}
   %\vspace*{-12pt}
 \end{figure}
@@ -202,7 +200,7 @@ When using minibatch SGD steps the weight changes are accumulated in the backpro
 When we look at the backpropagation algorithm we can see, that we need a differentiable activation function to perform error backpropagation. Also the first derivate of the activation function must be nonzero, otherwise all our gradients would always be zero. In order to use SGD the step function needs to be replaced with another activation function. Replacing the step function with a nonlinear function also resolves another problem of the original stacked perceptron, since it introduces nonlinearity into the network. This change finally allows the MLP to compute arbitrary functions and makes it the powerful tool it is today. Figure \ref{fig:ActivationFunctions} shows an overview over frequently used activation functions. Let us take a short look on each of them:
 
 
-\begin{figure}[h!]
+\begin{figure}[ht!]
   \begin{center}
   \resizebox{0.9\columnwidth}{!}{%
   \begin{tabular}{cc}
@@ -217,7 +215,7 @@ When we look at the backpropagation algorithm we can see, that we need a differe
   }%
   \end{center}
   %\vspace*{-12pt}
-  \caption[Activation Functions]{Common activation functions. The step function is the only function which cannot be used with the backpropagation algorithm.}
+  \caption[Activation Functions]{Common activation functions. Activation functions give neural networks the ability to learn non-linear functions. Their value range also greatly influences the performance of the backpropagation algorithm. The step function is the only function which cannot be used in modern neural networks. Currently the ReLU or the Leaky ReLU function are widely used, because they are computationally cheap.}
   \label{fig:ActivationFunctions}
   %\vspace*{-12pt}
 \end{figure}
@@ -290,12 +288,10 @@ Since the learning rate is the most important hyperparameter for deep learning o
     \end{center}
   
   %\vspace*{-6pt}
-  \caption[Overfitting Example]{This example demonstrates the effects of over- and underfitting for a 2-dimensional dataset with samples of two classes blue and red. We can see, that neither the underfitted nor the overfitted models will work well on test data, even though the overfitted model will have a 0\% error rate on the training dataset.\footnotemark}
+  \caption[Overfitting Example]{This example demonstrates the effects of over- and underfitting for a 2-dimensional dataset with samples of two classes blue and red (from \cite{icke2008Overfitting}, edited). We can see, that neither the underfitted nor the overfitted models will work well on test data, even though the overfitted model will have a 0\% error rate on the training dataset.}
   \label{fig:Overfitting}
   %\vspace*{-12pt}
 \end{figure}
-
-\footnotetext{Original image created by user Ignacio Icke, released under Creative Commons under \url{https://commons.wikimedia.org/wiki/File:Overfitting.svg}, edited and extend with underfitting example.}
 
 Neural networks generally have a high tendency to overfit on the training data, because their size and the resulting number of parameters enables the network to very closely fit to the training data. When training, it usually makes sense to create a balance between the number of samples we have to train the network and the number of parameters (neurons) inside of our network. If we do not have much training data we need a smaller neural network to avoid overfitting too quickly. Overfitting is also influenced by the learning rate. If the learning rate is high enough, gradient descent will never converge completely and the network will therefore generalize better. Therefore the danger of overfitting increases when using advanced optimizers or learning rate scheduling to adapt the learning rate dynamically.
 

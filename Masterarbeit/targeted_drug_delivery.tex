@@ -151,7 +151,7 @@ In 2019 Li Huang showed that is is possible to solve the targeted drug delivery 
     \end{center}
     
     %\vspace*{-6pt}
-    \caption[Network Architecture for the RL Approach]{The network architecture for the reinforcement learning approach (from \cite{huang2019}).}
+    \caption[Network Architecture for the RL Approach]{The network architecture for the reinforcement learning approach (from \cite{huang2019}). The network consists of a convolutional feature extractor with 32 ($8\times 8, s=4$), 64 ($4\times 4, s=2$) and 64 ($2\times 2, s=1$) filters followed by a fully connected layer with 512 neurons. All hidden layers use the Leaky ReLU activation function. The input is a concatenation of the last four observations of the environment which are downscaled to 84 by 84 pixels.}
     \label{fig:huang_network_architecture}
     %\vspace*{-12pt}
 \end{figure}

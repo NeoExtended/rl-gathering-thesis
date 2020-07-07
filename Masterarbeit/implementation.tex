@@ -106,7 +106,7 @@ When starting a session, we also need to specify a \textit{lab configuration fil
 
 \begin{figure}[h]
     \lstinputlisting[language=yaml]{figures/implementation/simple_config.yml}
-    \caption[Basic lab configuration file]{Basic lab configuration file in YAML.}
+    \caption[Basic lab configuration file]{Basic lab configuration file in YAML. The three major keywords \textit{algorithm}, \textit{env} and \textit{meta} define how to train which agent on which environment and under which training conditions.}
     \label{fig:BasicLabConfig}
 \end{figure}
 
@@ -151,7 +151,7 @@ Monitoring the training process is very important for machine learning. By loggi
     \end{center}
     
     %\vspace*{-6pt}
-    \caption[Tensorboard Example]{Example for a Tensorboard visualization.}
+    \caption[Tensorboard Example]{Example for a Tensorboard visualization which can be accessed with a web browser.}
     \label{fig:TensorboardExample}
     %\vspace*{-12pt}
   \end{figure}
@@ -180,19 +180,23 @@ Additional to the extended monitoring, we also extended some other functions of 
 \subsection{Random Network Distillation Module} \label{sec:blRND}
 Stable Baselines does not offer an implementation for any form of curiosity reward. Since Huang et al. had shown, that curiosity reward can significantly improve training, we needed to implement our own version of intrinsic reward. In all previous experiments the RND curiosity reward produced superior results in comparison with the original idea of an ICM module. We therefore decided to implement the RND reward. 
 
-\begin{figure}[ht]
+\begin{figure}[htp]
     \begin{center}
     %\resizebox{0.95\columnwidth}{!}{%
     \begin{tabular}{c}
-    \includegraphics[clip, height=4.5cm]{figures/implementation/rnd_pong_episode_reward.pdf} \\
-    \includegraphics[clip, height=4.5cm]{figures/implementation/rnd_pong_episode_intrinsic_reward.pdf} \\
-    \includegraphics[clip, height=4.5cm]{figures/implementation/rnd_pong_episode_length.pdf} \\
-    
+    \includegraphics[clip, width=0.7\columnwidth]{figures/implementation/rnd_pong_episode_reward.pdf} \\
+    {\small (a) Average Extrinsic Reward per Episode} \\
+    \addlinespace[0.4cm]
+    \includegraphics[clip, width=0.7\columnwidth]{figures/implementation/rnd_pong_episode_intrinsic_reward.pdf} \\
+    {\small (b) Average Intrinsic Reward per Episode} \\
+    \addlinespace[0.4cm]
+    \includegraphics[clip, width=0.7\columnwidth]{figures/implementation/rnd_pong_episode_length.pdf} \\
+    {\small (c) Average Episode Length} \\
     \end{tabular}
     %}%
     \end{center}
-    %\vspace*{-12pt}
-    \caption[RND on Pong]{Learning curves for the verification experiment of the curiosity reward wrapper on the Atari game Pong.}
+    \vspace*{-0.25cm}
+    \caption[RND on Pong]{Learning curves for the verification experiment of the curiosity reward wrapper on the Atari game Pong. We can see, that the extrinsic reward increases over time, even if the agent does only receive intrinsic reward (a). This happens, because the agent maximizes the episode length (c). This requires the agent to learn how to not loose against its opponent. Once it starts winning, the intrinsic reward starts to decline (see (a) and (b)), so the agent learns to play with its opponent by only returning the ball in a way such that its opponent can return it back. The intrinsic reward does not increase over a certain level, because the predictor network constantly adapts to the new observations.}
     \label{fig:RNDPong}
     %\vspace*{-12pt}
   \end{figure}
@@ -247,7 +251,7 @@ Environments are usually registered within the gym registry and can then be crea
     \begin{center}
         \inputpython{figures/implementation/code/number_env.py}{0}{39}
     \end{center}
-    \caption[Example Implementation of a Simple Environment]{Example environment implementation using the OpenAI gym interface. The goal for the agent is to increment or decrement a random number until it matches a second random number as fast as possible, by choosing from the actions (+1, +5, +10, -1, -5, -10). Note that we omitted an implementation for the \texttt{render} method, which should display the environment visually.} \label{fig:EnvironmentExampleImplementation}
+    \caption[Example Implementation of a Simple Environment]{Example environment implementation using the OpenAI Gym interface. The goal for the agent is to increment or decrement a random number until it matches a second random number as fast as possible, by choosing from the actions (+1, +5, +10, -1, -5, -10). Note that we omitted an implementation for the \texttt{render} method, which should display the environment visually.} \label{fig:EnvironmentExampleImplementation}
 \end{figure}
 
 In Figure \ref{fig:EnvironmentExampleImplementation}, we implemented a simple example environment, in which the goal is to increment or decrement a random initial number until it matches a second random number between 0 and 100. The agent can choose between six actions which increase or decrease the current number by 1, 5 or 10. The reward is calculated by the change in difference between the current and the target number plus a fixed negative value of -0.5 to encourage the agent to end episodes as fast as possible. The observation is generated as a concatenation of the current and the target number, and the episode ends if the current and the target number are equal. The environment has to be registered within the Gym registry, either by installing it, or by calling \texttt{gym.register()} at the start of the program. The first way is preferred, as it allows to use Baselines Lab without loading any additional Python script.
@@ -257,7 +261,7 @@ To train an agent, we have to call the \texttt{run\_lab.py} run script with the 
 
 \begin{figure}[h]
     \lstinputlisting[language=yaml]{figures/implementation/example_config.yml}
-    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel Number environments for a total of 100000 steps.}
+    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel NumberEnv environments for a total of 100000 steps.}
     \label{fig:NumberEnvConfig}
 \end{figure}
 
@@ -279,13 +283,13 @@ We now can see what the agent does, but we now want to have exact numbers about 
 \paragraph{Optimizing Hyperparameters.}
 Often when training RL agents, the default hyperparameters for the RL algorithms do not work properly - especially for complex environments. Tuning hyperparameters is therefore very important and can be done in multiple ways. Let us begin with manual parameter tuning. To manual tune we can make use of the logs. By running the command \texttt{tensorboard -{}-logdir LOG\_DIR} and replacing \texttt{LOG\_DIR} with the location of our logs, we can start a new Tensorboard instance and connect to that instance with any internet browser. The default port is 6006. Tensorboard can also be started in a directory containing multiple log directories to compare different configurations. Tensorboard visualizes a number of parameters which have been logged during training, most importantly episode length and episode reward, but depending on the learning algorithm used, we can also see algorithm specific parameters over time, like the approximate Kullback-Leibler divergence for PPO. We also added some more values to the Tensorboard logging as described in Section \ref{sec:blFunctions}.  
 
-A look at the logs often helps to understand why the agent does or does not learn. For example, if the reward increases over time, but the agent fails to solve the environment, we maybe just have to increase the number of training steps, or the learning rate. If learning is unstable, we often see an oscillating reward or episode length. We then can try to decrease the learning rate or increase the number of parallel environments. If the reward is not increasing over time, we maybe need to change the observations or the reward the agent is receiving or modify the neural network. 
-
 \begin{figure}[ht!]
     \lstinputlisting[language=yaml]{figures/implementation/example_config_search.yml}
-    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel Number environments for a total of 100000 steps.}
+    \caption[Lab Configuration File for the Number Environment]{Example lab configuration file for training an actor-critic agent (A2C) on 8 parallel NumberEnv environments for a total of 100000 steps.}
     \label{fig:NumberEnvConfigSearch}
 \end{figure}
+
+A look at the logs often helps to understand why the agent does or does not learn. For example, if the reward increases over time, but the agent fails to solve the environment, we maybe just have to increase the number of training steps, or the learning rate. If learning is unstable, we often see an oscillating reward or episode length. We then can try to decrease the learning rate or increase the number of parallel environments. If the reward is not increasing over time, we maybe need to change the observations or the reward the agent is receiving or modify the neural network. 
 
 Unfortunately, manual tuning of hyperparameters requires a lot of insight into the RL algorithm used \textit{and} is also dependent on the environment specific challenges. Manual parameter tuning therefore can be a very time consuming task. We therefore integrated automated hyperparametersearch into Baselines Lab to help optimizing parameters. For each RL algorithm contained in Stable Baselines, we provide a set of parameters in a reasonable range which can automatically be tested on a given environment. Let us say, we want to search for ideal parameters for our problem. We already optimized the learning rate, but we are not sure about the value of gamma. Additionally, we want to know how many parallel environments work best. We included an example configuration in Figure \ref{fig:NumberEnvConfigSearch}. To set the learning rate to a fixed value, we simply leave it in the algorithm configuration. Because we want to search for an optimal value for gamma, we have to remove it. Environment parameters will not be evaluated on default, so we define a new parameter in the search configuration. For more details see Section \ref{sec:blSearch} and Appendix \ref{apx:BaselinesLab}. 
 
@@ -295,7 +299,7 @@ Once we finished creating the new configuration file, we can start Baslines Lab 
 
 \noindent This will start the automated hyperparametersearch. Once finished, the log directory will contain configuration files for the three best configurations which were tested during the hyperparametersearch. All configurations will also create a Tensorboard log file, so we can inspect and compare training results.
 
-
+\newpage
 \section{The Particle Maze Environment} \label{sec:MazeEnvironment}
 Because most RL algorithms require millions of steps of training before they can solve a problem, we need a very efficient implementation for the particle simulation environment. At the same time we are interested in a modular design, as we want to experiment with rewards, random goal positions, random mazes (polyominos) or even different particle models. In Section \ref{sec:MazeImplementation} we present our implementation of the basic maze environment and its modular components. We then discuss implementation details and advances in comparison to previous implementations in Section \ref{sec:MazeImplementationDetails}. In the following sections we then explain in detail how the components of the modular extensions work, beginning with Section \ref{sec:MazeReward} where we will talk about reward generation. We then talk about extensions of the original environment to bring the simulations closer to reality with the addition of physical particles or imprecise observations in Section \ref{sec:ExtendedMaze} and finally talk about random instance generation in Section \ref{sec:RandomInstanceGeneration}.
 
@@ -317,7 +321,7 @@ Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the main componen
     \end{center}
     
     %\vspace*{-6pt}
-    \caption[Implementation Design for the Maze Environment]{Implementation Design for the Maze Environment.}
+    \caption[Implementation Design for the Maze Environment]{Implementation design for the modular maze environment. The behavior of the environment is completely flexible, by changing the modular components which define how instances are generated (e.g. loading a fixed instance or generating a new one), how reward is shaped and how particles should behave. All components can also be parameterized by using Baselines Lab configuration files.}
     \label{fig:MazeBaseDesign}
     %\vspace*{-12pt}
   \end{figure}
@@ -346,7 +350,7 @@ The maze environment has to keep track of two things: The maze and the particles
         \end{tabular}
     \end{center}
     \vspace{-0.25cm}
-    \caption[Example for Python Loop Substitution with NumPy]{Example for substituting a Python loop with a NumPy statement. The array freespace is a 2d array containing false for blocked and true for non-blocked pixels. The locations array is a list of particle positions. NumPy arrays allow for advanced indexing, e.g. with a number of tuples. We also can index multiple dimensions of the array at the same time. Using these advantages, we can convert the Python loop from (a) into a single line of NumPy code in example (b).} \label{fig:MazeImplementation/Loops}
+    \caption[Example for Python Loop Substitution with NumPy]{Example for substituting a Python loop with a NumPy statement. The array \texttt{freespace} is a 2d array containing \textit{false} for blocked and \textit{true} for non-blocked pixels. The \texttt{locations} array is a list of particle positions. NumPy arrays allow for advanced indexing, e.g. with a number of tuples. We also can index multiple dimensions of the array at the same time. Using these advantages, we can convert the Python loop from (a) into a single line of NumPy code in example (b).} \label{fig:MazeImplementation/Loops}
 \end{figure}
 
 
@@ -400,7 +404,7 @@ We compare the speed of both implementations in Table \ref{tab:MazeImplementatio
             \bottomrule
         \end{tabular}
     \end{center}
-    \caption[Speed Comparison for Different Collision Detection Implementations]{Speed comparison for different implementations of the collision detection. Each run was executed with 100k randomly generated actions for the particle movement. We can see, that the pure Python implementation is significantly slower than a NumPy supported implementation. Both NumPy implementations also scale very well and are only affected by the number of particles due to the improved array structure (the Python implementation uses lists). The NumPy implementation with a flattened array is slightly faster in almost every test compared to the non-flattened implementation (see bold results).} \label{tab:MazeImplementation/CollisionDetectionSpeed}
+    \caption[Speed Comparison for Different Collision Detection Implementations]{Speed comparison for different implementations of the collision detection. Each run was executed with 100k randomly generated actions. We can see, that the pure Python implementation is significantly slower than a NumPy supported implementation. Both NumPy implementations also scale very well and are only affected by the number of particles due to the improved array structure (the Python implementation uses lists). The NumPy implementation with a flattened array is slightly faster in almost every test compared to the non-flattened implementation (see bold results).} \label{tab:MazeImplementation/CollisionDetectionSpeed}
 \end{table}
 
 Additionally using NumPy methods for all array manipulation tasks, we also tried to compare NumPy implementations with each other. Often there are multiple possibilities to solve the same problem using NumPy and not all of them have the same speed. Sticking to our collision detection example, we included an alternative implementation using also NumPy in Figure \ref{fig:MazeImplementation/Collision} (c). The only difference to the example in Figure \ref{fig:MazeImplementation/Collision} (b) is in Line 2. Instead of using the particle locations directly to index the two-dimensional array, we first flatten the array and then use a single dimensional index. For NumPy, this single dimensional index is faster, which can be seen, by comparing the results in Table \ref{tab:MazeImplementation/CollisionDetectionSpeed}.
@@ -417,7 +421,7 @@ Additionally using NumPy methods for all array manipulation tasks, we also tried
             \bottomrule
         \end{tabular}
     \end{center}
-    \caption[Maze Environment Implementation Speed Comparison]{Comparison between the environments implemented by L.Huang \cite{huangMazeGithub} and our implementation. The performance is measured in seconds for the execution of the step-method on different instances (see Section \ref{sec:TestProcedure} for a list of instances). The best value is marked in bold. Each environment performs 100k random actions with 256 particles and is automatically reset after performing 2000 steps. We can see, that our new implementation significantly reduces interaction time and also scales better with larger environments.} \label{tab:MazeImplementation/ImplementationComparison}
+    \caption[Maze Environment Implementation Speed Comparison]{Comparison between the environments implemented by L. Huang \cite{huangMazeGithub} and our new implementation. The performance is measured in seconds for the execution of the step-method on different instances (see Section \ref{sec:TestProcedure} for a list of instances). The best value is marked in bold. Each environment performs 100k random actions with 256 particles and is automatically reset after performing 2000 steps. We can see, that our new implementation significantly reduces interaction time and also scales better with larger environments.} \label{tab:MazeImplementation/ImplementationComparison}
 \end{table}
 
 Previous implementations like the implementation of L. Huang \cite{huangMazeGithub} also used NumPy. We compared the difference in execution time between the different implementations on three test instances (see Section \ref{sec:TestProcedure} for a description of the instances) and listed the results in Table \ref{tab:MazeImplementation/ImplementationComparison}. We can see, that our new implementation significantly reduces agent-environment interaction time, being between 10 and 13 times faster.
@@ -560,7 +564,7 @@ To train agents to solve randomized mazes, we need a generator which produces bl
     %}%
     \end{center}
     %\vspace*{-12pt}
-    \caption[Random Instance Generation]{Creating vessel-like random instances with the RRT algorithm.}
+    \caption[Random Instance Generation]{Creating vessel-like random instances with the RRT algorithm. (a) Shows a tree structure generated using the original RRT algorithm. We then scale the branches by calculating a flow from the leaf nodes back to the beginning (b). At the end, we also add a number of random loops into the tree (c).}
     \label{fig:RRRTrees}
     %\vspace*{-12pt}
   \end{figure}

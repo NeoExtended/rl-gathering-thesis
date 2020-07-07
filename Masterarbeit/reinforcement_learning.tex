@@ -33,7 +33,7 @@ Reinforcement learning at its core tries to solve some arbitrary decision-making
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Agent-environment interaction control loop]{The basic reinforcement learning control loop for agent-environment interaction.}
+  \caption[Agent-environment interaction control loop]{The basic reinforcement learning control loop for agent-environment interaction. Environments inform the agent about the current state of the environment and also return a reward. Agents can adjust their behavior from the reward and chose actions to interact with the environment.}
   \label{fig:rl_control_loop}
   %\vspace*{-12pt}
 \end{figure}
@@ -53,20 +53,18 @@ This abstract setting can be used to solve a variety of tasks. We have three exa
   \includegraphics[height=5cm, keepaspectratio]{figures/rl/chess.jpg} & 
   \includegraphics[trim=400px 0px 75px 0px, clip, height=5cm, keepaspectratio]{figures/rl/Google_Robot_Learning.jpg}\\
   {(a) The Atari game Breakout} &
-  {(b) Chess\footnotemark} &
-  {(c) Google Robot Grasping \footnotemark}\\
+  {(b) Chess \cite{chessBoard}} &
+  {(c) Robot Control \cite{levine2016learning}}\\
   
   \end{tabular}
   }%
   \end{center}
   %\vspace*{-12pt}
-  \caption{Reinforcement learning examples.}
+  \caption[Reinforcement Learning Examples]{Examples for typical tasks for reinforcement learning agents.}
   \label{fig:RLExamples}
   %\vspace*{-12pt}
 \end{figure}
   
-\footnotetext{Image from chess.com \url{https://www.chess.com/bundles/web/images/offline-play/standardboard.6a504885.png}}
-\footnotetext{Image from ai.googleblog.com \url{https://i.ytimg.com/vi/iaF43Ze1oeI/maxresdefault.jpg}}
 
 Let's take a closer look at another example, pictured in Figure \ref{fig:CartPole}: The game of balancing a stick on a cart in a 2D environment. The stick can only be balanced by moving the cart, which has some velocity and can either be accelerated to the left or to the right. At each timestep the agent gets an observation which describes the current position and angle of the stick and can then choose which action it wants to take. If the stick falls over the agent looses. If it is able to balance the stick for more than 200 steps it wins. At each step it survives it gets a reward of $+1$.
 
@@ -151,7 +149,7 @@ Markov decision processes extend the idea of Markov chains with an active agent.
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[An Example for the Markov Decision Process Example]{An example for the Markov decision process (recreated from \cite{handson2019geron}). Again we start in $s_0$ and the agent can choose from the actions $a_0$, $a_1$ or $a_2$. Choosing $a_0$ will give it a reward of $+10$. With a probability of 70\% the agent will be staying in $s_0$ and with a probability of 30\% it will transition to $s_1$. So the agent can likely repeat action $a_0$ in $s_0$ multiple times, but will at some point transition to $s_1$. In $s_1$ it now only has the options to stay there or go through a $-50$ penalty, which might even be repeated. The question is which strategy leads statistically to the most reward? Maybe choosing $a_0$ until we end up in $s_1$ and then never leave $s_1$ by always choosing $a_0$? Or going through the penalty and then collecting positive reward again? We will take a detailed look how we can solve this problem in the introduction of Section \ref{sec:ValueMethods}.}
+  \caption[An Example for the Markov Decision Process Example]{An example for the Markov decision process (recreated from \cite{handson2019geron}). Again we start in $s_0$ and the agent can choose from the actions $a_0$, $a_1$ or $a_2$. Choosing $a_0$ will give it a reward of $+10$. With a probability of 70\% the agent will be staying in $s_0$ and with a probability of 30\% it will transition to $s_1$. So the agent can likely repeat action $a_0$ in $s_0$ multiple times, but will at some point transition to $s_1$. In $s_1$ it now only has the options to stay there or go through a $-50$ penalty, which might even be repeated. The question is which strategy statistically leads to the most reward. Maybe choosing $a_0$ until we end up in $s_1$ and then never leave $s_1$ by always choosing $a_0$? Or going through the penalty and then collecting positive reward again? We will take a detailed look how we can solve this problem in the introduction of Section \ref{sec:ValueMethods}.}
   \label{fig:MDP}
   %\vspace*{-12pt}
 \end{figure}
@@ -180,7 +178,7 @@ To build a better connection between actions and reward, instead of associating 
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Discounted Reward Example]{Example for discounted reward for a trajectory over four states. The agent will calculate negative reward for all actions, even though the first action produced a positive short-term reward.}
+  \caption[Discounted Reward Example]{Example for discounted reward for a trajectory over four states. The agent will calculate a negative discounted return for all actions, even though the first action produced a positive short-term reward.}
   \label{fig:DiscountedReward}
   %\vspace*{-12pt}
 \end{figure}
@@ -328,7 +326,7 @@ Using a common metric like the mean square error we can calculate the difference
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Learning Curve for Deep Q-Learning on CartPole]{Learning Curve for basic Deep Q-Learning only with simple experience replay on the CartPole environment.}
+  \caption[Learning Curve for Deep Q-Learning on CartPole]{Learning curve for basic Deep Q-Learning with simple experience replay only on the CartPole environment. We can see that learning is extremely unstable. Even though the agent is able to balance the stick after about 200 episodes of training, it quickly forgets what it has learned again. This loop then repeats for the next 400 episodes of training.}
   \label{fig:learning_curve_dqn}
   %\vspace*{-12pt}
 \end{figure}
@@ -382,7 +380,7 @@ We already discussed a lot of important extensions for Deep Q-Learning, but ther
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Learning Curve for DQN with Extensions on CartPole]{Learning Curve for Deep Q-Learning with Double DQN, Duelling DQN and prioritized replay on the CartPole environment over 100k steps ($\sim$ 600 episodes). Learning is much more stable than before, but still suffers from brief performance collapses. Learning can be further stabilized by optimizing the used hyperparameters, especially the learning rate and the size of the replay buffer.}
+  \caption[Learning Curve for DQN with Extensions on CartPole]{Learning curve for Deep Q-Learning with Double DQN, Duelling DQN and prioritized replay on the CartPole environment over 100k steps ($\sim$ 600 episodes). Learning is much more stable than before, but still suffers from brief performance collapses. Learning can be further stabilized by optimizing the used hyperparameters, especially the learning rate and the size of the replay buffer.}
   \label{fig:learning_curve_dqn}
   %\vspace*{-12pt}
 \end{figure}
@@ -490,11 +488,11 @@ As we can suggest from its name an agent which learns with the actor-critic mode
 \begin{figure}[ht]
   
   \begin{center}
-      \includegraphics[clip, trim=10px 10px 10px 10px, width=0.85\columnwidth]{figures/rl/Actor_Critic_Architecture.pdf}
+      \includegraphics[clip, trim=10px 10px 10px 10px, width=0.95\columnwidth]{figures/rl/Actor_Critic_Architecture.pdf}
   \end{center}
   
   %\vspace*{-6pt}
-  \caption[Actor-Critic Network Architectures]{Network architecture variants for actor-critic algorithms. The networks might be separate or with shared layers. (Adapted from \cite{foundations2019graesser})}
+  \caption[Actor-Critic Network Architectures]{Network architecture variants for actor-critic algorithms. The networks might be separate (top) or with shared layers (bottom). (Adapted from \cite{foundations2019graesser})}
   \label{fig:actor_critic_architecture}
   %\vspace*{-12pt}
 \end{figure}
