@@ -930,6 +930,8 @@ In this section we want to take our findings from the previous sections to estab
 \paragraph{Final Agent Configuration}
 For the training of the final agents we chose to use PPO (see Section \ref{sec:EvalRLAlgorithms}) with the hyperparameters given in Table \ref{tab:PPOHyperparemeters}. For reward we use our novel continuous internally normalized reward (see Section \ref{sec:EvalReward}). Observations will be downscaled to 84 by 84 pixels to be compatible with all environments, but we remove frame stacking (see Section \ref{sec:EvalObs}). Finally, we use the same network structure as in previous experiments, but use SELU activations for all neurons in the hidden layers (see Section \ref{sec:EvalNetworks}).
 
+The agents are trained on the four test instances shown in Table \ref{tab:TestInstances}. We select a number of training steps which ensures, that agents train long enough to achieve a performance which is at least close to their optimal possible performance. Similar to before, we therefore train the agents for 3M steps on Corridor and 6M steps on Vessel. We slightly extend the training time for Brain from 12M to 14M steps and will use 7M training steps for the Capillary environment.
+
 \begin{figure}[htp]
     \begin{center}
         \begin{tabular}{c}
@@ -948,30 +950,71 @@ For the training of the final agents we chose to use PPO (see Section \ref{sec:E
         \end{tabular}
 
     \end{center}
-    \caption{Baselines} \label{fig:Eval/Baselines}
+    \caption{Baselines TODO} \label{fig:Eval/Baselines}
 \end{figure}
 
-
 \paragraph{Baseline Performance}
-We train two separate sets of agents, one with a fixed number of 256 particles and one with a randomized number of particles, where the particle count is randomly selected to be between 1 and one fifth of the number of non-blocked pixels of the current environment for each episode. The results for the performance of the agents can be found in Table \ref{tab:Eval/BaselinePerformance}. We also included plots for the average episode length during training in Figure \ref{fig:Eval/Baselines}. TODO.
+To establish a baseline, we train two separate sets of agents. The first set will use a fixed number of 256 particles per episode and the second set will randomize the number of particles at the start of each episode to be between one and the number of non-blocked pixels of the current environment (see Table \ref{tab:TestInstances}) with an upper limit of 4500 particles. 
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{lrrrr}
+            \toprule
+            \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
+            \midrule
+            Corridor & 54.47 & 55.85 & 155k  & 0:36:38h \\
+            Vessel & 95.44 & 99.55 & 381k & 1:04:30h \\
+            Capillary & 92.69 & 93.38 & 249k & 1:37:11h \\
+            Brain & 281.12 & 293.40 & 4.59M & 5:13:28h \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Baseline Training Performance for Agents on Different Environments]{Performance for the baseline agents on different environments. The values for average and best are created during training evaluation. These values therefore include frame skipping. The real number of steps therefore is approximately four times higher. For more accurate values see Table \ref{tab:Eval/BaselinePerformance}.} \label{tab:Eval/BaselinePerformance/Training}
+\end{table}
+
+To allow easy comparison with other RL approaches, as well as algorithmic approaches, we measure the performance of the agent in two different ways. First, we provide the training performance of the agent, similar to how we reported values for the previous experiments in Table \ref{tab:Eval/BaselinePerformance/Training}. These values include frame skipping and are only calculated over 32 episodes for each trial and therefore may be slightly inaccurate. Nevertheless, these values can be used to compare the baseline to the values of other experiments or future RL approaches which also use frame skipping. 
+
+To allow easy comparison of our combined improved parameters with the older default parameters, we include a plot of the average episode length during training in Figure\ref{fig:Eval/Baselines}. We can see, that the combined configuration of the baseline agent outperforms our previous configurations on all test instances, being both faster during training and producing better final results. Training on the Brain instance becomes slightly unstable after 8 million training steps, but becomes stable again after 13 million training steps.
+
+We also provide results from a distinct evaluation of the trained agents as an average over 128 episodes with randomly distributed particles for different particle counts. The results for the performance of the agents can be found in Table \ref{tab:Eval/BaselinePerformance}.
 
 \begin{table} [htp]
     \begin{center}
-        \begin{tabular}{lrrr}
+        \begin{tabular}{lrrrr}
             \toprule
-            & \multicolumn{3}{c}{Avgerage Episode Length} \\
-            \cmidrule(lr){2-4}
-            Instance & 256 Particles & 1000 Particles & 2000 Particles \\
+            & \multicolumn{4}{c}{Avgerage Episode Length} \\
+            \cmidrule(lr){2-5}
+            Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count \\
             \midrule
-            Corridor & 216.73 & &  \\
-            Vessel & 417.48 & & \\
-            Capillary & 375.01 & & \\
-            Brain & 1143.59 & 1241.70 & 1404.70 \\
+            Corridor & & & &  \\
+            Vessel & & & & \\
+            Capillary & & & & \\
+            Brain & & & &  \\
             \bottomrule
         \end{tabular}
 
     \end{center}
-    \caption{Baseline Performance} \label{tab:Eval/BaselinePerformance}
+    \caption[Baseline Performance for Agents Trained with a Random Particle Count]{Performance for agents trained with a random partzicle count on different environments, using a fixed particle count. TODO.} \label{tab:Eval/BaselinePerformance}
+\end{table}
+
+
+\begin{table} [htp]
+    \begin{center}
+        \begin{tabular}{lrrrr}
+            \toprule
+            & \multicolumn{4}{c}{Avgerage Episode Length} \\
+            \cmidrule(lr){2-5}
+            Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count  \\
+            \midrule
+            Corridor & 216.73 & 217.73 & 221.52 & 220.64  \\
+            Vessel & 417.48 & 417.25 & 452.98 & 458.74 \\
+            Capillary & 375.01 & 377.44 & 377.90 & 378.88 \\
+            Brain & 1143.59 & 1229.98 & 1261.50 & 1286.21 \\
+            \bottomrule
+        \end{tabular}
+
+    \end{center}
+    \caption[Baseline Performance for Agents Trained with a Fixed Particle Count]{Performance for agents trained with a fixed particle count of 256 on different test environments. The numbers are measured as an average over 128 episodes and exclude frame skipping, while frame skipping is still enabled for the observations. We can see, that even though the agent is trained with a relatively small number of particles, the same strategy can be applied for a larger number of particles.} \label{tab:Eval/BaselinePerformance}
 \end{table}
 
 
@@ -1015,7 +1058,7 @@ Comparison to Algorithmic Approaches - real time capable implementations of Algo
             \multirow{4}{*}{Vessel} & ssp & 1344.00 & \multirow{4}{*}{396.23} & \\
             & dsp & & & \\
             & mte & & & \\
-            & mtse & & & \\
+            & mtse & 1479.91 & & \\
             \midrule
             \multirow{4}{*}{Capillary} & ssp & 1316.59 & & \\
             & dsp & 1475.26 & & \\
