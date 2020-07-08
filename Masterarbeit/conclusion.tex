@@ -1,17 +1,50 @@
 \chapter{Conclusion}
-conclude this work we must.
+In this thesis we focused on solving the problem of navigating distributed particles to a single goal position in a maze-like environment by a global uniform force, using techniques from reinforcement learning. To perform our experiments, we developed a laboratory environment for RL algorithms called Baselines Lab which we present in Section \ref{sec:BaselinesLab}. We also provide a high-performance implementation for the simulation of the particle maze environment, which we present in Section \ref{sec:MazeEnvironment}.  
+
+In this chapter we want to wrap up this thesis, by summarizing and discussing the results of our experiments in Section \ref{sec:EvalDiscussion} and finishing with a look on open work for the future in Section \ref{sec:FutureWork}.
+
 \section{Discussion of Results} \label{sec:EvalDiscussion}
-Discussion of Results
-\section{Future Work}
-future work will be important.
+Using our laboratory environment Baselines Lab we performed a series of experiments to analyze how we can train RL agents to solve the distributed particle navigation problem. We also provide a number of extended problem settings (see Section \ref{sec:ExtendedMaze}) and show how well RL agents are able perform when confronted with these additional challenges.
 
-Only four actions
+\paragraph{Improved Training.}
+Previous work already showed, that it is possible to train RL agents to solve the particle navigation problem \cite{huang2019,becker2020}. In this work we show, that it is possible to vastly improve training performance for RL agents compared to previous work. This improvement was achieved by combining a number of findings we made during our experiments:
 
-Instance Scaling
+\begin{itemize}
+    \item We performed an extensive study on reward generation which shows how different rewards can influence the training behavior (see Section \ref{sec:EvalReward}). We included several variants of continuous and goal-based discrete rewards and tested them in various combinations including a mix with intrinsic rewards from curiosity-based techniques. The results showed that continuous rewards are important for agent performance and that our novel reward system heavily improves training compared with previous approaches.
+    \item We performed a study to analyze the performance of several RL algorithms on the particle navigation task (see Section \ref{sec:EvalAlgorithms}) and to provide a set of optimized hyperparameters for each of these algorithms (see Table \ref{tab:RLHyperparameters} and Table \ref{tab:PPOHyperparemeters}). Our tests included PPO, ACER, ACKTR and DQN and showed that on average PPO performs better than its competitors.
+    \item Previous work often scales input images down to speed up training performance. We show, that downscaling also works for the particle navigation task, but our experiments indicate, that the possibility of downscaling is limited by the size of the instance (see Section \ref{sec:Eval/ObsSize}). Nevertheless downscaling as far as possible does only slightly degrade performance and therefore is preferable when training agents. During our experiments we also discovered, that RL agents are able to learn strategies which solve simple environments without any information about the position of the particles.
+    \item Similar to our experiments on downscaling, we also analyzed the effect of the widely used technique of providing temporal information to the agent by stacking input observations. We found that agents are able to make correct decisions without frame stacking as long as particles do not keep their velocity (see Section \ref{sec:EvalObs}). For more complicated or environments which provide noisy observations, this finding does not hold though (see Section \ref{sec:EvalPhysical} and Section \ref{sec:EvalError}). 
+    \item The backbone of RL agents is the artificial neural network which is trained by the RL algorithm. We performed a study on the performance of different network structures (see Section \ref{sec:Eval/NetworkStructure}) and the influence of activation functions (see Section \ref{sec:Eval/ActivationFunctions}) and found that while the network structure only has minor influence on the training performance, the choice to use the new SELU activation function can heavily benefit the results.
+\end{itemize}
 
-Agent Pretraining
+We combined our findings into a single RL agent and established a baseline for future work in Section \ref{sec:EvalBaseline}. We also compared the results of that baseline to previous work on RL agents (see Section \ref{sec:EvalRLComparison}) and previous algorithmic approaches (see Section \ref{sec:EvalAlgorithms}).
 
-Agent Algorithm interaction
 
-Ensemble Classifiers
+\paragraph{Extended Problem Settings.}
+One of the largest problems when using RL agents to solve the particle maze problem is, that agents must be trained for each individual instance. In this work, we provide insight into extending the capability of agents to handle more general settings. We found that agents can be trained successfully to gather particles at random goal positions for a single instance (see Section \ref{sec:EvalRandomGoals}). Using the right settings, we were able to train agents which achieve performance close to agents trained for a single goal only. We also shine some light on the idea of training agents under a even more general setting with random environments in Section \ref{sec:EvalRandomMaze}.
+
+Real-world scenarios often introduce additional problems into purely algorithmic tasks. We therefore present a number of new settings (see Section \ref{sec:ExtendedMaze}) and evaluate how RL agents are able to deal with these new challenges. The new scenarios include: 
+\begin{itemize}
+    \item Particles with physical properties. Instead of directly changing the position of particles, they get accelerated and also keep their velocity between successive simulation steps. We found, that RL agents are able to easily deal with more complicated particle behavior (see Section \ref{sec:EvalPhysical}). Moreover RL agents are capable of acting in an environment they are not directly trained for and still perform reasonable well. This is important, because it allows us to train RL agents using slightly inaccurate simulations for real world applications.
+    \item Dealing with observation noise. Observing particles in a real-world scenario will be notoriously hard and imprecise. We therefore introduced multiple sources of observation noise and analyzed how well agents can deal with such noise (see Section \ref{sec:EvalError}). We found, that agents are able to tolerate a certain amount of observation error, but may struggle under certain conditions.
+    \item Dealing with action noise. In real-world scenarios, acting in an environment might be imprecise due to error in the hardware or simply environment noise affecting the particles. we therefore analyzed how well agents are able to deal with action noise (see Section \ref{sec:EvalError}). We found that similar to observation noise, agents are able to tolerate a large amount of noise, before they struggle to learn in noisy environments.
+\end{itemize}
+
+\paragraph{Conclusion.} In this work, we made significant progress towards solving a distributed particle navigation task using reinforcement learning algorithms. Our results show that reinforcement learning is capable of solving the algorithmic task in a reasonable time, while providing results which are better than the results of previous RL or algorithmic approaches. We also demonstrated, that RL agents are capable of being used in a scenario with real-world properties without major performance problems. Still there are some open questions and shortcomings when using RL agents which we will discuss in the following section.  
+
+\section{Future Work} \label{sec:FutureWork}
+Our findings indicate that using reinforcement learning might be a viable replacement for algorithmic approaches for the application in real world scenarios. While RL algorithms need a lot of computation power to train, using a training model is fairly cheap. RL algorithms are therefore well suited for a real-world application, because they can deal with errors on-the-fly. However there are a number of unanswered questions which have to be addressed in future work.
+
+\paragraph{Training Time.}
+First and most important is a further improvement in training time, especially when dealing with larger instances. We already saw, that training time heavily increases for larger instances. The question is if this is only due to size, or also due to increase complexity. A study comparing the performance of a instance scaled to different sizes should bring the answer to this question. Further it seems that agents make rapid improvement in the first few million training steps, and then only struggle to retrieve particles from a few places. For real-world applications the objective could be relaxed to only deliver a certain percentage of particles to the goal. Another simplification would be to remove diagonal movements and only allow the movement in four directions, which halves the possible actions. Another approach would be to use a single continuous action to indicate a direction in degrees.
+
+Training time could also be improved by using algorithmic approaches for network pretraining. Networks can be trained to mimic the behavior of a certain algorithm by collecting data from the algorithm-environment interaction. The problem for the current environments is, that action sequences of algorithmic solutions often generate negative reward for a majority of the episode. This produces problems, once agents begin to train on the environment themselves, because the strategy they are evolving into is vastly different from what they learned during pretraining. A different kind of reward system or new algorithmic strategies might fix this problem.
+
+An straightforward approach to further reducing the training time is a further optimization of the RL approach itself. Using improved RL algorithms like new DQN extensions has proven to show better results for other problems which heavily rely on exploration \cite{badia2020agent57}. Exploration might also benefit from new iterations of intrinsic reward \cite{badia2020never}. Additional to the optimization of the RL algorithm, the underlying neural network may also be further optimized. We have already shown that newer activation functions can mage a large difference. Possible improvements can be made when using other network types like RNNs or LSTMs to replace frame stacking and improve agent performance especially for noisy environments.
+
+\paragraph{Generalization.}
+A completely different approach to reducing training times is to train agents which generalize for random instances. These agents do not need to perform on the same level as agents optimized for a single instance, but can be used as a starting point for training. They then can be optimized quickly for a specific instance. We already showed, that it is possible to train agents for random goals and that agents are able to perform on more than one instance. Further extending this capability would solve the training time problem for real-world usage.
+
+\paragraph{Extended Models.}
+We already saw that agents are able to perform even when dealing with physical particles or noisy environments. In this work we tested all settings isolated on their own. A study showing agent performance in a combined environment would give more information about the performance in a real-world scenario. Our model of physical particles also is still fairly simple and this could be extended to see how well agents are able to estimate more complex physical behavior.
 
