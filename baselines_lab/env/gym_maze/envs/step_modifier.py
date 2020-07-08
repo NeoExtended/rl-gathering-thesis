@@ -45,6 +45,8 @@ class RandomMovementModifier(StepModifier):
             random_moves = random_moves * mask
 
             return np.squeeze((np.array([random_moves[tuple(locations.T)]])))
+        else:
+            return np.zeros(locations.shape, dtype=locations.dtype)
 
 
 class FuzzyMovementModifier(StepModifier):
