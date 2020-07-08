@@ -85,9 +85,10 @@ published or written by another person except where due reference is made in the
 \centerline{\bfseries Abstract}
 \vspace*{1em}
 \noindent
-Since the early years of computer science, navigation tasks were heavily explored. Weather it is about planning optimal routes, exploring spaces or avoiding obstacles, most tasks have been found to be exceptionally hard to solve optimally. Therefore even modern computers struggle with the optimal solution of larger instances for those problems. By sacrificing optimal results for speed, the traditional approach was to find approximation algorithms which ideally guarantee some performance bound and yield usable results in a relatively short time. 
+Since the early years of computer science, navigation tasks were heavily explored. Weather it is about planning optimal routes, exploring spaces or avoiding obstacles, most tasks have been found to be exceptionally hard to solve optimally. One example is the navigation of distributed particles through a maze-like environment to a given goal position using a global force for control. While traditional approximation algorithms provide results in reasonable time, recent studies have shown that the use of reinforcement learning (RL) can compute significantly better solutions for individual instances.
 
-In this work we want to focus on a specific problem: The navigation of particles by a single global force - also known as tilt problem. The particles must be navigated to a given goal position through a maze-like environment. Instead of using traditional approximation algorithms, we use reinforcement learning (RL) to navigate the particles. We explore, how recent RL techniques perform under different settings and compare the results to multiple state-of-the-art approximation algorithms.
+In this work, we further explore and improve these reinforcement learning strategies. By introducing a novel continuous reward and optimizing the training procedure, we are able to decrease learning times by up to 95\% while still outperforming previous RL agents. These improved training conditions also allow us to train agents, which learn more generalized strategies and can perform navigation tasks for random goal positions. We also introduce a number of new environment conditions which should simulate real-world conditions. These environments include physical particle behavior and noisy observations and actions. We then show that RL agents are able to perform even under these new amd more challenging conditions.  
+
 \cleardoublepage
 
 \microtypesetup{protrusion=false}

@@ -983,10 +983,10 @@ We also provide results from a distinct evaluation of the trained agents as an a
             \cmidrule(lr){2-5}
             Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count \\
             \midrule
-            Corridor & & & &  \\
-            Vessel & & & & \\
-            Capillary & & & & \\
-            Brain & & & &  \\
+            Corridor & 230.48 & 228.13 & 228.06 & 228.33 \\
+            Vessel & 398.74 & 393.00 & 393.00 & 394.38 \\
+            Capillary & 464.88 & 436.98 & 437.00 & 439.37 \\
+            Brain & 2000.00 & 2000.00 & 2000.00 & 2000.00  \\
             \bottomrule
         \end{tabular}
 
@@ -1004,14 +1004,14 @@ We also provide results from a distinct evaluation of the trained agents as an a
             Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count  \\
             \midrule
             Corridor & 216.73 & 217.73 & 221.52 & 220.64  \\
-            Vessel & 417.48 & 417.25 & 452.98 & 458.74 \\
+            Vessel & 373.57 & 370.72 & 381.04 & 385.63 \\
             Capillary & 375.01 & 377.44 & 377.90 & 378.88 \\
             Brain & 1143.59 & 1229.98 & 1261.50 & 1286.21 \\
             \bottomrule
         \end{tabular}
 
     \end{center}
-    \caption[Baseline Performance for Agents Trained with a Fixed Particle Count]{Performance for agents trained with a fixed particle count of 256 on different test environments. The numbers are measured as an average over 128 episodes and exclude frame skipping, while frame skipping is still enabled for the observations. We can see, that even though the agent is trained with a relatively small number of particles, the same strategy can be applied for a larger number of particles.} \label{tab:Eval/BaselinePerformance}
+    \caption[Baseline Performance for Agents Trained with a Fixed Particle Count]{Performance for agents trained with a fixed particle count of 256 on different test environments. The values are measured as an average over 128 episodes and exclude frame skipping, while frame skipping is still enabled for the observations. We can see, that even though the agent is trained with a relatively small number of particles, the same strategy can be applied for a larger number of particles.} \label{tab:Eval/BaselinePerformance}
 \end{table}
 
 
@@ -1026,9 +1026,9 @@ Compare here.
             \cmidrule(lr){2-4} \cmidrule(lr){5-7}
             \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} & \multicolumn{1}{c}{Old} & \multicolumn{1}{c}{New} & \multicolumn{1}{c}{Improvement} \\
             \midrule
-            Corridor & 75M & 3M & 96\% & 246.48 & & \\
-            Capillary & 160M & 6M & 96.25\% & 386.42 & & \\
-            Brain & 250M & 12M & 95.2\% & 1500.08 & 1241.70 & \\
+            Corridor & 75M & 3M & 96.00\% & 246.48 & 217.73 & 11.66\% \\
+            Capillary & 160M & 7M & 95.63\% & 386.42 & 377.44 & 2.32\% \\
+            Brain & 250M & 12M & 95.20\% & 1500.08 & 1229.98 & 18.01\% \\
             \bottomrule
         \end{tabular}
 
@@ -1047,25 +1047,25 @@ Comparison to Algorithmic Approaches - real time capable implementations of Algo
             \cmidrule(lr){3-5} 
             \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Alg} & \multicolumn{1}{c}{RL} & \multicolumn{1}{c}{Difference} \\
             \midrule
-            \multirow{4}{*}{Corridor} & ssp & 612.18 & \multirow{4}{*}{244.97} & -59.98\% \\
-            & dsp & 661.10 & & -62.95\% \\
-            & mte & 568.43 & & -56.90\% \\
-            & mtse & 491.14 & & -50.12\% \\
+            \multirow{4}{*}{Corridor} & ssp & 612.18 & \multirow{4}{*}{217.73} & -64.43\% \\
+            & dsp & 661.10 & & -67.07\% \\
+            & mte & 568.43 & & -61.70\% \\
+            & mtse & 491.14 & & -55.67\% \\
             \midrule
-            \multirow{4}{*}{Vessel} & ssp & 1344.00 & \multirow{4}{*}{396.23} & \\
+            \multirow{4}{*}{Vessel} & ssp & 1344.00 & \multirow{4}{*}{370.72} & -72.42\% \\
             & dsp & & & \\
-            & mte & & & \\
-            & mtse & 1479.91 & & \\
+            & mte & 1496.86 & & -75.23\% \\
+            & mtse & 1479.91 & & -74.95\% \\
             \midrule
-            \multirow{4}{*}{Capillary} & ssp & 1316.59 & & \\
-            & dsp & 1475.26 & & \\
-            & mte & 1932.20 & & \\
-            & mtse & 1010.84 & & \\
+            \multirow{4}{*}{Capillary} & ssp & 1316.59 & \multirow{4}{*}{377.44} & -71.33\% \\
+            & dsp & 1475.26 & & -74.42\% \\
+            & mte & 1932.20 & & -80.47\% \\
+            & mtse & 1010.84 & & -62.66\% \\
             \midrule
-            \multirow{4}{*}{Brain} & ssp & 5238.91 & \multirow{4}{*}{1241.70} & -76.30\% \\
-            & dsp & 5187.72 & & -76.06\% \\
-            & mte & 4863.12 & & -74.47\% \\
-            & mtse & 4605.64 & & -73.04\% \\
+            \multirow{4}{*}{Brain} & ssp & 5238.91 & \multirow{4}{*}{1229.98} & -76.52\% \\
+            & dsp & 5187.72 & & -76.29\% \\
+            & mte & 4863.12 & & -74.71\% \\
+            & mtse & 4605.64 & & -73.29\% \\
             \bottomrule
         \end{tabular}
 
