@@ -35,7 +35,16 @@ class TrainingInformation(TensorboardLogReader):
         self.drop_train = self._get_drop(tag_values.get("episode_length/ep_length_mean"), drop_level=drop_level)
         self.drop_test = self._get_drop(tag_values.get("episode_length/eval_ep_length_mean"), drop_level=drop_level)
         step_data, value_data = tag_values.get("episode_length/eval_ep_length_mean")
+        for steps, values in zip(step_data, value_data):
+            if steps[-2] == steps[-1]:
+                values[-2] = (values[-1] + values[-2]) / 2
+                del steps[-1]
+                del values[-1]
+            else:
+                logging.warning("End evaluation only with 32 episodes!")
+
         step_data, value_data = np.asarray(step_data), np.asarray(value_data)
+
         # Check if all rows in step data are equal. If not interpolate.
         if step_data.dtype == np.object or not (step_data == step_data[0]).all():
             step_data, value_data = interpolate(step_data, value_data)

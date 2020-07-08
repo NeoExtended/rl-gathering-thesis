@@ -55,7 +55,7 @@ class TableGenerator(ABC):
             if self.avg:
                 row["Avg"] = info.avg
             if self.drop:
-                if config["env"].get("dynamic_episode_length", False):
+                if config["env"].get("reward_kwargs", {}).get("dynamic_episode_length", False):
                     row["Drop"] = int(info.drop_test)
                 else:
                     row["Drop"] = int(info.drop_train)
@@ -359,8 +359,8 @@ class ObservationSizeTableGenerator(TableGenerator):
 
 class RewardTableGenerator(TableGenerator):
     def __init__(self, files: List[Path], best: bool = True, avg: bool = True, drop: bool = True, run_id: bool = False, time: bool = False,
-                 std: bool = False, var: bool = False, cv_train: bool = False, cv_test: bool = False):
-        super(RewardTableGenerator, self).__init__(files, best, avg, drop, run_id, time, std, var, cv_train, cv_test)
+                 std: bool = False, var: bool = False, cv_train: bool = False, cv_test: bool = False, rd_train: bool = False, rd_test: bool = False):
+        super(RewardTableGenerator, self).__init__(files, best, avg, drop, run_id, time, std, var, cv_train, cv_test, rd_train, rd_test)
         self.mode = None
 
     def _get_header(self) -> Optional[List[Tuple[str, int, int]]]:
