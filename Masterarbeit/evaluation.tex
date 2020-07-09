@@ -1253,20 +1253,20 @@ At first step when training random mazes is to relax the setting, by limiting th
 
 \begin{table}[htp]
     \begin{center}
-        \begin{tabular}{lrrrr}
+        \begin{tabular}{rlrrrr}
             \toprule
-            & \multicolumn{4}{c}{Success Rate} \\
-            \cmidrule(lr){2-5}
-            \multicolumn{1}{c}{Configuration} & \multicolumn{1}{c}{Stage 1} & \multicolumn{1}{c}{Stage 2} & \multicolumn{1}{c}{Stage 3} & \multicolumn{1}{c}{Random Stage} \\
+            & & \multicolumn{4}{c}{Success Rate} \\
+            \cmidrule(lr){3-6}
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Configuration} & \multicolumn{1}{c}{Stage 1} & \multicolumn{1}{c}{Stage 2} & \multicolumn{1}{c}{Stage 3} & \multicolumn{1}{c}{Random Stage} \\
             \midrule
-            Default & \textbf{89.84\%} & 10.94\% & 6.25\% & 1.56\% \\
-            8 Environments & 78.12\% & 13.08\% & 8.53\% & \textbf{3.12\%} \\
-            Dynamic Normalization & 65.62\% & \textbf{15.50\%} & \textbf{13.18\%} & 0.00\% \\
-            Scaling Only & 10.94\% & 4.96\% & 0.00\% & 0.00\% \\
-            Precomputed Normalization & 10.94\% & 1.56\% & 3.91\% & 0.00\%\\
+            1 & Default & \textbf{89.84\%} & 10.94\% & 6.25\% & 1.56\% \\
+            2 & 8 Environments & 78.12\% & 13.08\% & 8.53\% & \textbf{3.12\%} \\
+            3 & Dynamic Normalization & 65.62\% & \textbf{15.50\%} & \textbf{13.18\%} & 0.00\% \\
+            4 & Scaling Only & 10.94\% & 4.96\% & 0.00\% & 0.00\% \\
+            5 & Precomputed Normalization & 10.94\% & 1.56\% & 3.91\% & 0.00\%\\
             \bottomrule
         \end{tabular}
-        \caption[Evaluation Results for Agents trained on the Stages Environment]{Evaluation results for agents trained for 6 million training steps on the Stages environment. A detailed description of the agent configuration is provided in Section \ref{sec:EvalRandomMaze}. Agents are evaluated over 128 episodes on the first three stages plus a new random stage. The first three stages have been visited at least once during training. We can see, that agents with dynamic normalization work well on all training stages, while failing to perform on the new random stage. The default configuration which only uses normalization for the first stage, also performs best on the first stage. Reducing training batch variance by reducing the number of environments seems to bring a small positive effect for random mazes, but the effect is very small and might be subject to randomness.} \label{tab:Eval/RandomMaze}
+        \caption[Evaluation Results for Agents trained on the Stages Environment]{Evaluation results for agents trained for 6 million training steps on the Stages environment. A detailed description of the agent configuration is provided in Section \ref{sec:EvalRandomMaze}. Agents are evaluated over 128 episodes and the results show for which fraction of these episodes the agents were able to gather all particles at the random goal position in less than 2000 steps. The first three stages have been visited at least once during training, while the last maze has never been seen before. We can see, that agents trained with dynamic normalization work well on all training stages, while failing to perform on the new random stage. The default configuration which only uses normalization for the first stage, also performs best on the first stage. Reducing training batch variance by reducing the number of environments seems to bring a small positive effect for random mazes, but the effect is very small and might be caused by randomness.} \label{tab:Eval/RandomMaze}
     \end{center}
 \end{table}
 
@@ -1288,13 +1288,13 @@ At first step when training random mazes is to relax the setting, by limiting th
 
 To help the agent to learn in a more stable environment, we suppose another relaxed scenario: An environment, consisting of a series of mazes which we call \textit{Stages}. The agent is confronted with a single maze at first. Each time it is able to solve that instance, it continuous to the next stage (a new maze). Failing in the next stages then brings it back to the first stage with a probability of 50\%. This procedure minimizes the randomness for the agent, while still confronting it with a possibly infinite amount of random mazes. We suspect, that the randomness in the observations are the biggest problem for the agent and also may interfere with our precomputed normalization which will only be optimized for the very first stage. We therefore test the following configurations on the Stages environment:
 
-\begin{itemize}
+\begin{enumerate}
     \item Our default configuration which uses the network from the first experiment described above with the extended layers and frame stacking. 
     \item A configuration where we reduce the number of parallel environments from 64 to 8. This should minimize randomness in a single batch of training data.
     \item A configuration where the normalization by mean and standard deviation is not precomputed, but rather updated dynamically based on the gathered observations.
     \item A configuration with only normalizes observations by $x \mapsto x / 255$.
-    \item A configuration using a precomputed normalization over 1000 random instances.
-\end{itemize}
+    \item A configuration using a precomputed normalization over 2000 random observations from 500 random instances.
+\end{enumerate}
 
 We evaluated the different configurations using 128 test episodes and measuring for how many of these episodes the agent was able to complete the episode in less than 2000 steps. The agents were trained using the Stages environment, which generated stages as shown in Figure \ref{fig:Eval/RandomMaze/Stages}. We also evaluated the performance on an additional maze which was not used during training. Table \ref{tab:Eval/RandomMaze} shows the evaluation results for the different stages. We can see, that our default configuration clearly optimizes for the first stage only. Precomputed normalization therefore must be calculated over multiple random stages. Unfortunately, our experiment using precomputing over multiple random stages did not provide good results, even though it shows to work better than simple observation scaling. We can also see, that reducing the number of environments can be an option to improve training. 
 
