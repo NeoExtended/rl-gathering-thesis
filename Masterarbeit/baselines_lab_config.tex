@@ -158,8 +158,8 @@ We already talked about lab configuration files in Section \ref{sec:blFunctions}
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
             \hhline{|=|=|}
             scale & Weather or not to scale the inputs by $x \mapsto x / 255$ \\
-            extractor\_arch & Architecture for the CNN extractor layers. Is given in tuple form of a list of triplets (n\_filters, filter\_size, stride) where each triplet defines a CNN layer. \\
-            mlp\_arch & Architecture for the MLP layers which get their input from the CNN extractor. May be a list of integer values where each value defines the number of neurons in a fully connected layer. The last element may be a dictionary with the entries \textit{pi} and \textit{vi} which both may contain lists of integers to define a diverging network for the policy network and the value function. \\
+            extractor\_arch & Architecture for the CNN extractor layers. The structure of the CNN is given as a list of tuples in the form of ("conv", n\_filters, filter\_size, stride) for a convolutional layer or ("pool", size, stride) for a pooling layer. \\
+            mlp\_arch & Architecture for the MLP layers which get their input from the CNN extractor. May be a list of integer values where each value defines the number of neurons in a fully connected layer. The last element may be a dictionary with the entries \textit{pi} and \textit{vf} which both may contain lists of integers to define a diverging network for the policy network and the value function. \\
             extractor\_act & Defines the activation function for the extractor network. \\
             mlp\_act & Defines the activation function for the MLP network. \\
             \hline

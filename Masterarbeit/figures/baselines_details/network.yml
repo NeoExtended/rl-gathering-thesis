@@ -2,12 +2,12 @@ algorithm:
   policy:
     name: GeneralCnnPolicy
     extractor_arch:
-      - [32, 8, 4]
-      - [64, 4, 2]
-      - [64, 3, 1]
+      - ["conv", 32, 8, 4]
+      - ["conv", 64, 4, 2]
+      - ["conv", 64, 3, 1]
     extractor_act: "leaky_relu"
     mlp_arch: 
       - 512
       - pi: [256]
-      - vi: [256]
+        vf: [256]
     mlp_act: "leaky_relu"

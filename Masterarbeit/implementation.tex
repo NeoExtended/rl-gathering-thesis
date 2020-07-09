@@ -462,7 +462,7 @@ As we mentioned in Section \ref{sec:TDDRL}, Huang et al. used both, the maximum 
 \end{table}
 
 
-The sparseness of this reward signal may significantly increase the complexity of the problem. Also this reward is not flexible, since the reward subgoals were handcrafted for each individual instance. In order to investigate the impact of different rewards, we test a number of combinations of our reward components and measure their impact on the performance in Section TODO. In the following we want to explain what the goal behind each reward component is and how we calculate them. Figure \ref{fig:RewardDesign} provides an overview of the different components of our flexible reward system.
+The sparseness of this reward signal may significantly increase the complexity of the problem. Also this reward is not flexible, since the reward subgoals were handcrafted for each individual instance. In order to investigate the impact of different rewards, we test a number of combinations of our reward components and measure their impact on the performance in Section \ref{sec:EvalReward}. In the following we want to explain what the goal behind each reward component is and how we calculate them. Figure \ref{fig:RewardDesign} provides an overview of the different components of our flexible reward system.
 
 \begin{figure}[ht]
     
@@ -510,7 +510,7 @@ When we talked about the time penalty, we already proposed a way to estimate the
 Using a dynamic episode length in this form may cause problems in combination with a time penalty. Since longer episodes result in more time penalty (meaning less total reward), the agent might try to end episodes as fast as possible. In the case of dynamic episode lengths a short episode means not receiving any "normal" reward at all. We therefore add two constraints which should resolve this problem: First, if the agent is not able to reach the goal, it will receive a negative reward equal to the time penalty it would receive if the episode had not been canceled early. Additionally, if the agent is able to finish the episode earlier than the estimated episode length, it receives a positive reward which is proportional to the number of steps its solution was faster than expected.
 
 \subsection{Extended Models} \label{sec:ExtendedMaze}
-Previous work only looked at the particle navigation problem from a very theoretical point of view. Each particle could be perfectly observed meaning we always had information about its pixel perfect position. We also were able to perfectly apply the same uniform transformation to each particle and this transformation was a direct change of the position instead of a "real" movement. To investigate the performance of RL models under more real-life conditions, we therefore implemented two extensions which we evaluated one-by-one and combined in Section TODO.
+Previous work only looked at the particle navigation problem from a very theoretical point of view. Each particle could be perfectly observed meaning we always had information about its pixel perfect position. We also were able to perfectly apply the same uniform transformation to each particle and this transformation was a direct change of the position instead of a "real" movement. To investigate the performance of RL models under more real-life conditions, we therefore implemented two extensions which we evaluated one-by-one and combined in Section \ref{sec:EvalError}.
 
 \paragraph{Introducing Error.}
 When it comes to real world applications, we always will have to deal with multiple sources of error. Sensors will always provide a certain amount of noise and actions might not be executed perfectly. To simulate various error sources we therefore introduce fuzzy observations and fuzzy actions.  
@@ -519,7 +519,7 @@ In combination with noise, detecting the exact location of microscopic particles
 
 \begin{itemize}
     \item \textit{Noise.} To simulate standard detection error, we add gaussian noise to the observation.
-    \item \textit{False Negative Detection.} At each step, each particle has a small chance to be not be included in the observation at all.
+    \item \textit{False Negative Detection.} At each step, each particle has a chance to be not be included in the observation at all.
     \item \textit{False Positive Detection.} At each step, particles with random positions may be added to the observation.
 \end{itemize}
 
@@ -531,14 +531,14 @@ While particles in the theoretical model are directed using a uniform force, in 
     \item \textit{Random Actions.} Each particle may move randomly at each step.
 \end{itemize}
 
-We test all these sources of error and their influence on the performance in Section TODO.
+We test all these sources of error and their influence on the performance in Section \ref{sec:EvalError}.
 
 \paragraph{Physical Particles.}
 While error in actions and observations adds a lot to the realism of the simulation, we are still working with particles which directly change from one position to another. Instead we want to have particles which behave more like real particles. Instead of directly changing the particle position, we want to accelerate particles. Particles themselves then have an internal speed vector which also influences their position for the following steps of the simulation. To simulate friction we divide this speed vector by a constant value of $1.1$ for each step and set the speed to zero if a particles' speed drops below a threshold. The particle position is rounded to match an integer position for the observation, but kept at floating point precision for internal calculations.
 
 One problem when simulating physical particles is that the computations for the environment get more complicated and training needs more time. This is especially problematic when calculating collisions with the maze. For the non-physical particles, each particle could at most move a single pixel in any direction. If the particle was blocked by the maze in that direction it would remain at its current position. However with physical particles, particles may actually move more than one pixel per step. In case of a collision, we would need to calculate the exact point of contact between the particle and the maze. Instead we approximate the collision by halving the speed if the particle would cause a collision at full speed. The particle then does not move for the current step, but will keep half of its velocity for the next step, getting closer and closer to the wall. Note that this procedure might allow particles to move through walls if their velocity is large enough to cross the wall in a single step. However the size of our test instances does not allow the agent to accelerate particles to this point.
 
-We investigate the performance of RL algorithms when dealing with physical particles in Section TODO.
+We investigate the performance of RL algorithms when dealing with physical particles in Section \ref{sec:EvalPhysical}.
 
 \subsection{Random Instance Generation} \label{sec:RandomInstanceGeneration}
 To train agents to solve randomized mazes, we need a generator which produces blood vessel like structures. To generate these structures we used an algorithm called \textit{rapidly-exploring random tree} (RRT) \cite{lavalle1998rapidly}. The algorithm was originally designed to efficiently search high-dimensional spaces by randomly generating a space-filling tree. The tree is generated by randomly proposing new points in the search space and connecting these new points to the closest point of the search tree. If the random point is to far away from the closest point of the search tree, a new node is inserted at a predefined maximum length in the direction of the random point. Using the RRT algorithm, we create blood-vessel like instances in four steps:
@@ -572,5 +572,5 @@ To train agents to solve randomized mazes, we need a generator which produces bl
 When training with randomly created instances a goal position is randomly chosen from the set of empty pixels. Additionally we buffer the randomly created instances and choose an already created instance with a probability of 95\% and only generate a new instance with a probability of 5\%. This avoids expensive recomputation at every environment reset.
 
 \subsection{Integration of Algorithmic Approaches} \label{sec:AlgorithmIntegration}
-To allow easy evaluation, we integrated an adapter which allows algorithmic strategies, which precompute all particle movements, to interact with our step-based environment and replay their decisions accordingly. By adapting code from \cite{becker2020} we have access to the SSP, DSP and MTE algorithms as shown in Section \ref{chp:TDD}. Evaluation results comparing the RL approach against the algorithmic approaches can be found in Section TODO.
+To allow easy evaluation, we integrated an adapter which allows algorithmic strategies, which precompute all particle movements, to interact with our step-based environment and replay their decisions accordingly. By adapting code from \cite{becker2020} we have access to the SSP, DSP and MTE algorithms as shown in Section \ref{chp:TDD}. Evaluation results comparing the RL approach against the algorithmic approaches can be found in Section \ref{sec:EvalAlgorithms}.
 
