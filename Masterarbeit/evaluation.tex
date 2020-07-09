@@ -931,29 +931,9 @@ For the training of the final agents we chose to use PPO (see Section \ref{sec:E
 
 The agents are trained on the four test instances shown in Table \ref{tab:TestInstances}. We select a number of training steps which ensures, that agents train long enough to achieve a performance which is at least close to their optimal possible performance. Similar to before, we therefore train the agents for 3M steps on Corridor and 6M steps on Vessel. We slightly extend the training time for Brain from 12M to 14M steps and will use 7M training steps for the Capillary environment.
 
-\begin{figure}[htp]
-    \begin{center}
-        \begin{tabular}{c}
-            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/maze0318_ep_len.pdf} \\
-            \addlinespace[0.15cm]
-            {\small (a) Maze0318} \\
-            \addlinespace[0.5cm]
-            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/vessel_ep_len.pdf} \\
-            \addlinespace[0.15cm]
-            {\small (b) Vessel} \\
-            \addlinespace[0.5cm]
-            \includegraphics[clip, width=0.8\columnwidth]{figures/evaluation/baseline/maze0122_ep_len.pdf} \\
-            \addlinespace[0.15cm]
-            {\small (c) Maze0122} \\
-            \addlinespace[0.5cm]
-        \end{tabular}
-
-    \end{center}
-    \caption{Baselines TODO} \label{fig:Eval/Baselines}
-\end{figure}
 
 \paragraph{Baseline Performance}
-To establish a baseline, we train two separate sets of agents. The first set will use a fixed number of 256 particles per episode and the second set will randomize the number of particles at the start of each episode to be between one and the number of non-blocked pixels of the current environment (see Table \ref{tab:TestInstances}) with an upper limit of 4500 particles. 
+We establish our baseline, by training the agents on all four test instances (see Table \ref{tab:TestInstances}), using the parameters described above. Each environment will use 256 randomly generated particles in each training and evaluation episode. 
 
 \begin{table}[htp]
     \begin{center}
@@ -961,21 +941,88 @@ To establish a baseline, we train two separate sets of agents. The first set wil
             \toprule
             \multicolumn{1}{c}{Instance} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
             \midrule
-            Corridor & 54.47 & 55.85 & 155k  & 0:36:38h \\
-            Vessel & 95.44 & 99.55 & 381k & 1:04:30h \\
-            Capillary & 92.69 & 93.38 & 249k & 1:37:11h \\
-            Brain & 281.12 & 293.40 & 4.59M & 5:13:28h \\
+            Corridor & 54.53 & 55.94 & 155k  & 0:36:38h \\
+            Vessel & 95.67 & 100.34 & 381k & 1:04:30h \\
+            Capillary & 92.31 & 93.45 & 249k & 1:37:11h \\
+            Brain & 287.17 & 299.43 & 4.59M & 5:13:28h \\
             \bottomrule
         \end{tabular}
     \end{center}
-    \caption[Baseline Training Performance for Agents on Different Environments]{Performance for the baseline agents on different environments. The values for average and best are created during training evaluation. These values therefore include frame skipping. The real number of steps therefore is approximately four times higher. For more accurate values see Table \ref{tab:Eval/BaselinePerformance}.} \label{tab:Eval/BaselinePerformance/Training}
+    \caption[Baseline Training Performance for Agents on Different Environments]{Performance for the baseline agents using a fixed number of 256 particles on different environments. The values for average and best are created during training evaluation. These values therefore include frame skipping. For accurate values see Table \ref{tab:Eval/BaselinePerformance/Fixed}.} \label{tab:Eval/BaselinePerformance/Training}
 \end{table}
 
-To allow easy comparison with other RL approaches, as well as algorithmic approaches, we measure the performance of the agent in two different ways. First, we provide the training performance of the agent, similar to how we reported values for the previous experiments in Table \ref{tab:Eval/BaselinePerformance/Training}. These values include frame skipping and are only calculated over 32 episodes for each trial and therefore may be slightly inaccurate. Nevertheless, these values can be used to compare the baseline to the values of other experiments or future RL approaches which also use frame skipping. 
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/baseline/maze0318_ep_len.pdf} \\
+            %\addlinespace[0.15cm]
+            {\small (a) Episode length on the Corridor environment.} \\
+            \addlinespace[0.75cm]
+            \includegraphics[clip, width=0.95\columnwidth]{figures/evaluation/baseline/vessel_ep_len.pdf} \\
+            %\addlinespace[0.15cm]
+            {\small (b) Episode length on the Vessel environment} \\
+        \end{tabular}
 
-To allow easy comparison of our combined improved parameters with the older default parameters, we include a plot of the average episode length during training in Figure\ref{fig:Eval/Baselines}. We can see, that the combined configuration of the baseline agent outperforms our previous configurations on all test instances, being both faster during training and producing better final results. Training on the Brain instance becomes slightly unstable after 8 million training steps, but becomes stable again after 13 million training steps.
+    \end{center}
+    \caption[Training Performance of Baseline Agents on Small Instances]{Training performance of agents using the baseline configuration in comparison with the default configuration for our smaller test instances. We can see, that the new configuration speeds up the initial training progress and performs at least as good as the previous result in terms of final performance. Overall the training time on the small instances can be reduced to 1 million steps for Corridor and 3 million steps for Vessel without any major performance loss.} \label{fig:Eval/Baselines/SmallInstances}
+\end{figure}
 
-We also provide results from a distinct evaluation of the trained agents as an average over 128 episodes with randomly distributed particles for different particle counts. The results for the performance of the agents can be found in Table \ref{tab:Eval/BaselinePerformance}.
+To allow easy comparison with other RL approaches, as well as algorithmic approaches, we measure the performance of the agent in two different ways. First, we provide the training performance of the agent, similar to how we reported values for the previous experiments in Table \ref{tab:Eval/BaselinePerformance/Training}. These values include frame skipping and are calculated over 64 episodes for each trial. The column with the average agent performance therefore is an average over 3 separately trained agents with a total of 192 test episodes. These values can be used to compare the baseline to the values of other experiments or future RL approaches which also use frame skipping and a fixed number of 256 particles. By comparison with the results for PPO from Section \ref{sec:EvalRLAlgorithms}, we can see, that the combined new configuration improved the results across all instances. 
+
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{c}
+            \includegraphics[clip, width=0.93\columnwidth]{figures/evaluation/baseline/maze0518_ep_len.pdf} \\
+            %\addlinespace[0.15cm]
+            {\small (a) Episode length on the Capillary environment.} \\
+            \addlinespace[0.5cm]
+            \includegraphics[clip, width=0.93\columnwidth]{figures/evaluation/baseline/maze0122_ep_len.pdf} \\
+            %\addlinespace[0.15cm]
+            {\small (b) Episode length on the Brain environment.} \\
+        \end{tabular}
+
+    \end{center}
+    \caption[Training Performance of Baseline Agents on Large Instances]{Training performance of agents using the baseline configuration in comparison with the default configuration for our larger test instances. We can see that the new configuration slightly speeds up training for the smaller Capillary instance, while making a large difference on the Brain environment. Training on the Capillary environment can be shortened to about 3 million training steps with no major performance loss. Training on the Brain environment seems to get unstable at around 9 million training steps, but stabilizes again after 13 million steps. Because the agent already reached a performance at 9 million steps, which is superior to the performance of the default configuration at 12 million steps, we suspect that there may be larger strategy changes involved later in the training process causing these instabilities. We can see that even though the training is not stable for a few million steps, the agent never suffers from a complete learning collapse.} \label{fig:Eval/Baselines/LargeInstances}
+\end{figure}
+
+The improvement from the new configuration gets even more clear by looking at the average episode length during training, for which we included a plot in Figure \ref{fig:Eval/Baselines/SmallInstances} for Corridor and Vessel and in Figure \ref{fig:Eval/Baselines/LargeInstances} for Capillary and Brain. We can see, that the agents make faster initial progress especially on large instances. They also provide better results and seem to be less affected by variance between trials. An exception to this findings are the results for the Brain instance, which get very unstable for a period between 9 and 13 million training steps. Luckily, the agent is able to consistently recover from the unstable period and still achieves constantly better performance than with the old configuration.
+
+\begin{table} [htp]
+    \begin{center}
+        \begin{threeparttable}
+            \begin{tabular}{lrrrr}
+                \toprule
+                & \multicolumn{4}{c}{Avgerage Episode Length} \\
+                \cmidrule(lr){2-5}
+                Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count  \\
+                \midrule
+                Corridor & 216.73 & 217.73 & 221.52 & 220.64  \\
+                Vessel & 373.57 & 370.72 & 381.04 & 385.63 \\
+                Capillary & 375.01 & 377.44 & 377.90 & 378.88 \\
+                Brain\tnote{1} & 1143.59 & 1293.20\tnote{2} & 1292.75\tnote{2} & 1342.40\tnote{2} \\
+                \midrule
+                Brain\tnote{3} & 1548.56\tnote{4} & 1264.56 & 1414.80\tnote{4} & 1687.32\tnote{4} \\
+                \bottomrule
+            \end{tabular}
+            \begin{tablenotes}
+                \footnotesize
+                \item [1] For the Brain environment, we found that evaluating with a different particle count can be instable. The agent then often gets stuck by oscillating between two states.
+                \item[2] This agent failed 5/128, 3/128 and 5/128 episodes when being evaluated with 1000, 2000 and random particle counts respectively. We aborted evaluation for these episodes at 3000 steps, but included these values in the calculation of the average.
+                \item[3] This agent was trained with 500 particles.
+                \item[4] This agent failed 13/128, 6/128 and 23/128 episodes when being evaluated with 1000, 2000 and random particle counts. We aborted evaluation for these episodes at 3000 steps, but included these values in the calculation of the average.
+            \end{tablenotes}
+
+        \end{threeparttable}
+
+    \end{center}
+    \caption[Baseline Performance for Agents Trained with a Fixed Particle Count]{Performance for agents trained with a fixed particle count of 256 on different test environments. We also provide a single agent trained on the Brain environment with a fixed particle count of 500 for comparison. The values are measured as an average over 128 episodes for environments with different fixed and one environment with a random particle count. The measurements exclude frame skipping, while frame skipping is still enabled for the observations. We can see, that even though the agent is trained with a relatively small number of particles, the same strategy can be applied for a larger number of particles. This seems not to hold for the agent trained on the Brain environment, which begins to fail solving episodes with particle counts it has not been trained with.} \label{tab:Eval/BaselinePerformance/Fixed}
+\end{table}
+
+To make the results of our agents comparable to future RL approaches which do not use frame skipping and to compare our results to the results of approximation algorithms, we also provide a distinct agent evaluation over 128 episodes with different particle counts and without frame skipping. Note that the frame skipping is only disabled for the evaluation itself and not for the agent. Disabling frame skipping for the agent was found to have negative effects during evaluation, because the agent might experience environment states which it has never seen before.
+
+The results for the performance of the agents can be found in Table \ref{tab:Eval/BaselinePerformance/Fixed}. We can see, that the agents had no problem dealing with larger particle counts at test time for three of our four test instances. The random particle count used a random number between one and 4500 particles. For instances with less than 4500 free pixels, we reduced that upper number to the maximum possible amount. Interestingly, we only observed that our agents trained on the Brain instance struggled with particle counts which were not close to the number of particles the agent has been trained with. We therefore included the values of a second agent which was trained with 500 instead of 256 particles which was able to solve environments with 1000 particles without failing a single episode. We suspect that increasing the number of training steps on the Brain environment further may eliminate this problem, but we will leave these experiments for future work.
+
+For comparison with future work, we also include a Baseline for the performance of our agents using a randomized number of particles for every episode. The results are listed in Table \ref{tab:Eval/BaselinePerformance/RPC}. By comparison with Table \ref{tab:Eval/BaselinePerformance/Fixed}, we can see, that the performance of RL agents gets worse, when being trained with random particle counts, even for the benchmark using random particles. This is also a surprising result which demands further investigation in future work. 
 
 \begin{table} [htp]
     \begin{center}
@@ -988,37 +1035,17 @@ We also provide results from a distinct evaluation of the trained agents as an a
             Corridor & 230.48 & 228.13 & 228.06 & 228.33 \\
             Vessel & 398.74 & 393.00 & 393.00 & 394.38 \\
             Capillary & 464.88 & 436.98 & 437.00 & 439.37 \\
-            Brain & 2000.00 & 2000.00 & 2000.00 & 2000.00  \\
+            Brain & 3000.00 & 3000.00 & 3000.00 & 3000.00  \\
             \bottomrule
         \end{tabular}
 
     \end{center}
-    \caption[Baseline Performance for Agents Trained with a Random Particle Count]{Performance for agents trained with a random partzicle count on different environments, using a fixed particle count. TODO.} \label{tab:Eval/BaselinePerformance}
-\end{table}
-
-
-\begin{table} [htp]
-    \begin{center}
-        \begin{tabular}{lrrrr}
-            \toprule
-            & \multicolumn{4}{c}{Avgerage Episode Length} \\
-            \cmidrule(lr){2-5}
-            Instance & 256 Particles & 1000 Particles & 2000 Particles & Random Particle Count  \\
-            \midrule
-            Corridor & 216.73 & 217.73 & 221.52 & 220.64  \\
-            Vessel & 373.57 & 370.72 & 381.04 & 385.63 \\
-            Capillary & 375.01 & 377.44 & 377.90 & 378.88 \\
-            Brain & 1143.59 & 1229.98 & 1261.50 & 1286.21 \\
-            \bottomrule
-        \end{tabular}
-
-    \end{center}
-    \caption[Baseline Performance for Agents Trained with a Fixed Particle Count]{Performance for agents trained with a fixed particle count of 256 on different test environments. The values are measured as an average over 128 episodes and exclude frame skipping, while frame skipping is still enabled for the observations. We can see, that even though the agent is trained with a relatively small number of particles, the same strategy can be applied for a larger number of particles.} \label{tab:Eval/BaselinePerformance}
+    \caption[Baseline Performance for Agents Trained with a Random Particle Count]{Performance for agents trained with a random particle count on different environments. We evaluate the agents using a fixed particle count as well as a random particle count. The measurements exclude frame skipping. By comparison with Table \ref{tab:Eval/BaselinePerformance/Fixed} we can see, that agents perform worse, even when trained with randomized particle counts. The Brain environment could not be solved in 15 million steps if particle counts were randomized.} \label{tab:Eval/BaselinePerformance/RPC}
 \end{table}
 
 
 \subsection{Comparison to Previous RL Approaches} \label{sec:EvalRLComparison}
-Compare here.
+In this section, we want to compare our results to the results of previous RL approaches. Previous approaches were also evaluated using 1000 randomly distributed particles for each environment and also with 128 evaluation episodes. We make a direct comparison of training length (taken from \cite{huang2019}) and final evaluation result (taken from \cite{becker2020}) in Table \ref{tab:Eval/PreviousRLApproach}. We can see, that by using our new approach we can significantly shorten the training time, while still increasing the final performance. This finding can also be supported by looking at the boxplot in Figure \ref{fig:Eval/Basline/Boxplot} which shows us, that our new approach produces results with less variance. 
 
 \begin{table}[htp]
     \begin{center}
@@ -1030,18 +1057,31 @@ Compare here.
             \midrule
             Corridor & 75M & 3M & 96.00\% & 246.48 & 217.73 & 11.66\% \\
             Capillary & 160M & 7M & 95.63\% & 386.42 & 377.44 & 2.32\% \\
-            Brain & 250M & 12M & 95.20\% & 1500.08 & 1229.98 & 18.01\% \\
+            Brain & 250M & 15M & 94.00\% & 1500.08 & 1264.56 & 15.70\% \\
             \bottomrule
         \end{tabular}
 
     \end{center}
-    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousRLApproach}
+    \caption[Comparison with Previous RL Approaches]{Comparison with previous RL approaches in terms of total training time (in training steps) and final evaluation performance. Our results are measured using the models trained with 256 particles for Corridor and Capillary and the model trained with 500 particles for Brain. All values were calculated as an average over 128 episodes with 1000 randomly distributed particles. We can see, that our new approach significantly shortens the training process, while also improving the final result.} \label{tab:Eval/PreviousRLApproach}
 \end{table}
 
-\subsection{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
-Comparison to Algorithmic Approaches - real time capable implementations of Algorithmic approaches?
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{cc}
+            \includegraphics[clip, width=0.45\columnwidth]{figures/evaluation/baseline/plot_map0318_MostDistancedPairFinderAlgorithm.pdf} &
+            \includegraphics[clip, width=0.45\columnwidth]{figures/evaluation/baseline/plot_vessel_MostDistancedPairFinderAlgorithm.pdf} \\
+            \includegraphics[clip, width=0.45\columnwidth]{figures/evaluation/baseline/plot_map0518_MostDistancedPairFinderAlgorithm.pdf} &
+            \includegraphics[clip, width=0.45\columnwidth]{figures/evaluation/baseline/plot_map0122_RandomPairFinderAlgorithm.pdf} \\
+        \end{tabular}
 
-\begin{table}
+    \end{center}
+    \caption{Comparison of algorithmic approaches with algorithmic approaches and previous RL (PRL) approaches. The measurements use data from 128 episodes for environments with 1000 randomly distributed particles. The boxes show the upper and lower quartile with an orange line at the median. The whiskers extend to show the range, with outliers drawn as circles. For the algorithms, particles are selected using the most distant pair, except for the brain environment, where random pairs have been used. We can see, that both RL approaches outperform the algorithmic approaches. Our new agent configuration shows to not only have good average performance, but also lower variance compared with the previous approach.} \label{fig:Eval/Baseline/Boxplot}
+\end{figure}
+
+\subsection{Comparison to Algorithmic Approaches} \label{sec:EvalAlgorithms}
+In this section we want to compare the results of our RL approach to the results of the approximation algorithms we talked about in Section \ref{sec:TDDPreviousWork}. We listed the results in Table \ref{tab:Eval/PreviousAlgorithmicApproach}. Similar to previous algorithmic approaches we were able to significantly outperform algorithmic approaches in terms of final performance with improvements between 55\% and 80\%. This difference can also be seen in the plot from figure \ref{fig:Eval/Baseline/Boxplot} which also shows the spread of the evaluation results. We can see, that while both RL approaches offer a low variance, they both suffer from having a number of outlier episodes. 
+
+\begin{table}[htp]
     \begin{center}
         \begin{tabular}{llrrr}
             \toprule
@@ -1064,16 +1104,18 @@ Comparison to Algorithmic Approaches - real time capable implementations of Algo
             & mte & 1932.20 & & -80.47\% \\
             & mtse & 1010.84 & & -62.66\% \\
             \midrule
-            \multirow{4}{*}{Brain} & ssp & 5238.91 & \multirow{4}{*}{1229.98} & -76.52\% \\
-            & dsp & 5187.72 & & -76.29\% \\
-            & mte & 4863.12 & & -74.71\% \\
-            & mtse & 4605.64 & & -73.29\% \\
+            \multirow{4}{*}{Brain} & ssp & 5238.91 & \multirow{4}{*}{1264.56} & -75.86\% \\
+            & dsp & 5187.72 & & -75.62\% \\
+            & mte & 4863.12 & & -74.00\% \\
+            & mtse & 4605.64 & & -72.54\% \\
             \bottomrule
         \end{tabular}
 
     \end{center}
-    \caption{Performance Comparison TODO} \label{tab:Eval/PreviousAlgorithmicApproach}
+    \caption[Performance Comparison with Approximation Algorithms]{Performance comparison with approximation algorithms in terms of episode length. The values are measured as an average over 128 episodes with 1000 randomly distributed particles. We can see, that the RL approach can offer significant improvements in performance compared to all approximation algorithms.} \label{tab:Eval/PreviousAlgorithmicApproach}
 \end{table}
+
+For a real-world application there are a few more important factors when it comes to a comparison between algorithmic and RL approaches. All models we have trained so far are only able to solve one specific instance. This means that using an RL approach comes at the expense of a large amount of computation cost for every new instance. Even though we were able to reduce that cost by a large amount, it is still huge compared with the cost needed for the approximation algorithms. On the other side do we have a clear advantage of RL algorithms at test time. While training an RL model is complicated, using a trained model is fairly inexpensive. The RL model is able to compute actions directly for every observation and can therefore react in real-time to sudden changes. Approximation algorithms preplan a larger portion of the actions and would have to recalculate them each time something distracts the environment. Therefore the application of RL algorithms can be faster and more reactive at test time.
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
 Extended Environment Models
