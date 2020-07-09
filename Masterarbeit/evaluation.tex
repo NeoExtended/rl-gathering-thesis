@@ -8,12 +8,14 @@ The initial tests will allow us to generate a baseline for the performance of ou
 In this section we want to talk about different aspects of our test procedure.
 
 \paragraph{Environment.}
-All experiments were done on a Linux workstation running Ubuntu 18.04 LTS. The workstation has an Intel 6700K CPU, a single Nvidia GeForce GTX 1080 Ti GPU and 64GB of main memory. We installed Python 3.7.3 using the Anaconda \cite{anaconda} software distribution. We also used Tensorflow 1.14 in conjunction with the CUDA Toolkit version 10.1.243 and CUDNN version 7.6.5. Baselines Lab was developed on top of Stable-Baselines 2.10 and NumPy 1.17. For a complete list of installed packages see Appendix \ref{apx:BaselinesLab}.
+All experiments which involved real-time measurements were done on a Linux workstation running Ubuntu 18.04 LTS. The workstation has an Intel 6700K CPU, a single Nvidia GeForce GTX 1080 Ti GPU and 64GB of main memory. We installed Python 3.7.3 using the Anaconda \cite{anaconda} software distribution. We also used Tensorflow 1.14 in conjunction with the CUDA Toolkit version 10.1.243 and CUDNN version 7.6.5. Baselines Lab was developed on top of Stable-Baselines 2.10 and NumPy 1.17. For a complete list of installed packages see Appendix \ref{apx:BaselinesLab}. Additional experiments were done on a second workstation, running the same software and hardware configuration, except for a different GPU in form of an Nvidia GTX 970.
 
-\paragraph{Procedure.}
-Our experiments involved several sources of randomness. To ensure consistent executions, we fixed the random seed for all involved components to the same value for all experiments. Unfortunately Tensorflow 1.14 does not guarantee consistent results during GPU computations. We therefore repeated experiments three times and averaged the results for comparison. The learning curves provided in this chapter are also smoothed by an exponential weighted moving average, using a factor of $0.6$.
+\paragraph{Measuring Performance.}
+Measuring accurate agent performance is nontrivial due to involved randomness from several sources. For our experiments, ensured consistent executions, by fixing the random seed for all involved components to the same value. Unfortunately Tensorflow 1.14 does not guarantee consistent results during GPU computations. We therefore repeated all experiments three times and averaged the results for comparison. The learning curves provided in this chapter are also smoothed by an exponential weighted moving average.
 
-To determine the performance of a configuration, we look at the end result during training for the average and best trial. We also determine the step in which the average episode length becomes smaller by five percent in comparison to the environments' time limit. We call this moment the \textit{drop}, since performance usually suddenly increases when the agent is able to reach the goal for the first time. The drop can be used as an indicator for how fast the agent is able to find a first usable result, while the end-of-training episode length is an indicator for how good the best solution is the agent is able to find. 
+Measuring the performance of a configuration can be done in multiple ways. An easy way to measure performance would be to look at the average episode length during training. While this is a good way to look how much agents improve over time, the average episode length of the training environment never represents the true performance of the agent, because the agent might get updated several times during a single episode. We therefore never really measure the performance of a single agent, but rather a combination of the performance of a few similar agents. To deal with this problem, we added periodical evaluation into our training process, which evaluates the performance of the model every 200 thousand training steps for 32 episodes and additionally for 64 episodes at the end of the training process. If not stated otherwise, the data we provide is taken from these evaluations - more specific from the last evaluation with 64 episodes. For each model, we provide an \textit{average} representing the average final evaluation result over all three trials (so an average over 192 episodes in total). We also report the evaluation result of the \textit{best} trial. Please note, that we provide our evaluation results with respect to a frame skipping wrapper with a skip of four frames. This means, that the true episode length is about four times longer, than the evaluated result. For episodes which end with an episode length which is not a multiple of four, the true episode length therefore might be slightly shorter than measured.
+
+The performance of a configuration cannot only be determined by the final evaluation result, because we are sometimes more interested in getting results faster instead of only getting better results. We therefore also determine the step in which the average episode length becomes smaller by five percent in comparison to the environments' time limit - which we usually set to 2000. We call this moment the \textit{drop}, since performance usually suddenly increases. The drop can be used as an indicator for how fast the agent is able to find a first usable result, while the end-of-training episode length is an indicator for how good the best solution is the agent is able to find. 
 
 \paragraph{Initial Hyperparameters.}
 For our initial experiments we wanted to use general purpose hyperparameters for the PPO algorithm. We therefore used parameters similar to the parameters used in the RND paper \cite{burda2018exploration} (see Table \ref{tab:PPOHyperparemeters}) which showed to produce good results across all Atari environments. 
@@ -136,18 +138,18 @@ We begin with our easy instance Corridor. In our tests, we use the basic setting
             \cmidrule(lr){2-7}\cmidrule(lr){8-9}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  &  & X &  &  & 256.78 & 295.04 & 1.25M \\
-            2 &  &  &  & X & 0.50 &  & 499.97 & 499.99 & 750k \\
-            3 &  &  &  & X & 0.25 &  & 110.94 & 117.82 & 750k \\
+            1 &  &  &  & X &  &  & 249.53 & 294.19 & 1.25M \\
+            2 &  &  &  & X & 0.50 &  & 495.62 & 498.50 & 750k \\
+            3 &  &  &  & X & 0.25 &  & 107.97 & 117.01 & 750k \\
             4 &  &  & X &  &  &  & 135.03 & 145.34 & 629k \\
-            5 &  &  & X &  & 0.25 &  & 324.29 & 422.48 & 456k \\
-            6 &  &  & X & X &  &  & 477.62 & 491.48 & 3M \\
-            7 &  & X & X &  &  &  & 83.78 & 84.66 & 461k \\
-            8 &  & X & X &  &  & 1.00 & 93.31 & 94.30 & 406k \\
-            9 & X & X &  & X &  &  & 65.72 & 67.17 & 400k \\
+            5 &  &  & X &  & 0.25 &  & 234.72 & 396.47 & 456k \\
+            6 &  &  & X & X &  &  & 478.38 & 491.19 & 3M \\
+            7 &  & X & X &  &  &  & 83.86 & 85.36 & 461k \\
+            8 &  & X & X &  &  & 1.00 & 93.31 & 93.91 & 406k \\
+            9 & X & X &  & X &  &  & 66.05 & 67.16 & 400k \\
             10 & X & X & X &  &  & 1.00 & 59.31 & \textbf{65.68} & 190k \\
-            11 & X & X & X &  &  &  & \textbf{57.38} & 66.81 & 182k \\
-            12 & X & X & X &  & 0.50 &  & 84.52 & 207.78 & \textbf{181k} \\
+            11 & X & X & X &  &  &  & \textbf{57.31} & 66.80 & 182k \\
+            12 & X & X & X &  & 0.50 &  & 84.97 & 202.71 & \textbf{181k} \\
             13 & X & X & X & X &  &  & 65.34 & 78.93 & 400k \\
             14 & X & X & X & X & 0.50 &  & 500.00 & 500.00 & 3M \\
             \bottomrule
@@ -176,23 +178,23 @@ The evaluation results using continuous reward show similar outcomes to the expe
             \cmidrule(lr){2-9}\cmidrule(lr){10-11}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  &  & X &  &  & X &  & 101.06 & 106.07 & 600k \\
-            2 &  &  &  & X & 0.25 &  & X &  & 394.12 & 413.82 & 800k \\
-            3 &  &  & X &  &  &  &  &  & 146.38 & 149.47 & 787k \\
-            4 &  &  & X &  &  &  & X &  & 102.44 & 103.96 & 718k \\
-            5 &  &  & X & X &  &  & X &  & 92.12 & 96.00 & 400k \\
-            6 &  & X & X &  &  &  & X & X & 90.47 & 98.18 & 370k \\
-            7 &  & X & X &  &  &  & X &  & 101.62 & 102.40 & 525k \\
-            8 &  & X & X &  &  & 1.00 & X &  & 96.22 & 103.99 & 614k \\
-            9 &  & X & X &  & 0.25 &  & X &  & 198.44 & 335.29 & 561k \\
-            10 & X & X &  & X &  &  & X &  & 82.41 & 83.32 & 400k \\
+            1 &  &  &  & X &  &  & X &  & 100.80 & 106.44 & 600k \\
+            2 &  &  &  & X & 0.25 &  & X &  & 375.98 & 409.84 & 800k \\
+            3 &  &  & X &  &  &  &  &  & 143.95 & 150.02 & 787k \\
+            4 &  &  & X &  &  &  & X &  & 101.81 & 103.45 & 718k \\
+            5 &  &  & X & X &  &  & X &  & 93.66 & 97.02 & 400k \\
+            6 &  & X & X &  &  &  & X & X & 90.91 & 97.32 & 370k \\
+            7 &  & X & X &  &  &  & X &  & 101.69 & 102.23 & 525k \\
+            8 &  & X & X &  &  & 1.00 & X &  & 97.66 & 104.26 & 614k \\
+            9 &  & X & X &  & 0.25 &  & X &  & 193.27 & 331.71 & 561k \\
+            10 & X & X &  & X &  &  & X &  & 82.20 & 82.85 & 400k \\
             11 & X & X & X &  &  &  &  &  & \textbf{56.59} & \textbf{59.04} & \textbf{127k} \\
-            12 & X & X & X &  &  &  & X & X & 58.72 & 65.46 & 152k \\
-            13 & X & X & X &  &  &  & X &  & 61.81 & 71.28 & 147k \\
-            14 & X & X & X &  &  & 1.00 &  &  & 60.53 & 62.46 & 149k \\
-            15 & X & X & X &  &  & 1.00 & X &  & 59.09 & 68.69 & 151k \\
+            12 & X & X & X &  &  &  & X & X & 58.88 & 65.82 & 152k \\
+            13 & X & X & X &  &  &  & X &  & 61.78 & 71.30 & 147k \\
+            14 & X & X & X &  &  & 1.00 &  &  & 60.59 & 62.59 & 149k \\
+            15 & X & X & X &  &  & 1.00 & X &  & 59.47 & 68.69 & 151k \\
             16 & X & X & X &  & 0.25 &  & X & X & 69.41 & 246.38 & 158k \\
-            17 & X & X & X & X &  &  & X & X & 79.19 & 79.39 & 400k \\
+            17 & X & X & X & X &  &  & X & X & 79.27 & 79.45 & 400k \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -243,12 +245,12 @@ Looking at the results for discrete rewards in Table \ref{tab:VesselMaze02/Rewar
             \cmidrule(lr){2-7}\cmidrule(lr){8-9}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  &  & X & 0.25 &  & 478.91 & 487.95 & 9.99M \\
-            2 &  &  & X &  & 0.25 &  & 491.19 & 497.06 & 9.99M \\
-            3 & X & X &  & X &  &  & \textbf{89.38} & 95.75 & 1.2M \\
+            1 &  &  &  & X & 0.25 &  & 479.92 & 486.21 & 9.99M \\
+            2 &  &  & X &  & 0.25 &  & 494.48 & 498.16 & 9.99M \\
+            3 & X & X &  & X &  &  & \textbf{89.16} & 95.94 & 1.2M \\
             4 & X & X & X &  &  &  & 97.28 & 100.09 & 762k \\
-            5 & X & X & X &  &  & 1.00 & 93.78 & \textbf{95.15} & 828k \\
-            6 & X & X & X &  & 0.50 &  & 107.31 & 109.18 & \textbf{694k} \\
+            5 & X & X & X &  &  & 1.00 & 93.45 & \textbf{95.07} & 828k \\
+            6 & X & X & X &  & 0.50 &  & 106.44 & 107.80 & \textbf{694k} \\
             7 & X & X & X & X &  &  & 89.62 & 96.38 & 1.2M \\
             \bottomrule
         \end{tabular}
@@ -264,18 +266,18 @@ Looking at the results for discrete rewards in Table \ref{tab:VesselMaze02/Rewar
             \cmidrule(lr){2-9}\cmidrule(lr){10-11}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 &  &  & X &  & 0.25 &  & X &  & 451.00 & 476.26 & 7.92M \\
-            2 &  & X & X &  &  &  &  &  & 423.09 & 433.16 & 7.81M \\
-            3 &  & X & X &  &  &  & X & X & 373.28 & 405.12 & 8M \\
-            4 &  & X & X &  &  &  & X &  & 416.28 & 458.89 & 7.91M \\
-            5 &  & X & X &  &  & 1.00 & X &  & 418.75 & 470.94 & 7.05M \\
-            6 & X & X & X &  &  &  &  &  & 93.97 & 98.73 & \textbf{501k} \\
-            7 & X & X & X &  &  &  & X & X & 103.16 & 105.57 & 628k \\
-            8 & X & X & X &  &  &  & X &  & 91.06 & \textbf{96.72} & 532k \\
-            9 & X & X & X &  &  & 1.00 &  &  & \textbf{89.41} & 100.26 & 600k \\
-            10 & X & X & X &  &  & 1.00 & X &  & 95.16 & 98.65 & 507k \\
-            11 & X & X & X &  & 0.25 &  & X & X & 126.94 & 197.88 & 601k \\
-            12 & X & X & X & X &  &  & X & X & 185.62 & 193.65 & 2.8M \\
+            1 &  &  & X &  & 0.25 &  & X &  & 454.12 & 473.62 & 7.92M \\
+            2 &  & X & X &  &  &  &  &  & 428.91 & 440.77 & 7.81M \\
+            3 &  & X & X &  &  &  & X & X & 369.62 & 407.23 & 8M \\
+            4 &  & X & X &  &  &  & X &  & 421.59 & 462.27 & 7.91M \\
+            5 &  & X & X &  &  & 1.00 & X &  & 421.19 & 469.76 & 7.05M \\
+            6 & X & X & X &  &  &  &  &  & 93.00 & 97.98 & \textbf{501k} \\
+            7 & X & X & X &  &  &  & X & X & 103.33 & 106.82 & 628k \\
+            8 & X & X & X &  &  &  & X &  & 91.02 & \textbf{96.42} & 532k \\
+            9 & X & X & X &  &  & 1.00 &  &  & \textbf{90.44} & 100.06 & 600k \\
+            10 & X & X & X &  &  & 1.00 & X &  & 95.02 & 98.76 & 507k \\
+            11 & X & X & X &  & 0.25 &  & X & X & 128.52 & 198.25 & 601k \\
+            12 & X & X & X & X &  &  & X & X & 185.12 & 192.62 & 2.8M \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -299,8 +301,8 @@ The results for discrete reward are listed in Table \ref{tab:Maze0122/Reward/Dis
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
             1 & X & X &  & X &  &  & 500.00 & 500.00 & 12M \\
-            2 & X & X & X &  &  & 1.00 & \textbf{311.44} & \textbf{319.23} & \textbf{7.15M} \\
-            3 & X & X & X &  & 0.50 &  & 479.59 & 486.36 & 12M \\
+            2 & X & X & X &  &  & 1.00 & \textbf{313.95} & \textbf{321.94} & \textbf{7.15M} \\
+            3 & X & X & X &  & 0.50 &  & 478.83 & 485.26 & 12M \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -317,9 +319,9 @@ In contrast to the discrete reward variations, all continuous reward configurati
             \cmidrule(lr){2-9}\cmidrule(lr){10-11}
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{ON} & \multicolumn{1}{c}{RN} & \multicolumn{1}{c}{TP} & \multicolumn{1}{c}{DEL} & \multicolumn{1}{c}{RND} & \multicolumn{1}{c}{GR} & \multicolumn{1}{c}{Int Norm} & \multicolumn{1}{c}{PO} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
             \midrule
-            1 & X & X & X &  &  &  &  &  & 328.97 & 352.97 & 7.46M \\
-            2 & X & X & X &  &  &  & X &  & \textbf{308.31} & 333.53 & 7.34M \\
-            3 & X & X & X &  &  & 1.00 & X &  & 324.78 & \textbf{333.35} & \textbf{6.75M} \\
+            1 & X & X & X &  &  &  &  &  & 325.61 & 352.57 & 7.46M \\
+            2 & X & X & X &  &  &  & X &  & \textbf{310.42} & 333.96 & 7.34M \\
+            3 & X & X & X &  &  & 1.00 & X &  & 322.39 & \textbf{330.26} & \textbf{6.75M} \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -482,9 +484,9 @@ Similar to previous experiments we tested the RL algorithms on our three test in
             \toprule
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
             \midrule
-            1 & PPO & 61.81 & 71.28 & 147k & 0:40:36h \\
+            1 & PPO & 61.78 & 71.30 & 147k & 0:40:36h \\
             2 & DQN & 500.00 & 500.00 & 381k & 3:08:00h \\
-            3 & ACKTR & 63.38 & 70.73 & 424k & \textbf{0:32:49h} \\
+            3 & ACKTR & 63.25 & 70.65 & 424k & \textbf{0:32:49h} \\
             4 & ACER & \textbf{55.84} & \textbf{68.83} & \textbf{100k} & 0:41:40h \\
             \bottomrule
         \end{tabular}
@@ -498,10 +500,10 @@ Similar to previous experiments we tested the RL algorithms on our three test in
             \toprule
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
             \midrule
-            1 & PPO & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
+            1 & PPO & \textbf{91.02} & \textbf{96.42} & 532k & 1:10:00h \\
             2 & DQN & 500.00 & 500.00 & 6M & 5:40:24h \\
-            3 & ACKTR & 103.88 & 109.20 & 759k & \textbf{0:51:54h} \\
-            4 & ACER & 111.72 & 117.50 & \textbf{182k} & 1:12:57h \\
+            3 & ACKTR & 104.34 & 108.87 & 759k & \textbf{0:51:54h} \\
+            4 & ACER & 111.16 & 119.04 & \textbf{182k} & 1:12:57h \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -514,8 +516,8 @@ Similar to previous experiments we tested the RL algorithms on our three test in
             \toprule
             \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Algorithm} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} &  \multicolumn{1}{c}{Time}\\
             \midrule
-            1 & PPO & \textbf{308.31} & \textbf{333.53} & \textbf{7.34M} & \textbf{4:28:39h} \\
-            2 & ACKTR & 341.78 & 367.42 & 9.12M & 4:32:15h \\
+            1 & PPO & \textbf{310.42} & \textbf{333.96} & \textbf{7.34M} & \textbf{4:28:39h} \\
+            2 & ACKTR & 344.86 & 370.02 & 9.12M & 4:32:15h \\
             3 & ACER & 500.00 & 500.00 & 12M & 4:51:40h \\
             \bottomrule
         \end{tabular}
@@ -660,12 +662,12 @@ Because observation size does not seem to matter to much in terms of performance
                     \toprule
                     \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                     \midrule
-                    1 & (100, 100) & \textbf{60.75} & \textbf{65.57} & 157k & 1:00:46h \\
-                    2 & (84, 84) & 61.81 & 71.28 & \textbf{147k} & 0:40:36h \\
-                    3 & (44, 44) & 78.00 & 79.42 & 181k & 0:21:17h \\
-                    4 & (24, 24) & 82.28 & 84.67 & 209k & 0:22:12h \\
+                    1 & (100, 100) & \textbf{60.84} & \textbf{65.50} & 157k & 1:00:46h \\
+                    2 & (84, 84) & 61.78 & 71.30 & \textbf{147k} & 0:40:36h \\
+                    3 & (44, 44) & 77.52 & 79.19 & 181k & 0:21:17h \\
+                    4 & (24, 24) & 82.83 & 84.93 & 209k & 0:22:12h \\
                     5 & (12, 12) & 500.00 & 500.00 & 1.41M & 0:15:19h \\
-                    6 & (-, -) & 307.50 & 307.51 & 251k & \textbf{0:11:06h} \\
+                    6 & (-, -) & 300.14 & 300.15 & 251k & \textbf{0:11:06h} \\
                     \bottomrule
                 \end{tabular} \\
                 \addlinespace[0.15cm]
@@ -675,11 +677,11 @@ Because observation size does not seem to matter to much in terms of performance
                     \toprule
                     \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                     \midrule
-                    1 & (130, 80) & 98.38 & 100.20 & 539k & 2:03:17h \\
-                    2 & (84, 84) & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
-                    3 & (44, 44) & 105.03 & 112.49 & 566k & 0:43:36h \\
-                    4 & (24, 24) & 99.38 & 107.81 & \textbf{501k} & 0:45:29h \\
-                    5 & (12, 12) & 494.75 & 495.42 & 6M & 0:31:24h \\
+                    1 & (130, 80) & 98.59 & 100.32 & 539k & 2:03:17h \\
+                    2 & (84, 84) & \textbf{91.02} & \textbf{96.42} & 532k & 1:10:00h \\
+                    3 & (44, 44) & 103.94 & 112.36 & 566k & 0:43:36h \\
+                    4 & (24, 24) & 98.80 & 108.86 & \textbf{501k} & 0:45:29h \\
+                    5 & (12, 12) & 494.67 & 496.54 & 6M & 0:31:24h \\
                     6 & (-, -) & 500.00 & 500.00 & 6M & \textbf{0:22:28h} \\
                     \bottomrule
                 \end{tabular} \\
@@ -690,8 +692,8 @@ Because observation size does not seem to matter to much in terms of performance
                     \toprule
                     \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Size} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                     \midrule
-                    1\tnote{1} & (168, 168) & 356.47 & 356.47\tnote{1} & \textbf{6.22M} & 17:49:36h \\
-                    2 & (84, 84) & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
+                    1\tnote{1} & (168, 168) & 356.83 & 356.83\tnote{1} & \textbf{6.22M} & 17:49:36h \\
+                    2 & (84, 84) & \textbf{310.42} & \textbf{333.96} & 7.34M & 4:28:39h \\
                     3 & (44, 44) & 500.00 & 500.00 & 12M & 3:06:27h \\
                     4 & (24, 24) & 500.00 & 500.00 & 12M & 2:54:06h \\
                     5 & (-, -) & 500.00 & 500.00 & 12M & \textbf{0:49:34h} \\
@@ -738,10 +740,10 @@ Frame stacking is important for settings where the agent must be able to estimat
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & 6 & 61.34 & 66.34 & 143k & 1:17:40h \\
-                2 & 4 & 61.81 & 71.28 & 147k & 0:40:36h \\
-                3 & 2 & 57.22 & 66.69 & 145k & 0:34:00h \\
-                4 & 1 & \textbf{56.44} & \textbf{59.70} & \textbf{122k} & \textbf{0:31:25h} \\
+                1 & 6 & 61.22 & 66.25 & 143k & 1:17:40h \\
+                2 & 4 & 61.78 & 71.30 & 147k & 0:40:36h \\
+                3 & 2 & 57.36 & 66.68 & 145k & 0:34:00h \\
+                4 & 1 & \textbf{56.55} & \textbf{59.77} & \textbf{122k} & \textbf{0:31:25h} \\
                 \bottomrule
             \end{tabular} \\
             \addlinespace[0.15cm]
@@ -751,10 +753,10 @@ Frame stacking is important for settings where the agent must be able to estimat
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & 6 & 107.91 & 108.86 & 569k & 2:02:54h \\
-                2 & 4 & \textbf{91.06} & 96.72 & 532k & 1:10:00h \\
-                3 & 2 & 92.06 & 99.84 & 443k & 0:59:14h \\
-                4 & 1 & 93.16 & \textbf{94.32} & \textbf{382k} & \textbf{0:53:57h} \\
+                1 & 6 & 108.91 & 109.42 & 569k & 2:02:54h \\
+                2 & 4 & \textbf{91.02} & 96.42 & 532k & 1:10:00h \\
+                3 & 2 & 92.05 & 98.20 & 443k & 0:59:14h \\
+                4 & 1 & 92.43 & \textbf{93.91} & \textbf{382k} & \textbf{0:53:57h} \\
                 \bottomrule
             \end{tabular} \\
             \addlinespace[0.15cm]
@@ -764,9 +766,9 @@ Frame stacking is important for settings where the agent must be able to estimat
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Frame Stack} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & 4 & \textbf{308.31} & \textbf{333.53} & 7.34M & 4:28:39h \\
-                2 & 2 & 331.44 & 353.35 & 6.56M & 3:58:53h \\
-                3 & 1 & 326.06 & 345.49 & \textbf{6.54M} & \textbf{3:49:05h} \\
+                1 & 4 & \textbf{310.42} & \textbf{333.96} & 7.34M & 4:28:39h \\
+                2 & 2 & 329.36 & 347.14 & 6.56M & 3:58:53h \\
+                3 & 1 & 331.88 & 343.72 & \textbf{6.54M} & \textbf{3:49:05h} \\
                 \bottomrule
             \end{tabular} \\
             \addlinespace[0.15cm]
@@ -804,13 +806,13 @@ The CNN we used in past experiments consists of three convolutional layers with 
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & default\tnote{1} & [128] & 101.97 & 104.03 & 476k & 1:09:56h \\
-                2 & default\tnote{1} & [256] & 94.16 & 98.81 & 506k & \textbf{1:09:27h} \\
-                3 & default\tnote{1} & [512] & \textbf{91.06} & \textbf{96.72} & 532k & 1:10:00h \\
-                4 & default\tnote{1} & [512, 512] & 95.97 & 99.09 & 508k & 1:10:34h \\
-                5 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 101.03 & 104.18 & 538k & 1:10:47h \\
-                6 & default\tnote{1} & [256, 448, {'pi': [448], 'vf': [448]}] & 98.38 & 107.02 & 536k & 1:10:37h \\
-                7\tnote{2} & modified\tnote{3} & [512] & 110.00 & 114.35 & \textbf{413k} & 1:51:27h \\
+                1 & default\tnote{1} & [128] & 101.94 & 104.08 & 476k & 1:09:56h \\
+                2 & default\tnote{1} & [256] & 94.25 & 98.60 & 506k & \textbf{1:09:27h} \\
+                3 & default\tnote{1} & [512] & \textbf{91.02} & \textbf{96.42} & 532k & 1:10:00h \\
+                4 & default\tnote{1} & [512, 512] & 95.94 & 99.72 & 508k & 1:10:34h \\
+                5 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 101.84 & 103.83 & 538k & 1:10:47h \\
+                6 & default\tnote{1} & [256, 448, {'pi': [448], 'vf': [448]}] & 98.81 & 107.81 & 536k & 1:10:37h \\
+                7\tnote{2} & modified\tnote{3} & [512] & 109.52 & 113.48 & \textbf{413k} & 1:51:27h \\
                 \bottomrule
             \end{tabular}
             \begin{tablenotes} \footnotesize
@@ -832,9 +834,9 @@ The CNN we used in past experiments consists of three convolutional layers with 
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN} & \multicolumn{1}{c}{MLP} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & default\tnote{1} & [512] & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
-                2 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 317.84 & 334.83 & \textbf{6.79M} & \textbf{4:24:58h} \\
-                3\tnote{2,3} & modified\tnote{4} & [512] & 326.53 & \textbf{326.53}\tnote{3} & 7.41M & 16:08:57h \\
+                1 & default\tnote{1} & [512] & \textbf{310.42} & 333.96 & 7.34M & 4:28:39h \\
+                2 & default\tnote{1} & [512, {'pi': [512], 'vf': [512]}] & 324.53 & 342.36 & \textbf{6.79M} & \textbf{4:24:58h} \\
+                3\tnote{2,3} & modified\tnote{4} & [512] & 326.36 & \textbf{326.36} & 7.41M & 16:08:57h \\
                 \bottomrule
             \end{tabular}
             \begin{tablenotes} \footnotesize
@@ -870,9 +872,9 @@ In this section we want to take a look at how activation functions influence the
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & SELU & SELU & \textbf{54.50} & \textbf{55.88} & 184k & 0:44:21h \\
-                2 & Leaky ReLU & Tanh & 58.06 & 69.75 & \textbf{146k} & \textbf{0:40:24h} \\
-                3 & Leaky ReLU & Leaky ReLU & 61.81 & 71.28 & 147k & 0:40:36h \\
+                1 & SELU & SELU & \textbf{54.64} & \textbf{55.94} & 184k & 0:44:21h \\
+                2 & Leaky ReLU & Tanh & 57.53 & 70.45 & \textbf{146k} & \textbf{0:40:24h} \\
+                3 & Leaky ReLU & Leaky ReLU & 61.78 & 71.30 & 147k & 0:40:36h \\
                 \bottomrule
             \end{tabular} \\
             \addlinespace[0.15cm]
@@ -883,8 +885,8 @@ In this section we want to take a look at how activation functions influence the
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
                 1 & SELU & SELU & 96.71 & 97.27 & 505k & 1:19:05h \\
-                2 & Leaky ReLU & Tanh & 99.94 & 102.25 & \textbf{475k} & 1:10:54h \\
-                3 & Leaky ReLU & Leaky ReLU & \textbf{91.06} & \textbf{96.72} & 532k & \textbf{1:10:00h} \\
+                2 & Leaky ReLU & Tanh & 99.94 & 102.55 & \textbf{475k} & 1:10:54h \\
+                3 & Leaky ReLU & Leaky ReLU & \textbf{91.02} & \textbf{96.42} & 532k & \textbf{1:10:00h} \\
                 \bottomrule
             \end{tabular} \\
             \addlinespace[0.15cm]
@@ -894,9 +896,9 @@ In this section we want to take a look at how activation functions influence the
                 \toprule
                 \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{CNN Act} & \multicolumn{1}{c}{MLP Act} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop} & \multicolumn{1}{c}{Time}\\
                 \midrule
-                1 & SELU & SELU & 311.84 & \textbf{328.06} & \textbf{5.94M} & 4:39:51h \\
-                2 & Leaky ReLU & Tanh & 401.34 & 415.33 & 9.68M & \textbf{4:24:44h} \\
-                3 & Leaky ReLU & Leaky ReLU & \textbf{308.31} & 333.53 & 7.34M & 4:28:39h \\
+                1 & SELU & SELU & \textbf{310.12} & \textbf{325.15} & \textbf{5.94M} & 4:39:51h \\
+                2 & Leaky ReLU & Tanh & 411.23 & 419.35 & 9.68M & \textbf{4:24:44h} \\
+                3 & Leaky ReLU & Leaky ReLU & 310.42 & 333.96 & 7.34M & 4:28:39h \\
                 \bottomrule
             \end{tabular}\\
             \addlinespace[0.15cm]
