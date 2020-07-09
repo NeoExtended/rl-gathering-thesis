@@ -1240,4 +1240,62 @@ Training for random goal positions proves to be a significantly harder task than
 Looking at the results in Table \ref{tab:Eval/RandomGoal/All}, we can see, that even when doubling the number of training steps, the agent is far away from the average episode length we achieved when training with a single goal position on the same maze. We therefore trained an agent with Network 1 and SELU activations for a total of 12 million steps on the Corridor environment to see, if agents are able to develop strategies which perform well even in comparison with agents trained for a single goal position. We included a plot of the average episode length during training in Figure \ref{fig:Eval/RandomGoal/Maze0318}. We can see, that the agent constantly improves during training, finishing at with episode lengths of about 100. While the average episode length is still higher than for the fixed goal environments, we have to keep in mind that some goal positions may require more steps. We therefore evaluate the performance of the random goal agent on the fixed goal environment. The results can also be seen in Table \ref{tab:Eval/RandomGoal/All}. If trained with enough steps, agents which were trained with random goal positions come close to the performance of agents trained for a single goal position. The results for the Vessel environment show, that training with too few steps generates a high failrate during evaluation. Looking at the results for the Brain instance, we can see that we were not able to train the agent properly even after 50 million training steps, but we did observe constantly increasing average reward during training, which means the agent might be able to solve the Brain environment with more training steps.  
 
 \subsection{Random Mazes} \label{sec:EvalRandomMaze}
-Random Mazes
+In the previous section, we saw that we are actually able to learn agents which solve environments with static mazes, but random goal positions. We now want to take this idea one step further and evaluate how well agents perform when being confronted with completely random mazes. To generate these mazes we will use our RRT instance generator (see Section \ref{sec:RandomInstanceGeneration}). Because we can expect this problem to be extremely challenging, we limit the instance size to 84 by 84 pixels. This exactly matches our previously used downscaling. During our experiments we were not able to train agents to solve completely random mazes. Nevertheless we were able to train agents which can handle more than a single instance and our findings might be helpful to train more general agents in the future.
+
+\begin{figure}[htp]
+    \begin{center}
+        \includegraphics[clip, width=0.9\columnwidth]{figures/evaluation/randomness/instances/buffered_random_ep_len.pdf}
+    \end{center}
+    \caption[Episode Length on the Buffered Random Maze]{Episode length of an agent using a modified baseline configuration with frame stacking and a larger network with 512 additional neurons for the actor and the critic. The agent is trained using a buffered random maze setting, where random mazes can appear multiple times by being drawn from a buffer and new mazes are only occasionally generated. We can see that the agent is unable to improve past a certain point, but is able to occasionally solve an episode which means that there is at least some learning progress.} \label{fig:Eval/RandomInstance/Buffered}
+\end{figure}
+
+At first step when training random mazes is to relax the setting, by limiting the randomness. This limitation was achieved, by introducing a buffered random maze scenario, where mazes are randomly picked from a fixed set of at most 100 mazes. This set only contains three mazes at the start, and slowly grows during training with a probability of 1\% to generate a new maze at the start of an episode. This procedure improves the agent performance and allows it to learn enough to occasionally bring all the particles to the goal position (see Figure \ref{fig:Eval/RandomInstance/Buffered}). The agent uses our baseline configuration with frame stacking and with a modified network structure containing two additional layers: A shared fully connected layer with 512 neurons and an additional non-shared layer with 512 neurons for both the actor and the critic. We can see, that the agent is not able to make progress past a certain point, but can learn enough to steer particles into the general direction of the goal, which occasionally solves an episode.
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{lrrrr}
+            \toprule
+            & \multicolumn{4}{c}{Success Rate} \\
+            \cmidrule(lr){2-5}
+            \multicolumn{1}{c}{Configuration} & \multicolumn{1}{c}{Stage 1} & \multicolumn{1}{c}{Stage 2} & \multicolumn{1}{c}{Stage 3} & \multicolumn{1}{c}{Random Stage} \\
+            \midrule
+            Default & \textbf{89.84\%} & 10.94\% & 6.25\% & 1.56\% \\
+            8 Environments & 78.12\% & 13.08\% & 8.53\% & \textbf{3.12\%} \\
+            Dynamic Normalization & 65.62\% & \textbf{15.50\%} & \textbf{13.18\%} & 0.00\% \\
+            Scaling Only & 10.94\% & 4.96\% & 0.00\% & 0.00\% \\
+            Precomputed Normalization & 10.94\% & 1.56\% & 3.91\% & 0.00\%\\
+            \bottomrule
+        \end{tabular}
+        \caption[Evaluation Results for Agents trained on the Stages Environment]{Evaluation results for agents trained for 6 million training steps on the Stages environment. A detailed description of the agent configuration is provided in Section \ref{sec:EvalRandomMaze}. Agents are evaluated over 128 episodes on the first three stages plus a new random stage. The first three stages have been visited at least once during training. We can see, that agents with dynamic normalization work well on all training stages, while failing to perform on the new random stage. The default configuration which only uses normalization for the first stage, also performs best on the first stage. Reducing training batch variance by reducing the number of environments seems to bring a small positive effect for random mazes, but the effect is very small and might be subject to randomness.} \label{tab:Eval/RandomMaze}
+    \end{center}
+\end{table}
+
+\begin{figure}[htp]
+    \begin{center}
+        \begin{tabular}{cc}
+            \includegraphics[clip, width=0.25\columnwidth]{figures/evaluation/randomness/instances/stage0_upscaled.png} &
+            \includegraphics[clip, width=0.25\columnwidth]{figures/evaluation/randomness/instances/stage1_upscaled.png} \\
+            {\small (a) Stage 1} & {\small (b) Stage 2} \\
+            \addlinespace[0.25cm]
+            \includegraphics[clip, width=0.25\columnwidth]{figures/evaluation/randomness/instances/stage2_upscaled.png} &
+            \includegraphics[clip, width=0.25\columnwidth]{figures/evaluation/randomness/instances/stage3_upscaled.png} \\
+            {\small (c) Stage 3} & {\small (b) Random Stage} \\
+            
+        \end{tabular}
+    \end{center}
+    \caption[Images of Random Mazes Used by the Stages Environment]{Images of the first three mazes generated by the RRT generator for the Stages environment. We use the mazes (a)-(c) for training and the maze (d) for evaluation.} \label{fig:Eval/RandomMazes/Stages}
+\end{figure}
+
+To help the agent to learn in a more stable environment, we suppose another relaxed scenario: An environment, consisting of a series of mazes which we call \textit{Stages}. The agent is confronted with a single maze at first. Each time it is able to solve that instance, it continuous to the next stage (a new maze). Failing in the next stages then brings it back to the first stage with a probability of 50\%. This procedure minimizes the randomness for the agent, while still confronting it with a possibly infinite amount of random mazes. We suspect, that the randomness in the observations are the biggest problem for the agent and also may interfere with our precomputed normalization which will only be optimized for the very first stage. We therefore test the following configurations on the Stages environment:
+
+\begin{itemize}
+    \item Our default configuration which uses the network from the first experiment described above with the extended layers and frame stacking. 
+    \item A configuration where we reduce the number of parallel environments from 64 to 8. This should minimize randomness in a single batch of training data.
+    \item A configuration where the normalization by mean and standard deviation is not precomputed, but rather updated dynamically based on the gathered observations.
+    \item A configuration with only normalizes observations by $x \mapsto x / 255$.
+    \item A configuration using a precomputed normalization over 1000 random instances.
+\end{itemize}
+
+We evaluated the different configurations using 128 test episodes and measuring for how many of these episodes the agent was able to complete the episode in less than 2000 steps. The agents were trained using the Stages environment, which generated stages as shown in Figure \ref{fig:Eval/RandomMaze/Stages}. We also evaluated the performance on an additional maze which was not used during training. Table \ref{tab:Eval/RandomMaze} shows the evaluation results for the different stages. We can see, that our default configuration clearly optimizes for the first stage only. Precomputed normalization therefore must be calculated over multiple random stages. Unfortunately, our experiment using precomputing over multiple random stages did not provide good results, even though it shows to work better than simple observation scaling. We can also see, that reducing the number of environments can be an option to improve training. 
+
+Independent of the used configuration, the success rate of our agents rapidly decreases for later stages, while the success rate on random stages is close to zero. We were therefore not able to train an agent which learns a strategy to solve a random maze even on a very small scale. Nevertheless, our experiments provide a proof-of-concept that agents can learn to perform on more than a single maze.
