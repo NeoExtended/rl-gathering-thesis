@@ -221,6 +221,8 @@ class TableGenerator(ABC):
             return InstanceTableGenerator(**kwargs)
         elif type == "action_error":
             return SingleActionErrorTableGenerator(**kwargs)
+        elif type == "observation_error":
+            return SingleObsErrorTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
 
@@ -256,6 +258,42 @@ class InstanceTableGenerator(TableGenerator):
         return ["Instance"]
 
 
+class SingleObsErrorTableGenerator(TableGenerator):
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        obs_error_type = "None"
+        probability = 0
+        frame_stack = ""
+
+        for wrapper in config['env']['wrappers']:
+            if isinstance(wrapper, dict):
+                if "InvisibleParticleNoiseWrapper" in list(wrapper.keys())[0]:
+                    obs_error_type = "False Negative"
+                    probability = wrapper["baselines_lab.env.wrappers.InvisibleParticleNoiseWrapper"].get("max_particles", 20)
+                elif "FakeParticleNoiseWrapper" in list(wrapper.keys())[0]:
+                    obs_error_type = "False Positive"
+                    probability = wrapper["baselines_lab.env.wrappers.FakeParticleNoiseWrapper"].get("probability", 0.0001)
+                elif "ObservationNoiseWrapper" in list(wrapper.keys())[0]:
+                    obs_error_type = "Gaussian Noise"
+                    probability = wrapper["baselines_lab.env.wrappers.ObservationNoiseWrapper"].get("scale", 0.0001)
+            elif isinstance(wrapper, str):
+                if "InvisibleParticleNoiseWrapper" in wrapper:
+                    obs_error_type = "False Negative"
+                    probability = 20
+                elif "FakeParticleNoiseWrapper" in wrapper:
+                    obs_error_type = "False Positive"
+                    probability = 0.0001
+                elif "ObservationNoiseWrapper" in wrapper:
+                    obs_error_type = "Gaussian Noise"
+                    probability = 0.01
+        if config["env"].get("frame_stack", False):
+            frame_stack = "X"
+
+        return {"Observation Noise": obs_error_type, "Strength": probability, "FS": frame_stack}
+
+    def _get_fieldnames(self) -> List[str]:
+        return ["Observation Noise", "Strength", "FS"]
+
+
 class SingleActionErrorTableGenerator(TableGenerator):
     def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
         action_error_type = ""
@@ -273,7 +311,7 @@ class SingleActionErrorTableGenerator(TableGenerator):
             for wrapper in config['env']['wrappers']:
                 if isinstance(wrapper, dict) and "baselines_lab.env.wrappers.RepeatedActionWrapper" in list(wrapper.keys()):
                     action_error_type = "Sticky Actions"
-                    probability = wrapper.get('probability', 0.1)
+                    probability = wrapper["baselines_lab.env.wrappers.RepeatedActionWrapper"].get('probability', 0.1)
                     found_wrapper = True
                 elif isinstance(wrapper, str) and "RepeatedActionWrapper" in wrapper:
                     action_error_type = "Sticky Actions"

@@ -1,0 +1,9 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\obs\noisy\maze0318
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\obs\fake\maze0318
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\obs\remove\maze0318
+
+jobs:
+  - type: table
+    headers: observation_error
+    output: "../config/plots/fuzzy/obs/obs.tex"

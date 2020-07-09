@@ -1,0 +1,26 @@
+runs:
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Baseline\maze0318\2020_07_02_200220 #baseline
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\fuzzy\maze0318\2020_07_08_174514 # Fuzzy
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\fuzzy\maze0318\2020_07_08_234524
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\random\maze0318\2020_07_09_092723 # Random
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\random\maze0318\2020_07_09_054435
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\sticky\maze0318\2020_07_08_205830 # Sticky
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\sticky\maze0318\2020_07_09_025851
+  - F:\Uni\2020_Semester XIV\Learning_Archive\Fuzzy\actions\combined\maze0318\2020_07_09_163459 # combined
+
+jobs:
+#  - type: table
+#    headers: action_error
+#    output: "../config/plots/fuzzy/actions/actions.tex"
+  - type: figure
+    plot_avg_only: true
+    alias:
+      "2020_07_02_200220": "Baseline"
+      "2020_07_08_174514": "Fuzzy: 0.2"
+      "2020_07_08_234524": "Fuzzy: 0.4"
+      "2020_07_09_054435": "Random: 0.4"
+      "2020_07_09_092723": "Random: 0.2"
+      "2020_07_08_205830": "Sticky: 0.1"
+      "2020_07_09_025851": "Sticky: 0.25"
+      "2020_07_09_163459": "Combined"
+    output: "../config/plots/fuzzy/actions/"
