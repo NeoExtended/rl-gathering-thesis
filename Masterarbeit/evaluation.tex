@@ -1118,9 +1118,56 @@ In this section we want to compare the results of our RL approach to the results
 For a real-world application there are a few more important factors when it comes to a comparison between algorithmic and RL approaches. All models we have trained so far are only able to solve one specific instance. This means that using an RL approach comes at the expense of a large amount of computation cost for every new instance. Even though we were able to reduce that cost by a large amount, it is still huge compared with the cost needed for the approximation algorithms. On the other side do we have a clear advantage of RL algorithms at test time. While training an RL model is complicated, using a trained model is fairly inexpensive. The RL model is able to compute actions directly for every observation and can therefore react in real-time to sudden changes. Approximation algorithms preplan a larger portion of the actions and would have to recalculate them each time something distracts the environment. Therefore the application of RL algorithms can be faster and more reactive at test time.
 
 \section{Extended Environment Models} \label{sec:EvalExtendedModels}
-Extended Environment Models
+In this section we want to evaluate how RL agents are able to perform under the influence of additional challenges which might be present in a real-world particle navigation problem. We already presented a number of these settings in Section \ref{sec:ExtendedMaze} and will evaluate the effect of various sources of error in Section \ref{sec:EvalError} and the effect of a simple physical particle model in Section \ref{sec:EvalPhysical}.
+
 \subsection{Dealing with Error} \label{sec:EvalError}
-Dealing with Error
+In Section \ref{sec:ExtendedMaze} we identified various sources of error in a real-world environment. In this section we want to evaluate how much these errors might affect training for our RL agents. All agents we use in this section will be based on the baseline agent from Section \ref{sec:EvalBaseline}. Since all error sources affect the agent independent of the environment, we perform all our experiments on the Corridor environment.
+
+\paragraph{Observation Error}
+
+
+\paragraph{Action Error}
+Agents in real world scenarios may have to deal with several kinds of action error. In Section \ref{sec:ExtendedMaze} we described three sources: 
+\begin{enumerate}
+    \item Sticky actions, where actions may be repeated for more than a single step.
+    \item Random actions, where each particle may perform a random movement during a step.
+    \item Noisy actions, where actions will not affect a portion of the particles.
+\end{enumerate}
+
+\begin{table}[htp]
+    \begin{center}
+        \begin{tabular}{rcrrrr}
+            \toprule
+            \multicolumn{1}{c}{Idx} & \multicolumn{1}{c}{Action Error Type} & \multicolumn{1}{c}{Probability} & \multicolumn{1}{c}{Best} & \multicolumn{1}{c}{Avg} & \multicolumn{1}{c}{Drop}\\
+            \midrule
+            1 & None & - & \textbf{54.53} & \textbf{55.94} & 155k \\
+            \midrule
+            2 & Sticky Actions & 0.10 & 57.95 & 59.35 & 152k \\
+            3 & Sticky Actions & 0.25 & 66.22 & 67.70 & 175k \\
+            4 & Random Actions & 0.20 & 66.28 & 66.72 & 145k \\
+            5 & Random Actions & 0.40 & 68.83 & 69.74 & \textbf{125k} \\
+            6 & Noisy Actions & 0.20 & 77.15 & 77.54 & 206k \\
+            7 & Noisy Actions & 0.40 & 102.88 & 103.43 & 308k \\
+            \midrule
+            8 & Combined (3, 5, 7) & - & 122.09 & 123.90 & 311k \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption[Evaluation of the Influence of Action Error]{Evaluation of the influence of action error on the training performance for the Corridor instance. We can see that RL agents are able to handle action error even when nearly half of the actions are not executed normally. In fact we can see that random actions even improve initial learning performance, as agents explore more states. Sticky actions do not seem to deteriorate performance substantially, while noisy actions show to be the largest problem. Combining the action error sources from Experiments 3, 5 and 7 (see Experiment 8) does only worsen the performance slightly, when compared to the component with the largest influence (7).} \label{tab:Eval/Error/Actions}
+\end{table}
+
+\begin{figure}[htp]
+    \begin{center}
+        \includegraphics[clip, width=0.9\columnwidth]{figures/evaluation/error/action_error_ep_len.pdf}
+    \end{center}
+    \caption[Episode Length During Training with Action Error]{Average episode length when training with different sources of action error on the Corridor environment. We can see, that the agent is able to quickly deal with all sources of action error. The agent does not improve more after a certain number of training steps, because the action error limits the maximum possible performance.} \label{fig:Eval/Error/ActionsTrain}
+\end{figure}
+
+We evaluated the effect of these error sources on the performance of our baseline configuration. The results are listed in Table \ref{tab:Eval/Error/Actions} and we also provide a plot of the average episode length during training in Figure \ref{fig:Eval/Error/ActionsTrain}. We can see, that RL agents are able to deal with a large amount of action error. Even when 40\% of the particles do not perform the desired action, the agent is able to perform well (see Experiment 7). Instead of worsening the performance, the addition of randomized particle movements was found to improve initial learning speed, as it allows the agent to explore more environment states (see Experiments 4 and 5). Finally, we found that randomly repeated actions only slightly impact performance (see Experiments 2 and 3). While a combination of all error sources is the most challenging scenario for the agent, it is mostly dominated by the impact of noisy actions (see Experiment 8).  
+
+\paragraph{Conclusion}
+
+
 
 \subsection{Physical Particles} \label{sec:EvalPhysical}
 In this section we want to evaluate, how the agent performs when confronted with a more realistic particle system. Instead of having the capability to directly change the position of the particles, the agent now only has the ability to accelerate particles in a direction and the particles retain their velocity after a step (for more details see \ref{sec:ExtendedMaze}). To give the agent the possibility to predict the velocity of each particle, we reenable the observation frame stacking with four frames. All other agent settings are equal to the settings used for the baseline. Additionally to training new agents with the physical environment, we also test how the agents trained for the baseline experiments (see Section \ref{sec:EvalBaseline}) behave with the new particle model.
@@ -1147,7 +1194,7 @@ In this section we want to evaluate, how the agent performs when confronted with
         \end{threeparttable}
         
     \end{center}
-    \caption[Agent Performance on Environments with the Physical Particle Model]{Performance in terms of episode length for the RL agents using the physical particle model on different environments. We also included an evaluation of the performance of agents trained with the non-physical model and evaluated with the physical particle model. By comparing the results with Table TODO, we can see that the physical particle model is not harder for RL agents to solve, than the standard particle model. The numbers for the episode lengths are even smaller for large instances, because particles can move more than one pixel per step. Agents trained without the physical model are still able to perform to some extend, but often fail to solve episodes on more complex instances.} \label{tab:Eval/Physical}
+    \caption[Agent Performance on Environments with the Physical Particle Model]{Performance in terms of episode length for the RL agents using the physical particle model on different environments. We also included an evaluation of the performance of agents trained with the non-physical model and evaluated with the physical particle model. By comparing the results with Table \ref{tab:Eval/BaselinePerformance/Training}, we can see that the physical particle model is not harder for RL agents to solve, than the standard particle model. In fact the numbers for the episode lengths are even smaller for large instances, because particles can move more than one pixel per step. Agents trained without the physical model are still able to perform to some extend, but often fail to solve episodes on more complex instances.} \label{tab:Eval/Physical}
 \end{table}
 
 We listed the results of our experiments in Table \ref{tab:Eval/Physical}. By comparison with Table TODO, we can see, that environments using the physical particle model are not harder to solve for RL agents than agents with the simple particle model. Episodes under the physical particle model are evenly long or even shorter than under the standard particle model, because physical particles can move more than one pixel in a single step, if they are accelerated fast enough. 

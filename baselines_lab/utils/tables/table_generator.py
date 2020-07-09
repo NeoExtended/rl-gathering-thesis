@@ -219,6 +219,8 @@ class TableGenerator(ABC):
             return SimpleTableGenerator(**kwargs)
         elif type == "instance":
             return InstanceTableGenerator(**kwargs)
+        elif type == "action_error":
+            return SingleActionErrorTableGenerator(**kwargs)
         else:
             raise ValueError("Unknown table type {}.".format(type))
 
@@ -252,6 +254,39 @@ class InstanceTableGenerator(TableGenerator):
 
     def _get_fieldnames(self) -> List[str]:
         return ["Instance"]
+
+
+class SingleActionErrorTableGenerator(TableGenerator):
+    def _process_config(self, config: Dict[str, Any]) -> Dict[str, str]:
+        action_error_type = ""
+        probability = 0
+        if "-v4" in config['env']['name']:
+            step_kw = config['env']['step_kwargs']
+            if step_kw['random_move_chance'] > 0.0:
+                action_error_type = "Random Actions"
+                probability = step_kw['random_move_chance']
+            else:
+                action_error_type = "Noisy Actions"
+                probability = step_kw['fuzzy_action_probability']
+        else:
+            found_wrapper = False
+            for wrapper in config['env']['wrappers']:
+                if isinstance(wrapper, dict) and "baselines_lab.env.wrappers.RepeatedActionWrapper" in list(wrapper.keys()):
+                    action_error_type = "Sticky Actions"
+                    probability = wrapper.get('probability', 0.1)
+                    found_wrapper = True
+                elif isinstance(wrapper, str) and "RepeatedActionWrapper" in wrapper:
+                    action_error_type = "Sticky Actions"
+                    probability = 0.1
+                    found_wrapper = True
+
+            if not found_wrapper:
+                action_error_type = "None"
+
+        return {"Action Error Type": action_error_type, "Probability": probability}
+
+    def _get_fieldnames(self) -> List[str]:
+        return ["Action Error Type", "Probability"]
 
 
 class RLAlgorithmTableGenerator(TableGenerator):
