@@ -149,7 +149,7 @@ It took a few years, until in 1985 Rumelhart et al. were able to develop an algo
   %\vspace*{-6pt}
   \caption[Gradient Descent]{The idea of gradient descent. A local minimum is iteratively approximated by following the steepest descent. The learning rate controls how far we go in each iteration. Higher learning rates can speed up the process, but may also lead to unstable results.}
   \label{fig:GradientDescent}
-  %\vspace*{-12pt}
+  \vspace*{-10pt}
 \end{figure}
 
 \paragraph{Gradient Descent.} Let us first look at the gradient descent. Gradient descent is a method to calculate the minimum of a function. Given an arbitrary starting point on the function, gradient descent will iteratively find a series of new points leading towards a minimum (see Figure \ref{fig:GradientDescent}). Suppose we are at some point $x_k$ on our function $f$, we can then calculate the next step using the gradient $\nabla f$ of our function. We therefore can calculate 
@@ -200,7 +200,7 @@ When using minibatch SGD steps the weight changes are accumulated in the backpro
 When we look at the backpropagation algorithm we can see, that we need a differentiable activation function to perform error backpropagation. Also the first derivate of the activation function must be nonzero, otherwise all our gradients would always be zero. In order to use SGD the step function needs to be replaced with another activation function. Replacing the step function with a nonlinear function also resolves another problem of the original stacked perceptron, since it introduces nonlinearity into the network. This change finally allows the MLP to compute arbitrary functions and makes it the powerful tool it is today. We analyze the effect of different activation functions on the performance of our RL approach in Section \ref{sec:Eval/ActivationFunctions}. Figure \ref{fig:ActivationFunctions} shows an overview over frequently used activation functions. Let us take a short look on each of them:
 
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
   \begin{center}
   \resizebox{0.9\columnwidth}{!}{%
   \begin{tabular}{cc}
@@ -301,15 +301,11 @@ Luckily there are better ways of preventing overfitting than using a high learni
   \item \textit{Regularization}. One of the best ways to prevent overfitting is to use regularization methods to keep the weights of the neural network from getting too large. To achieve this a regularization term is added to the loss function. There are three widely used methods:
   \begin{itemize}
     \item $l_2$ regularization from \textit{Ridge Regression} (also called \textit{Tikhonov} regularization) can be used to explicitly punish single large weights in the network. To achieve this a regularization term is added to the loss function which adds a weight penalty according to the $l_2$ norm:
-
       \[\mathcal{L}_{l_2} = \frac{\gamma}{2} \sum_{i=1}^n \theta^2_i \]
-
       The sum starts at $i=1$, because the bias term is usually not regularized. There also exists an alternative idea of how to implement $l_2$ regularization called \textit{weight decay} which just multiplies each weight with a constant $c < 1$ after each training step.
     
     \item $l_1$ regularization from \textit{Lasso Regression}. $l_1$ regularization also adds a term to the loss function, but this time the $l_1$ norm is used so the weights contribute equally. 
-
       \[\mathcal{L}_{l_1} = \gamma \sum_{i=1}^n |\theta_i| \]
-
       An interesting characteristic of the $l_1$ regularization is that it produces weights close to zero for the least important features. This produces a sparse model where many connections will have a zeroed out weight.
     
     \item \textit{Max-Norm Regularization} is another regularization technique which simply limits the $l_2$ norm of the connection weights $\mathbf{w}$ to a certain value, such that $|| \mathbf{w} ||_2 \leq r$. Max-Norm regularization can be implemented similar to weight decay by rescaling the weights after each training step to $\mathbf{w} \leftarrow \mathbf{w} r/||\mathbf{w}||_2$ if needed. 
