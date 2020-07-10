@@ -128,7 +128,7 @@ Given a log directory, Baselines Lab will automatically save models during train
 
 If a log directory location is specified the lab will create a log directory with a current timestamp. Models (and additional components) will be periodically saved during training to a subdirectory called \textit{checkpoints}. On default, the lab keeps the last 5 checkpoints \textit{and} the model which had the best performance during training. This behavior can also be changed (see Appendix \ref{apx:BaselinesLab}).
 
-The checkpoints created during training can be used in enjoy mode or if we want to continue training in the future. To continue training, we just add a \texttt{trained\_agent} keyword to the algorithm configuration and specify weather we want to load the \textit{last} or the \textit{best} checkpoint. In enjoy mode the best checkpoint is selected on default. To change this behavior we can specify a \texttt{-{}-type} command line argument and set it to \textit{last}.
+The checkpoints created during training can be used in enjoy mode or if we want to continue training in the future. To continue training, we just add a \texttt{trained\_agent} keyword to the algorithm configuration and specify wether we want to load the \textit{last} or the \textit{best} checkpoint. In enjoy mode the best checkpoint is selected on default. To change this behavior we can specify a \texttt{-{}-type} command line argument and set it to \textit{last}.
 
 \paragraph{Automated Evaluation}
 Models are automatically evaluated during training. This evaluation is done periodically to determine the current model performance. Evaluation can be done in three different modes depending on the desired tradeoff between evaluation accuracy and speed:
@@ -178,7 +178,7 @@ Additional to the extended monitoring, we also extended some other functions of 
 
 
 \subsection{Random Network Distillation Module} \label{sec:blRND}
-Stable Baselines does not offer an implementation for any form of curiosity reward. Since Huang et al. had shown, that curiosity reward can significantly improve training, we needed to implement our own version of intrinsic reward. In all previous experiments the RND curiosity reward produced superior results in comparison with the original idea of an ICM module. We therefore decided to implement the RND reward. 
+Stable Baselines does not offer an implementation for any form of curiosity reward. Because previous approaches have shown, that curiosity reward can significantly improve training \cite{huang2019}, we needed to implement our own version of intrinsic reward. In all previous experiments the RND curiosity reward produced superior results in comparison with the original idea of an ICM module. We therefore decided to implement the RND reward. 
 
 \begin{figure}[htp]
     \begin{center}
@@ -311,7 +311,7 @@ Figure \ref{fig:MazeBaseDesign} shows a simplified overview of the main componen
 \begin{enumerate}
     \item \textit{Instance Generators.} Instance generators load or create instances. Depending on the generator, an instance can be just created once and then returned for every future episode (e.g. if we want to load a specific instance) or the instance can be randomly generated. We will talk more about random instance creating in Section \ref{sec:RandomInstanceGeneration}.
     \item \textit{Reward Generator.} Reward generators create rewards after each step and may also end an episode. We will talk in detail about reward shaping in Section \ref{sec:MazeReward}.
-    \item \textit{Step Modifiers.} Step modifiers define the behavior of the particles. This behavior might be very simple like in the original maze implementation of Huang et al. where each particle moves exactly one step into the direction given by the action, but can be more complex. We will talk about advanced particle behavior in Section \ref{sec:ExtendedMaze}. 
+    \item \textit{Step Modifiers.} Step modifiers define the behavior of the particles. This behavior might be very simple like in the original maze implementation of Becker et al. where each particle moves exactly one step into the direction given by the action, but can be more complex. We will talk about advanced particle behavior in Section \ref{sec:ExtendedMaze}. 
 \end{enumerate}
 
 \begin{figure}[ht]
@@ -441,7 +441,7 @@ Keeping in mind that we want to create an unbiased reward signal, we can use the
     \item \textit{Max cost reward} is generated based on the particle with the greatest distance to the goal position $d_{max}$ only. This reward may differ significantly from the total cost reward, since it strongly punishes leaving behind single particles. 
 \end{itemize}
 
-As we mentioned in Section \ref{sec:TDDRL}, Huang et al. used both, the maximum and the total cost reward signal. Instead of giving a continuous reward signal, they defined 4-8 subgoals for both these values and only rewarded the agent if it was able to reduce the distance for the average or maximum particle below one of the subgoal thresholds. An example for this method is shown in Table \ref{tab:OriginalRewards}.
+As we mentioned in Section \ref{sec:TDDRL}, previous approaches used both, the maximum and the total cost reward signal. Instead of giving a continuous reward signal, they defined 4-8 subgoals for both these values and only rewarded the agent if it was able to reduce the distance for the average or maximum particle below one of the subgoal thresholds. An example for this method is shown in Table \ref{tab:OriginalRewards}.
 
 \begin{table} [ht]
     \begin{center}

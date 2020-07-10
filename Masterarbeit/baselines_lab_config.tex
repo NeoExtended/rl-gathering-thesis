@@ -135,7 +135,7 @@ We already talked about lab configuration files in Section \ref{sec:blFunctions}
             \normalfont{Keyword} & \multicolumn{1}{c|}{Description} \\
             \hhline{|=|=|}
             name & Specifies the type of RL algorithm to use during training. Each learning algorithm which is available in Stable Baselines can be used in Baselines Lab and chosen by specifying its lowercase abbreviation (e.g. a2c for actor-critic). Note that there exist two implementations for the PPO algorithm which can be chosen via "ppo1" or "ppo2". \\
-            tensorboard\_log & Specifies weather or not logging should be enabled. \\
+            tensorboard\_log & Specifies wether or not logging should be enabled. \\
             policy & Defines the policy. The policy keyword itself is the parent of a \texttt{name} keyword which specifies a registered policy class. All additional keywords will get passed to the policy class. \\
             trained\_agent & Specifies if training should begin based on a pretrained model. The trained agent can either be \textit{best} or \textit{last} to automatically load a model from the last run saved in the specified log directory, or a complete path to a specific directory containing a model checkpoints directory. \\
             \hline
@@ -227,11 +227,11 @@ We also included an example configuration which is given in Figure \ref{fig:Basi
             seed & The global random seed. \\
             save\_interval & Number of timesteps between each model checkpoint. \\
             n\_keep & Total number of checkpoint to store (defaults to 5). If a new checkpoint is created the oldest checkpoint may be deleted if more than n\_keep checkpoints are already saved. \\
-            keep\_best & Sets weather or not to always save the best model. Also enables or disables model evaluation during training. \\
+            keep\_best & Sets wether or not to always save the best model. Also enables or disables model evaluation during training. \\
             n\_eval\_episodes & Number of episodes during training evaluation. Defaults to 32. \\
             n\_trials & Number of experiment repetitions. If n\_trials is greater than one, the experiment will be repeated several times with the same parameters. \\
-            plot & Sets weather or not plots should be automatically generated at the end of the training from the tensorboard log data. \\
-            record\_images & Sets weather or not to save images from the environment to the tensorboard log during training. \\
+            plot & Sets wether or not plots should be automatically generated at the end of the training from the tensorboard log data. \\
+            record\_images & Sets wether or not to save images from the environment to the tensorboard log during training. \\
             \hline
         \end{tabular}
         \egroup
@@ -257,7 +257,7 @@ We also included an example configuration which is given in Figure \ref{fig:Basi
             n\_evaluations & Total number of evaluations for each trial. The trial may be pruned after each evaluation, if its performance is worse than the performance of previous trials depending on the pruner. \\
             eval\_method & Evaluation method to use. May be \textit{fast}, \textit{normal} or \textit{slow}. See Section \ref{sec:blFunctions} for details. \\
             n\_test\_episodes & Number of episodes to perform during evaluation. \\
-            deterministic & Sets weather or not to use deterministic actions during evaluation. \\
+            deterministic & Sets wether or not to use deterministic actions during evaluation. \\
             n\_jobs & Sets the number of trials to run in parallel (defaults to one). \\
             \hline
         \end{tabular}
@@ -302,7 +302,7 @@ Depending on the lab mode, there are mode specific command line arguments. We li
             & \texttt{-{}-trial TRIAL} & The number of the trial to load from the log directory. Defaults to trial zero. \\
             & \texttt{-{}-plot} & If set, plots will be generated from the training tensorboard data and saved in the model's log directory.\\
             \hline
-            \texttt{Search} & \texttt{-{}-plot} & Sets weather or not to plot the distribution of choosen hyperparameters. \\
+            \texttt{Search} & \texttt{-{}-plot} & Sets wether or not to plot the distribution of choosen hyperparameters. \\
             \hline
         \end{tabular}
         \egroup
