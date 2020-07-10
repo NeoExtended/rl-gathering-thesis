@@ -197,7 +197,7 @@ where the subscript always defines the number of the neuron in the layer. If the
 When using minibatch SGD steps the weight changes are accumulated in the backpropagation step and then applied all at once. Since SGD is very sensitive to the learning rate, the parameter needs to be tuned carefully.
 
 \subsection{Activation Functions} \label{ssec:ActivationFunctions}
-When we look at the backpropagation algorithm we can see, that we need a differentiable activation function to perform error backpropagation. Also the first derivate of the activation function must be nonzero, otherwise all our gradients would always be zero. In order to use SGD the step function needs to be replaced with another activation function. Replacing the step function with a nonlinear function also resolves another problem of the original stacked perceptron, since it introduces nonlinearity into the network. This change finally allows the MLP to compute arbitrary functions and makes it the powerful tool it is today. Figure \ref{fig:ActivationFunctions} shows an overview over frequently used activation functions. Let us take a short look on each of them:
+When we look at the backpropagation algorithm we can see, that we need a differentiable activation function to perform error backpropagation. Also the first derivate of the activation function must be nonzero, otherwise all our gradients would always be zero. In order to use SGD the step function needs to be replaced with another activation function. Replacing the step function with a nonlinear function also resolves another problem of the original stacked perceptron, since it introduces nonlinearity into the network. This change finally allows the MLP to compute arbitrary functions and makes it the powerful tool it is today. We analyze the effect of different activation functions on the performance of our RL approach in Section \ref{sec:Eval/ActivationFunctions}. Figure \ref{fig:ActivationFunctions} shows an overview over frequently used activation functions. Let us take a short look on each of them:
 
 
 \begin{figure}[ht!]
@@ -238,7 +238,6 @@ When we look at the backpropagation algorithm we can see, that we need a differe
   \end{cases} \]
 
   Just like the Leaky ReLU function, the ELU function has a nonzero gradient for $z < 0$. If $\alpha = 1$ the ELU function is smooth everywhere. Therefore the ELU function performs better than the Leaky ReLU function, but it is harder to compute. \cite{clevert2015fast} There also exists an extension called SELU which stands for \textit{scaled exponential linear unit} \cite{klambauer2017self} and results in network layers which include self-normalization and therefore preserve a mean of 1 and a standard deviation of 0 during training. This further speeds up training and also showed to improve the results at test time.
-  
 \end{enumerate}
 
 \subsection{Challenges} \label{sec:NNChallenges}
