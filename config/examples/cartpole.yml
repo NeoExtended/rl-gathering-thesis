@@ -1,0 +1,10 @@
+algorithm:
+  name: "ppo2"
+  policy:
+    name: "MlpPolicy"
+
+env:
+  name: "CartPole-v0"
+
+meta:
+  n_timesteps: 10000
