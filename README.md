@@ -18,7 +18,7 @@ pip install numpy opencv-python matplotlib imageio gym optuna pandas Pillow PyYA
 
 ## Usage Example
 The lab contains a run script at /baselines_lab/run_lab.py which can be used to start a session.
-To train a simple PPO agent for the CartPole environment create a new configuration file [cartpole.yml](/config/exaples/cartpole.yml)
+To train a simple PPO agent for the CartPole environment create a new configuration file [cartpole.yml](/config/examples/cartpole.yml)
 
 ```yaml
 algorithm:
