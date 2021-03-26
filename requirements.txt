@@ -6,7 +6,7 @@ opencv-python==4.1.2.30
 optuna==1.0.0
 pandas==0.25.3
 Pillow==6.2.1
-PyYAML==5.2
+PyYAML==5.4
 stable-baselines==2.10.0
 tensorflow==1.15.4
 mpi4py==3.0.3
