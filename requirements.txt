@@ -5,7 +5,7 @@ numpy==1.17.3
 opencv-python==4.1.2.30
 optuna==1.0.0
 pandas==0.25.3
-Pillow==6.2.1
+Pillow==8.3.2
 PyYAML==5.2
 stable-baselines==2.10.0
 tensorflow==1.15.4
