@@ -1,10 +1,10 @@
-# Baselines Lab
-Baselines lab is a experimentation environment for Reinforcement Learning built on top of [Stable-Baselines](https://github.com/hill-a/stable-baselines).
-It offers easy configuration and deployment of RL algorithms via yaml or json config files in a simple syntax and inspired by [SLMLab](https://github.com/kengz/SLM-Lab).
+# About
+This repository contains the code and text for my Master's Thesis with the title "Reinforcement Learning for Navigating Particle Swarms by Global Force". 
+The thesis contains an in-depth analysis of the application of RL on the particle gathering problem.
 
-## About
-This project was created in 2020 as part of my master thesis to study the application of Reinforcement Learning on the targeted drug delivery problem.
-In addition to the code, this repository contains the complete thesis, including the experimental results as well as a detailed documentation of the test environment.
+## Baselines Lab
+Baselines lab was developed as part of my thesis and is an experimentation environment for Reinforcement Learning built on top of [Stable-Baselines](https://github.com/hill-a/stable-baselines).
+It offers easy configuration and deployment of RL algorithms via yaml or json config files in a simple syntax and inspired by [SLMLab](https://github.com/kengz/SLM-Lab).
 
 ## Installation
 Currently Baselines Lab cannot be installed via pip and can only be obtained by cloning this repository.
